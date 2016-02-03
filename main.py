@@ -1,0 +1,37 @@
+from PyQt4.QtGui import *
+from mainwindow import *
+from cmbackend import CMWorker
+from cmdline import StdoutHandler, CmdInterp
+
+if __name__ == '__main__':
+    import sys
+    app = QApplication(sys.argv)
+    app.setApplicationName('NMIC Test App')
+    app.setOrganizationName('Cortera Neurotechnologies Inc.')
+    app.setOrganizationDomain('corteraneuro.com')
+
+    stdout = StdoutHandler()
+    worker = CMWorker()
+    interp = CmdInterp()
+    worker.moveToThread(worker)
+    interp.moveToThread(interp)
+    w = MainWindow()
+    w.setWorker(worker)
+    interp.setWorker(worker)
+    w.cmdline.setInterp(interp)
+    w.cmdline.setStdout(stdout)
+    w.show()
+    worker.start()
+    interp.start()
+    oldstderr = sys.stderr
+    oldstdout = sys.stdout
+    sys.stdout = stdout
+    sys.stderr = stdout
+    ret = app.exec_()
+    sys.stdout = oldstdout
+    sys.stderr = oldstderr
+    # this avoids python hanging at exit due to garbage collection
+    del w
+    interp.quit()
+    worker.quit()
+    sys.exit(ret)
