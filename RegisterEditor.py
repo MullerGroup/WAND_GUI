@@ -142,15 +142,16 @@ class RegisterEditor(QDockWidget):
         s.endArray()
 
 
-    @pyqtSlot(int, int)
-    def regReadData(self, addr, data):
+    @pyqtSlot(int, int, int)
+    def regReadData(self, nm, addr, data):
+        if not self.nm==nm:
+            return
         self.regs[addr].setValue(data)
 
     @pyqtSlot()
     def on_readButton_clicked(self):
         for r in self.regs:
             self.readReg.emit(self.nm, r.addr)
-        #self.readReg.emit(0)
 
     @pyqtSlot()
     def on_writeButton_clicked(self):
@@ -165,7 +166,6 @@ class RegisterEditor(QDockWidget):
             if not r.readOnly:
                 self.writeReg.emit(self.nm, r.addr, r.value())
                 r.clearWrite()
-        print("wrote all registers for nm # ", self.nm)
 
     @pyqtSlot()
     def on_txtReadButton_clicked(self):

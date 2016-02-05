@@ -21,38 +21,34 @@ class MainWindow(QMainWindow):
         self.worker = None
 
         self.regEdit0 = RegisterEditor(self, 0)
-        self.addDockWidget(Qt.LeftDockWidgetArea, self.regEdit0)
-        #print(hex(self.regEdit.regs[1].defaultValue))
+        self.addDockWidget(Qt.TopDockWidgetArea, self.regEdit0)
 
         self.regEdit1 = RegisterEditor(self, 1)
-        self.addDockWidget(Qt.LeftDockWidgetArea, self.regEdit1)
+        self.addDockWidget(Qt.BottomDockWidgetArea, self.regEdit1)
 
- #       self.pControl = PowerControl(self)
- #       self.addDockWidget(Qt.RightDockWidgetArea, self.pControl)
-        
         self.sConfig0 = StimConfig(self, 0)
-        self.addDockWidget(Qt.LeftDockWidgetArea, self.sConfig0)
+        self.addDockWidget(Qt.TopDockWidgetArea, self.sConfig0)
 
         self.sConfig1 = StimConfig(self, 1)
-        self.addDockWidget(Qt.LeftDockWidgetArea, self.sConfig1)
+        self.addDockWidget(Qt.BottomDockWidgetArea, self.sConfig1)
 
         self.nmicCommand0 = NmicCommand(self, 0)
-        self.addDockWidget(Qt.BottomDockWidgetArea, self.nmicCommand0)
+        self.addDockWidget(Qt.TopDockWidgetArea, self.nmicCommand0)
 
         self.nmicCommand1 = NmicCommand(self, 1)
         self.addDockWidget(Qt.BottomDockWidgetArea, self.nmicCommand1)
 
         self.adcControl0 = AdcControl(self, 0)
-        self.addDockWidget(Qt.RightDockWidgetArea, self.adcControl0)
+        self.addDockWidget(Qt.TopDockWidgetArea, self.adcControl0)
 
         self.adcControl1 = AdcControl(self, 1)
-        self.addDockWidget(Qt.RightDockWidgetArea, self.adcControl1)
+        self.addDockWidget(Qt.BottomDockWidgetArea, self.adcControl1)
 
         self.DataVisualizer0 = DataVisualizer(self, 0)
-        self.addDockWidget(Qt.RightDockWidgetArea, self.DataVisualizer0)
+        self.addDockWidget(Qt.TopDockWidgetArea, self.DataVisualizer0)
 
         self.DataVisualizer1 = DataVisualizer(self, 1)
-        self.addDockWidget(Qt.RightDockWidgetArea, self.DataVisualizer1)
+        self.addDockWidget(Qt.BottomDockWidgetArea, self.DataVisualizer1)
 
         # NM0 widgets grouping
         self.tabifyDockWidget(self.regEdit0, self.sConfig0)
@@ -96,6 +92,8 @@ class MainWindow(QMainWindow):
         self.sConfig1.setWorker(worker)
         self.adcControl0.setWorker(worker)
         self.adcControl1.setWorker(worker)
+        self.DataVisualizer0.setWorker(worker)
+        self.DataVisualizer1.setWorker(worker)
 
 
     @pyqtSlot()

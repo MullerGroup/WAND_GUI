@@ -64,17 +64,15 @@ class AdcControl(QDockWidget):
         w.adcData.connect(self.adcData)
 
     @pyqtSlot(list)
-    def adcData(self, nm, data):
+    def adcData(self, data):
         self.data = data
         self.updatePlot()
         if self.ui.autoBtn.isChecked():
-            QTimer.singleShot(250, self.on_singleBtn_clicked(nm))
+            QTimer.singleShot(250, self.on_singleBtn_clicked())
 
-    #TODO: check that the use of nm is correct in above and below
-
-    @pyqtSlot(int)
-    def on_singleBtn_clicked(self, nm):
-        self.readAdc.emit(nm, self.ui.samples.value())
+    @pyqtSlot()
+    def on_singleBtn_clicked(self):
+        self.readAdc.emit(self.nm, self.ui.samples.value())
 
     @pyqtSlot()
     def on_saveMatBtn_clicked(self):
