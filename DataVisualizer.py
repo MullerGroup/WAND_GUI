@@ -18,6 +18,8 @@ class Bands(Enum):
     GammaLow=32
     GammaHigh=100
 
+# TODO: FFT output doesn't look correct
+
 def calculateFFT(d):
     fft = np.abs(np.fft.rfft(d, n=100)) # 100 point FFT
     return fft
@@ -93,6 +95,22 @@ class DataVisualizer(QDockWidget):
         self.ui.fStart1.setEnabled(self.ui.numBands.currentIndex() >= 0)
         self.ui.fStop1.setEnabled(self.ui.numBands.currentIndex() >= 0)
 
+# TODO:
+    '''
+adcData gets called from cmbackend each time Update button is pressed. This means that every time it is
+called, updatePlot is also called but on both modules!
+this is kind of a moot problem, because I should actually change the plot GUI to have all channels.
+whenever you want to read some adc data, the NMIC spits out all channels so that they're synced in time.
+I need to ensure that whenever I get data, both NMs send their data out so that they're also synced with each other.
+This needs to be handled GUI/CM side.
+
+Solution: make 1 widget with all 128 channels, with single Update button.
+When this is pressed, request data from both NMs at the same time, and return it.
+Channels are then numbered 0-127, which can be represented as nm*64+i for i in range (0, 64)
+That is, channels 0-63 correspond to nm=0 and channels 64-127 correspond to nm=1
+
+Finally, I can get rid of the original ADC Control module and just have 1 single Data Visualization module
+'''
     @pyqtSlot(list)
     def adcData(self, data):
         self.data = data
