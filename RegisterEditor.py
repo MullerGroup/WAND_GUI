@@ -114,6 +114,8 @@ class RegisterEditor(QDockWidget):
         self.ui.gridLayout.addItem(QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding), row, 0, 1, 4)
         self.restoreSettings()
 
+        self.setWindowTitle("NM{} Registers".format(self.nm))
+
     def setWorker(self, w):
         self.readReg.connect(w.readReg)
         self.writeReg.connect(w.writeReg)

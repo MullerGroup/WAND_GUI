@@ -18,6 +18,10 @@ class Bands(Enum):
     GammaLow=32
     GammaHigh=100
 
+class NMs(Enum):
+    NM0=0
+    NM1=1
+
 # TODO: FFT output doesn't look correct
 
 def calculateFFT(d):
@@ -25,22 +29,23 @@ def calculateFFT(d):
     return fft
 
 class DataVisualizer(QDockWidget):
-    readAdc = pyqtSignal(int, int)
+    readAdc = pyqtSignal(int)
 
-    def __init__(self, parent=None, nm=0):
+    def __init__(self, parent=None):
         def populate(listbox, start, stop, step):
             for i in range(start,stop+step,step):
                 listbox.addItem("{}".format(i))
         super().__init__(parent)
-        self.nm = nm
         self.ui = Ui_DataVisualizer()
         self.ui.setupUi(self)
         self.data = []
         self.lastfile = ""
-        self.numPlots = 4
+        self.numPlots = 128
         self.plots = []
         self.fftPlots = []
         self.plotEn = [] # each plot has checkbox for enabling/disabling
+
+        self.setWindowTitle("Data Visualizer")
 
         # populate plots
         for i in range(0,self.numPlots):
@@ -48,10 +53,10 @@ class DataVisualizer(QDockWidget):
             self.plots.append(self.ui.plot.addPlot())
             self.plots[i].setTitle(title='Ch {}'.format(i))
             self.ui.plot.nextColumn()
-            self.fftPlots.append(self.ui.plot.addPlot())
-            self.fftPlots[i].setTitle(title='FFT {}'.format(i))
-            self.ui.plot.nextColumn()
-            if not (i+1)%8: self.ui.plot.nextRow()
+            # self.fftPlots.append(self.ui.plot.addPlot())
+            # self.fftPlots[i].setTitle(title='FFT {}'.format(i))
+            # self.ui.plot.nextColumn()
+            if not (i+1)%16: self.ui.plot.nextRow()
             # self.plotEn[i] = True # enable all plots initially
 
             # self.plotEn[i].clicked.connect(self.updatePlot) # update on enable/disable
@@ -77,6 +82,7 @@ class DataVisualizer(QDockWidget):
 
         # set some defaults
         self.ui.numBands.setCurrentIndex(0)
+        self.ui.autorange.setChecked(True)
         self.updateBands()
 
     def setWorker(self, w):
@@ -120,7 +126,8 @@ Finally, I can get rid of the original ADC Control module and just have 1 single
 
     @pyqtSlot()
     def on_singleBtn_clicked(self):
-        self.readAdc.emit(self.nm, self.ui.samples.value())
+        self.readAdc.emit(self.ui.samples.value())
+        self.readAdc.emit(self.ui.samples.value())
 
     @pyqtSlot()
     def updatePlot(self):

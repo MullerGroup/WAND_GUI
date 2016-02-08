@@ -30,5 +30,7 @@ class NmicCommand(QDockWidget):
         self.ui.stim_start.clicked.connect(slotFunc(Cmd.StimStart))
         self.ui.stim_transfer.clicked.connect(slotFunc(Cmd.StimXfer))
 
+        self.setWindowTitle("NM{} Commands".format(self.nm))
+
     def setWorker(self, w):
         self.nmicCommand.connect(w.nmicCommand)

@@ -24,52 +24,52 @@ class MainWindow(QMainWindow):
         self.addDockWidget(Qt.TopDockWidgetArea, self.regEdit0)
 
         self.regEdit1 = RegisterEditor(self, 1)
-        self.addDockWidget(Qt.BottomDockWidgetArea, self.regEdit1)
+        self.addDockWidget(Qt.TopDockWidgetArea, self.regEdit1)
 
         self.sConfig0 = StimConfig(self, 0)
         self.addDockWidget(Qt.TopDockWidgetArea, self.sConfig0)
 
         self.sConfig1 = StimConfig(self, 1)
-        self.addDockWidget(Qt.BottomDockWidgetArea, self.sConfig1)
+        self.addDockWidget(Qt.TopDockWidgetArea, self.sConfig1)
 
         self.nmicCommand0 = NmicCommand(self, 0)
         self.addDockWidget(Qt.TopDockWidgetArea, self.nmicCommand0)
 
         self.nmicCommand1 = NmicCommand(self, 1)
-        self.addDockWidget(Qt.BottomDockWidgetArea, self.nmicCommand1)
+        self.addDockWidget(Qt.TopDockWidgetArea, self.nmicCommand1)
 
-        self.adcControl0 = AdcControl(self, 0)
-        self.addDockWidget(Qt.TopDockWidgetArea, self.adcControl0)
+        # self.adcControl0 = AdcControl(self, 0)
+        # self.addDockWidget(Qt.TopDockWidgetArea, self.adcControl0)
+        #
+        # self.adcControl1 = AdcControl(self, 1)
+        # self.addDockWidget(Qt.TopDockWidgetArea, self.adcControl1)
 
-        self.adcControl1 = AdcControl(self, 1)
-        self.addDockWidget(Qt.BottomDockWidgetArea, self.adcControl1)
+        self.DataVisualizer = DataVisualizer(self)
+        self.addDockWidget(Qt.BottomDockWidgetArea, self.DataVisualizer)
 
-        self.DataVisualizer0 = DataVisualizer(self, 0)
-        self.addDockWidget(Qt.TopDockWidgetArea, self.DataVisualizer0)
-
-        self.DataVisualizer1 = DataVisualizer(self, 1)
-        self.addDockWidget(Qt.BottomDockWidgetArea, self.DataVisualizer1)
+        # self.DataVisualizer0 = DataVisualizer(self, 0)
+        # self.addDockWidget(Qt.TopDockWidgetArea, self.DataVisualizer0)
+        #
+        # self.DataVisualizer1 = DataVisualizer(self, 1)
+        # self.addDockWidget(Qt.BottomDockWidgetArea, self.DataVisualizer1)
 
         # NM0 widgets grouping
-        self.tabifyDockWidget(self.regEdit0, self.sConfig0)
-        self.tabifyDockWidget(self.sConfig0, self.nmicCommand0)
-        self.tabifyDockWidget(self.nmicCommand0, self.adcControl0)
-        self.tabifyDockWidget(self.adcControl0, self.DataVisualizer0)
-
-        # NM1 widgets grouping
-        self.tabifyDockWidget(self.regEdit1, self.sConfig1)
-        self.tabifyDockWidget(self.sConfig1, self.nmicCommand1)
-        self.tabifyDockWidget(self.nmicCommand1, self.adcControl1)
-        self.tabifyDockWidget(self.adcControl1, self.DataVisualizer1)
+        self.tabifyDockWidget(self.regEdit0, self.regEdit1)
+        self.tabifyDockWidget(self.regEdit1, self.sConfig0)
+        self.tabifyDockWidget(self.sConfig0, self.sConfig1)
+        self.tabifyDockWidget(self.sConfig1, self.nmicCommand0)
+        self.tabifyDockWidget(self.nmicCommand0, self.nmicCommand1)
+        # self.tabifyDockWidget(self.nmicCommand1, self.adcControl0)
+        # self.tabifyDockWidget(self.adcControl0, self.adcControl1)
 
         self.sConfig0.loadState()
         self.sConfig1.loadState()
 
         self.boardControl = BoardControl(self)
-        self.addDockWidget(Qt.RightDockWidgetArea, self.boardControl)
+        self.addDockWidget(Qt.BottomDockWidgetArea, self.boardControl)
 
         self.cmdline = CommandLineWidget(self)
-        self.addDockWidget(Qt.RightDockWidgetArea, self.cmdline)
+        self.addDockWidget(Qt.BottomDockWidgetArea, self.cmdline)
 
         self.tabifyDockWidget(self.boardControl, self.cmdline)
 
@@ -90,10 +90,9 @@ class MainWindow(QMainWindow):
         self.regEdit1.setWorker(worker)
         self.sConfig0.setWorker(worker)
         self.sConfig1.setWorker(worker)
-        self.adcControl0.setWorker(worker)
-        self.adcControl1.setWorker(worker)
-        self.DataVisualizer0.setWorker(worker)
-        self.DataVisualizer1.setWorker(worker)
+        # self.adcControl0.setWorker(worker)
+        # self.adcControl1.setWorker(worker)
+        self.DataVisualizer.setWorker(worker)
 
 
     @pyqtSlot()

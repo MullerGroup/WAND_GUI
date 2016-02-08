@@ -5,6 +5,9 @@ from waveformconfig import WaveformEditor
 from ui.ui_stimConfig_unit import Ui_StimConfigUnit
 import pickle
 
+
+# TODO: change to support 2 NMs (128 channels) with 8 stimulators - will need 2 separate modules since the 4 stimulators are physically distinct per NM
+
 class WaveformList(QAbstractListModel):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -147,17 +150,18 @@ class StimConfigUnit(QWidget):
     sourceChange = pyqtSignal(int, str)
     sinkChange = pyqtSignal()
 
-    def __init__(self, model, stimLabel, parent=None):
+    def __init__(self, nm, model, stimLabel, parent=None):
         super().__init__(parent)
         self.ui = Ui_StimConfigUnit()
         self.ui.setupUi(self)
+        self.nm = nm
         self.model = model
         self.ui.wvfmBox.setModel(self.model)
         self.ui.enStim.setText("Enable")
         self.stimLabel = stimLabel
         self.ui.stimLabel.setText(self.stimLabel)
-        self.stimListSource = ["Source " + str(b) for b in range(0,64)]
-        self.stimListSink = ["Sink " + str(b) for b in range(0,64)]
+        self.stimListSource = ["Source " + str(b) for b in range((64*nm),(64*nm)+64)]
+        self.stimListSink = ["Sink " + str(b) for b in range((64*nm),(64*nm)+64)]
         self.ui.Loc1Box.insertItems(0, self.stimListSource)
         self.ui.Loc2Box.insertItems(0, self.stimListSink)
        # self.ui.Loc1Box.currentIndexChanged.connect(self.on_source_changed)
@@ -189,13 +193,15 @@ class StimConfig(QDockWidget):
         self.wfmlist = WaveformList()
         # Connect WaveformList items to dropBoxes
         self.stimLabels = ["A", "B", "C", "D"]
-        self.unit = [StimConfigUnit(self.wfmlist, self.stimLabels[b]) for b in range(0,4)]
+        self.unit = [StimConfigUnit(self.nm, self.wfmlist, self.stimLabels[b]) for b in range(0,4)]
         for b in range(0,4):
             self.ui.gridLayout.addWidget(self.unit[b], b+2, 1, 1, 6)
         [self.ui.stimMultBox.addItem(str(b) + " uA") for b in range(20,100,20)]
         [self.ui.hrcBox.addItem("VDDH - " + str(b) + " mV") for b in range(200,0,-50)]
         [self.ui.clBox.addItem("VDDM + " + str(b) + " mV") for b in range(100,500,100)]
         self.ui.stimFrequencyBox.valueChanged.connect(self.on_stimFrequencyBox_valueChanged)
+
+        self.setWindowTitle("NM{} Stim Config".format(self.nm))
 
     def saveState(self):
         s = QSettings()

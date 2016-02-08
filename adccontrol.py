@@ -44,6 +44,8 @@ class AdcControl(QDockWidget):
         self.numPlots = 4
         self.plots = []
 
+        self.setWindowTitle("NM{} ADC Control".format(self.nm))
+
         self.plotCh = [self.ui.chanA, self.ui.chanB, self.ui.chanC, self.ui.chanD]
         self.plotEn = [self.ui.plotA, self.ui.plotB, self.ui.plotC, self.ui.plotD]
         self.plotLbl = [(self.ui.chA_rms, self.ui.chA_thd), (self.ui.chB_rms, self.ui.chB_thd),

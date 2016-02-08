@@ -81,38 +81,25 @@ class CMWorker(QThread):
                 return d[3] << 8 | d[2]
 
 
-    def _getAdc(self, nm, N):
-        if nm==0:
-            out = []
-            self._regWr(Reg.req, 0x0001 | (N-1)<<16)
-            self.ser.flushInput()
-            self.ser.setTimeout(5+N/1000)
-            data = self.ser.read(128*N)
-            if len(data) != 128*N:
-                raise Exception("Failed to read from ADC: returned {}/{} bytes".format(len(data), 128*N))
-            for ct in range(0,N):
-                out.append([(data[i+1] << 8 | data[i]) & 0x7FFF for i in range(ct*128,(ct+1)*128,2)])
-            self.ser.setTimeout(1)
-            return out
+    def _getAdc(self, N):
+        out = []
+        self._regWr(Reg.req, 0x0003 | (N-1)<<16) # request N samples from both NMs
+        self.ser.flushInput()
+        self.ser.setTimeout(5+(2*N)/1000)
+        data = self.ser.read(256*N) # read all channels - 2 NMs * 64 channels per NM * 2 bytes per channel
+        if len(data) != 256*N:
+            raise Exception("Failed to read from ADC: returned {}/{} bytes".format(len(data), 256*N))
+        for ct in range(0,N):
+            out.append([(data[i+1] << 8 | data[i]) & 0x7FFF for i in range(ct*256,(ct+1)*256,2)])
+        self.ser.setTimeout(1)
+        return out
 
-        if nm==1:
-            out = []
-            self._regWr(Reg.req, 0x0002 | (N-1)<<16)
-            self.ser.flushInput()
-            self.ser.setTimeout(5+N/1000)
-            data = self.ser.read(128*N)
-            if len(data) != 128*N:
-                raise Exception("Failed to read from ADC: returned {}/{} bytes".format(len(data), 128*N))
-            for ct in range(0,N):
-                out.append([(data[i+1] << 8 | data[i]) & 0x7FFF for i in range(ct*128,(ct+1)*128,2)])
-            self.ser.setTimeout(1)
-            return out
 
-    @pyqtSlot(int, int)
-    def readAdc(self, nm, ns):
+    @pyqtSlot(int)
+    def readAdc(self, ns):
         if not self.ser.isOpen():
             return
-        self.adcData.emit(self._getAdc(nm, ns))
+        self.adcData.emit(self._getAdc(ns))
 
     @pyqtSlot()
     def refreshBoards(self):
@@ -154,7 +141,7 @@ class CMWorker(QThread):
         #        pass
         self._sendCmd(nm, cmd)
         if (cmd == 0x04 or cmd == 0x09):
-            self.adcData.emit(self._getAdc(nm, 1000))
+            self.adcData.emit(self._getAdc(1000))
 
     @pyqtSlot(float)
     def setPwr3V(self, voltage):
