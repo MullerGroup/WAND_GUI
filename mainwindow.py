@@ -45,13 +45,7 @@ class MainWindow(QMainWindow):
         # self.addDockWidget(Qt.TopDockWidgetArea, self.adcControl1)
 
         self.DataVisualizer = DataVisualizer(self)
-        self.addDockWidget(Qt.BottomDockWidgetArea, self.DataVisualizer)
-
-        # self.DataVisualizer0 = DataVisualizer(self, 0)
-        # self.addDockWidget(Qt.TopDockWidgetArea, self.DataVisualizer0)
-        #
-        # self.DataVisualizer1 = DataVisualizer(self, 1)
-        # self.addDockWidget(Qt.BottomDockWidgetArea, self.DataVisualizer1)
+        self.addDockWidget(Qt.TopDockWidgetArea, self.DataVisualizer)
 
         # NM0 widgets grouping
         self.tabifyDockWidget(self.regEdit0, self.regEdit1)
@@ -74,11 +68,11 @@ class MainWindow(QMainWindow):
         self.tabifyDockWidget(self.boardControl, self.cmdline)
 
         s = QSettings()
-        if s.value("mainwindow/geometry") is not None:
-            self.restoreGeometry(s.value("mainwindow/geometry"))
-            self.restoreState(s.value("mainwindow/state"))
-        # run loadState when the event loop starts
-        QTimer.singleShot(0, self.loadState)
+        # if s.value("mainwindow/geometry") is not None:
+        #     self.restoreGeometry(s.value("mainwindow/geometry"))
+        #     self.restoreState(s.value("mainwindow/state"))
+        # # run loadState when the event loop starts
+        # QTimer.singleShot(0, self.loadState)
 
     def setWorker(self, worker):
         self.worker = worker

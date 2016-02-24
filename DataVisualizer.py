@@ -1,4 +1,5 @@
 from PyQt4.QtCore import *
+from PyQt4 import QtCore, QtGui
 from PyQt4.QtGui import *
 from ui.ui_DataVisualizer import Ui_DataVisualizer
 import numpy as np
@@ -31,6 +32,23 @@ def calculateFFT(d):
 class DataVisualizer(QDockWidget):
     readAdc = pyqtSignal(int)
 
+    class PlotEventFilter(QObject):
+        mouseDoubleClick = pyqtSignal()
+        mouseClick = pyqtSignal()
+        keySpace = pyqtSignal()
+
+        def eventFilter(self, object, event):
+            if event.type() == QtCore.QEvent.KeyPress:
+                if event.key() == QtCore.Qt.Key_Space:
+                    self.keySpace.emit()
+                    return True
+            if event.type() == QtCore.QEvent.MouseButtonDblClick:
+                self.mouseDoubleClick.emit()
+                return True
+            return False
+
+# TODO: change pyqtgraph to RectMode instead of PanMode - this should allow mouse and key events inside the plot area
+
     def __init__(self, parent=None):
         def populate(listbox, start, stop, step):
             for i in range(start,stop+step,step):
@@ -41,49 +59,51 @@ class DataVisualizer(QDockWidget):
         self.data = []
         self.lastfile = ""
         self.numPlots = 128
+        self.numPlotsDisplayed = 16
+        # self.xRange = 5 # number of seconds over which to plot continuous data
         self.plots = []
+        self.plotGroup = 0 # which group of numPlotsDisplayed (16) plots to display at once (0: 0-15, 1: 16-31, ...)
         self.fftPlots = []
-        self.plotEn = [] # each plot has checkbox for enabling/disabling
+        self.plotEn = [] # each plot can be enabled/disabled by pressing spacebar on top of it
+
+        # self.ui.plot.scene().sigMouseClicked.connect(self.getPos)
+
+        # self.filter = self.PlotEventFilter(self)
+        # self.ui.plot.sigMouseReleased.connect(self.getPos)
+        # self.ui.plot.sigMouseClicked.connect(self.getPos)
+        # self.filter.keySpace.connect(self.enablePlot)
+        # self.filter.mouseClick.connect(self.getPos)
+        # self.filter.mouseDoubleClick.connect(self.enablePlot)
 
         self.setWindowTitle("Data Visualizer")
 
-        # populate plots
+        # populate array of plots
         for i in range(0,self.numPlots):
-            # self.ui.plot.addLabel(text='Ch {}'.format(i))
-            self.plots.append(self.ui.plot.addPlot())
-            self.plots[i].setTitle(title='Ch {}'.format(i))
-            self.ui.plot.nextColumn()
-            # self.fftPlots.append(self.ui.plot.addPlot())
-            # self.fftPlots[i].setTitle(title='FFT {}'.format(i))
-            # self.ui.plot.nextColumn()
-            if not (i+1)%16: self.ui.plot.nextRow()
-            # self.plotEn[i] = True # enable all plots initially
+            self.plots.append(pg.PlotItem().plot())
 
-            # self.plotEn[i].clicked.connect(self.updatePlot) # update on enable/disable
-            # populate(self.plotCh[i])
-            # self.plotCh[i].currentIndexChanged.connect(self.updatePlot)
+        self.updatePlotDisplay()
 
         # populate combo boxes
-        populate(self.ui.numBands, 1, 5, 1)
-        populate(self.ui.fStart1, 0, 100, 5)
-        populate(self.ui.fStart2, 0, 100, 5)
-        populate(self.ui.fStart3, 0, 100, 5)
-        populate(self.ui.fStart4, 0, 100, 5)
-        populate(self.ui.fStart5, 0, 100, 5)
-        populate(self.ui.fStop1, 0, 100, 5)
-        populate(self.ui.fStop2, 0, 100, 5)
-        populate(self.ui.fStop3, 0, 100, 5)
-        populate(self.ui.fStop4, 0, 100, 5)
-        populate(self.ui.fStop5, 0, 100, 5)
+        # populate(self.ui.numBands, 1, 5, 1)
+        # populate(self.ui.fStart1, 0, 100, 5)
+        # populate(self.ui.fStart2, 0, 100, 5)
+        # populate(self.ui.fStart3, 0, 100, 5)
+        # populate(self.ui.fStart4, 0, 100, 5)
+        # populate(self.ui.fStart5, 0, 100, 5)
+        # populate(self.ui.fStop1, 0, 100, 5)
+        # populate(self.ui.fStop2, 0, 100, 5)
+        # populate(self.ui.fStop3, 0, 100, 5)
+        # populate(self.ui.fStop4, 0, 100, 5)
+        # populate(self.ui.fStop5, 0, 100, 5)
 
         # every time the # of bands changes, update the band selection boxes
-        self.ui.numBands.currentIndexChanged.connect(self.updateBands)
+        # self.ui.numBands.currentIndexChanged.connect(self.updateBands)
         self.ui.autorange.clicked.connect(self.updatePlot)
 
         # set some defaults
-        self.ui.numBands.setCurrentIndex(0)
+        # self.ui.numBands.setCurrentIndex(0)
         self.ui.autorange.setChecked(True)
-        self.updateBands()
+        # self.updateBands()
 
     def setWorker(self, w):
         self.readAdc.connect(w.readAdc)
@@ -101,22 +121,36 @@ class DataVisualizer(QDockWidget):
         self.ui.fStart1.setEnabled(self.ui.numBands.currentIndex() >= 0)
         self.ui.fStop1.setEnabled(self.ui.numBands.currentIndex() >= 0)
 
-# TODO:
-    '''
-adcData gets called from cmbackend each time Update button is pressed. This means that every time it is
-called, updatePlot is also called but on both modules!
-this is kind of a moot problem, because I should actually change the plot GUI to have all channels.
-whenever you want to read some adc data, the NMIC spits out all channels so that they're synced in time.
-I need to ensure that whenever I get data, both NMs send their data out so that they're also synced with each other.
-This needs to be handled GUI/CM side.
+    def keyPressEvent(self, QKeyEvent):
+        # enable/disable plot under cursor
+        if QKeyEvent.key() == Qt.Key_Space:
+            print("spacebar") # TODO: implement enable/disable plots under cursor
+            self.updatePlotDisplay()
 
-Solution: make 1 widget with all 128 channels, with single Update button.
-When this is pressed, request data from both NMs at the same time, and return it.
-Channels are then numbered 0-127, which can be represented as nm*64+i for i in range (0, 64)
-That is, channels 0-63 correspond to nm=0 and channels 64-127 correspond to nm=1
+        # scroll through sets of plots
+        if QKeyEvent.key() == Qt.Key_PageDown:
+            if self.plotGroup < (self.numPlots/self.numPlotsDisplayed) - 1:
+                self.plotGroup += 1
+                self.updatePlotDisplay()
+        if QKeyEvent.key() == Qt.Key_PageUp:
+            if self.plotGroup > 0:
+                self.plotGroup -= 1
+                self.updatePlotDisplay()
 
-Finally, I can get rid of the original ADC Control module and just have 1 single Data Visualization module
-'''
+    # @pyqtSlot()
+    # def getPos(self, event):
+    #     print("hello")
+    #     items = self.ui.plot.scene().items(event.scenePos())
+    #     print("# of items: {}".format(items.count))
+    #     print("Plots: {}".format(x for x in items if isinstance(x, pg.PlotItem)))
+    #     items[0].setTitle("testing")
+    #     # p = self.ui.plot.scene().mousePressEvent()
+    #     # p = self.ui.plot.mapFromScene(pos)
+    #     print("hello2")
+    #     # p = QPoint(event.pos.x(), event.pos.y())
+    #     # # p = QtGui.QCursor.pos()
+    #     # print("position clicked: {}, {}".format(p.x(), p.y()))
+
     @pyqtSlot(list)
     def adcData(self, data):
         self.data = data
@@ -130,23 +164,38 @@ Finally, I can get rid of the original ADC Control module and just have 1 single
         self.readAdc.emit(self.ui.samples.value())
 
     @pyqtSlot()
+
+    def updatePlotDisplay(self):
+       for j in reversed(range(0,4)):
+            for i in reversed(range(0,4)):
+                plotToDelete = self.ui.plot.getItem(j,i)
+                if plotToDelete is not None:
+                    self.ui.plot.removeItem(plotToDelete)
+
+       for i in range(self.plotGroup*16, self.plotGroup*16 + self.numPlotsDisplayed):
+            self.plots[i] = self.ui.plot.addPlot(row=i%4, col=int(i/4)%4)
+            self.plots[i].setTitle(title='Ch {}'.format(i), size='8px')
+
+    @pyqtSlot()
     def updatePlot(self):
         if not self.data:
             return
         data = []
-        for ch in range(0,self.numPlots):
-            #data.append((np.array([i[ch] for i in self.data])-32768/2)*(100e-3/32768)*1e6)
+        for ch in range(0,self.numPlots): # store data for all channels in array
             data.append((np.array([i[ch] for i in self.data])))
 
-        for ch in range(0, self.numPlots):
+# TODO: implement scrolling, o-scope style plotting. Pre-allocate data array for self.xRange*1000 samples (xRange seconds)
+# TODO: and add data to this. When you reach the end, loop back to beginning.
+        for ch in range(self.plotGroup*16, self.plotGroup*16 + self.numPlotsDisplayed): # only plot currently displayed plots
             dp = data[ch]
             self.plots[ch].clear()
-            self.fftPlots[ch].clear()
-            # if self.plotEn[ch].isChecked():
-            self.plots[ch].plot(y=dp, pen=(102,204,255))
-            if self.ui.autorange.isChecked():
-                self.plots[ch].getViewBox().autoRange()
-            self.fftPlots[ch].plot(y=calculateFFT(dp), pen=(102,204,255))
-            if self.ui.autorange.isChecked():
-                self.fftPlots[ch].getViewBox().autoRange()
+            # self.fftPlots[ch].clear()
+            if self.plotEn[ch]:
+                self.plots[ch].plot(y=dp, pen=(102,204,255))
+                # self.plots[ch].plot(y=dp, pen=(ch,16)) # different color for each plot
+                if self.ui.autorange.isChecked():
+                    self.plots[ch].getViewBox().autoRange()
+                # self.fftPlots[ch].plot(y=calculateFFT(dp), pen=(102,204,255))
+                # if self.ui.autorange.isChecked():
+                    # self.fftPlots[ch].getViewBox().autoRange()
 
