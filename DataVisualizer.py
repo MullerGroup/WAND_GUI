@@ -59,12 +59,13 @@ class DataVisualizer(QDockWidget):
         self.data = []
         self.lastfile = ""
         self.numPlots = 128
-        self.numPlotsDisplayed = 16
+        self.numPlotsDisplayed = int(self.ui.numPlotsDisplayed.currentText())
         # self.xRange = 5 # number of seconds over which to plot continuous data
         self.plots = []
-        self.plotGroup = 0 # which group of numPlotsDisplayed (16) plots to display at once (0: 0-15, 1: 16-31, ...)
+        self.topPlot = 0 # which channel to begin display w/ (used for scrolling through plots)
         self.fftPlots = []
         self.plotEn = [] # each plot can be enabled/disabled by pressing spacebar on top of it
+        self.plotColors = []
 
         # self.ui.plot.scene().sigMouseClicked.connect(self.getPos)
 
@@ -80,6 +81,8 @@ class DataVisualizer(QDockWidget):
         # populate array of plots
         for i in range(0,self.numPlots):
             self.plots.append(pg.PlotItem().plot())
+            self.plotEn.append(True)
+            self.plotColors.append(pg.intColor(i%16,16))
 
         self.updatePlotDisplay()
 
@@ -99,6 +102,7 @@ class DataVisualizer(QDockWidget):
         # every time the # of bands changes, update the band selection boxes
         # self.ui.numBands.currentIndexChanged.connect(self.updateBands)
         self.ui.autorange.clicked.connect(self.updatePlot)
+        self.ui.numPlotsDisplayed.currentIndexChanged.connect(self.updatePlotDisplay)
 
         # set some defaults
         # self.ui.numBands.setCurrentIndex(0)
@@ -121,35 +125,51 @@ class DataVisualizer(QDockWidget):
         self.ui.fStart1.setEnabled(self.ui.numBands.currentIndex() >= 0)
         self.ui.fStop1.setEnabled(self.ui.numBands.currentIndex() >= 0)
 
+    def wheelEvent(self, QWheelEvent):
+        # scrolling through plots
+        modifiers = QApplication.keyboardModifiers()
+
+        # fast scroll
+        if modifiers == QtCore.Qt.ShiftModifier:
+            if QWheelEvent.delta() < 0: # scroll down
+                if self.topPlot+2*self.numPlotsDisplayed < self.numPlots:
+                    self.topPlot += self.numPlotsDisplayed
+                else:
+                    self.topPlot = self.numPlots-self.numPlotsDisplayed
+                self.updatePlotDisplay()
+            if QWheelEvent.delta() > 0: # scroll up
+                if self.topPlot > self.numPlotsDisplayed:
+                    self.topPlot -= self.numPlotsDisplayed
+                else:
+                    self.topPlot = 0
+                self.updatePlotDisplay()
+
+        # slow scroll
+        else:
+            if QWheelEvent.delta() < 0: # scroll down
+                if self.topPlot+self.numPlotsDisplayed < self.numPlots:
+                    self.topPlot += 1
+                    self.updatePlotDisplay()
+            if QWheelEvent.delta() > 0: # scroll up
+                if self.topPlot > 0:
+                    self.topPlot -= 1
+                    self.updatePlotDisplay()
+
     def keyPressEvent(self, QKeyEvent):
+        # print(self.ui.verticalLayout.itemAt(0))
+        # print(self.ui.verticalLayout.itemAt(1))
+        # print(self.ui.verticalLayout.itemAt(0).widget())
+        # print(self.ui.verticalLayout.itemAt(0).widget().getItem(0,0))
+        # self.ui.plot.itemAt(0)
         # enable/disable plot under cursor
         if QKeyEvent.key() == Qt.Key_Space:
+            # if self.ui.plot.itemAt(QCursor.pos(), QCursor.pos()):
+            print(self.ui.plot.scene().itemAt(QCursor.pos()))
+            print(self.ui.plot.itemAt(QCursor.pos()))
+            print(self.ui.verticalLayout.itemAt(QCursor.pos()))
+            print(QCursor.pos())
             print("spacebar") # TODO: implement enable/disable plots under cursor
             self.updatePlotDisplay()
-
-        # scroll through sets of plots
-        if QKeyEvent.key() == Qt.Key_PageDown:
-            if self.plotGroup < (self.numPlots/self.numPlotsDisplayed) - 1:
-                self.plotGroup += 1
-                self.updatePlotDisplay()
-        if QKeyEvent.key() == Qt.Key_PageUp:
-            if self.plotGroup > 0:
-                self.plotGroup -= 1
-                self.updatePlotDisplay()
-
-    # @pyqtSlot()
-    # def getPos(self, event):
-    #     print("hello")
-    #     items = self.ui.plot.scene().items(event.scenePos())
-    #     print("# of items: {}".format(items.count))
-    #     print("Plots: {}".format(x for x in items if isinstance(x, pg.PlotItem)))
-    #     items[0].setTitle("testing")
-    #     # p = self.ui.plot.scene().mousePressEvent()
-    #     # p = self.ui.plot.mapFromScene(pos)
-    #     print("hello2")
-    #     # p = QPoint(event.pos.x(), event.pos.y())
-    #     # # p = QtGui.QCursor.pos()
-    #     # print("position clicked: {}, {}".format(p.x(), p.y()))
 
     @pyqtSlot(list)
     def adcData(self, data):
@@ -164,17 +184,23 @@ class DataVisualizer(QDockWidget):
         self.readAdc.emit(self.ui.samples.value())
 
     @pyqtSlot()
-
     def updatePlotDisplay(self):
-       for j in reversed(range(0,4)):
-            for i in reversed(range(0,4)):
-                plotToDelete = self.ui.plot.getItem(j,i)
-                if plotToDelete is not None:
-                    self.ui.plot.removeItem(plotToDelete)
+        for j in reversed(range(0,self.numPlotsDisplayed)):
+            plotToDelete = self.ui.plot.getItem(j,0)
+            if plotToDelete is not None:
+                self.ui.plot.removeItem(plotToDelete)
 
-       for i in range(self.plotGroup*16, self.plotGroup*16 + self.numPlotsDisplayed):
-            self.plots[i] = self.ui.plot.addPlot(row=i%4, col=int(i/4)%4)
+        self.numPlotsDisplayed = int(self.ui.numPlotsDisplayed.currentText())
+        if self.topPlot+self.numPlotsDisplayed > self.numPlots:
+            self.topPlot = self.numPlots - self.numPlotsDisplayed
+        for i in range(self.topPlot, self.topPlot + self.numPlotsDisplayed):
+            self.plots[i] = self.ui.plot.addPlot(row=i-self.topPlot, col=0)
             self.plots[i].setTitle(title='Ch {}'.format(i), size='8px')
+
+            #TODO: implement fft plotting. Can place plots in col=1
+
+        # need to also replot the data
+        self.updatePlot()
 
     @pyqtSlot()
     def updatePlot(self):
@@ -186,13 +212,16 @@ class DataVisualizer(QDockWidget):
 
 # TODO: implement scrolling, o-scope style plotting. Pre-allocate data array for self.xRange*1000 samples (xRange seconds)
 # TODO: and add data to this. When you reach the end, loop back to beginning.
-        for ch in range(self.plotGroup*16, self.plotGroup*16 + self.numPlotsDisplayed): # only plot currently displayed plots
+
+#TODO: scale all y axes together?
+
+        for ch in range(self.topPlot, self.topPlot + self.numPlotsDisplayed): # only plot currently displayed plots
             dp = data[ch]
             self.plots[ch].clear()
             # self.fftPlots[ch].clear()
             if self.plotEn[ch]:
-                self.plots[ch].plot(y=dp, pen=(102,204,255))
-                # self.plots[ch].plot(y=dp, pen=(ch,16)) # different color for each plot
+                # self.plots[ch].plot(y=dp, pen=(102,204,255))
+                self.plots[ch].plot(y=dp, pen=self.plotColors[ch]) # different color for each plot
                 if self.ui.autorange.isChecked():
                     self.plots[ch].getViewBox().autoRange()
                 # self.fftPlots[ch].plot(y=calculateFFT(dp), pen=(102,204,255))

@@ -20,32 +20,32 @@ class MainWindow(QMainWindow):
 
         self.worker = None
 
+        self.DataVisualizer = DataVisualizer(self)
+        self.addDockWidget(Qt.LeftDockWidgetArea, self.DataVisualizer)
+        
         self.regEdit0 = RegisterEditor(self, 0)
-        self.addDockWidget(Qt.TopDockWidgetArea, self.regEdit0)
+        self.addDockWidget(Qt.RightDockWidgetArea, self.regEdit0)
 
         self.regEdit1 = RegisterEditor(self, 1)
-        self.addDockWidget(Qt.TopDockWidgetArea, self.regEdit1)
+        self.addDockWidget(Qt.RightDockWidgetArea, self.regEdit1)
 
         self.sConfig0 = StimConfig(self, 0)
-        self.addDockWidget(Qt.TopDockWidgetArea, self.sConfig0)
+        self.addDockWidget(Qt.RightDockWidgetArea, self.sConfig0)
 
         self.sConfig1 = StimConfig(self, 1)
-        self.addDockWidget(Qt.TopDockWidgetArea, self.sConfig1)
+        self.addDockWidget(Qt.RightDockWidgetArea, self.sConfig1)
 
         self.nmicCommand0 = NmicCommand(self, 0)
-        self.addDockWidget(Qt.TopDockWidgetArea, self.nmicCommand0)
+        self.addDockWidget(Qt.RightDockWidgetArea, self.nmicCommand0)
 
         self.nmicCommand1 = NmicCommand(self, 1)
-        self.addDockWidget(Qt.TopDockWidgetArea, self.nmicCommand1)
+        self.addDockWidget(Qt.RightDockWidgetArea, self.nmicCommand1)
 
         # self.adcControl0 = AdcControl(self, 0)
-        # self.addDockWidget(Qt.TopDockWidgetArea, self.adcControl0)
+        # self.addDockWidget(Qt.RightDockWidgetArea, self.adcControl0)
         #
         # self.adcControl1 = AdcControl(self, 1)
-        # self.addDockWidget(Qt.TopDockWidgetArea, self.adcControl1)
-
-        self.DataVisualizer = DataVisualizer(self)
-        self.addDockWidget(Qt.TopDockWidgetArea, self.DataVisualizer)
+        # self.addDockWidget(Qt.RightDockWidgetArea, self.adcControl1)
 
         # NM0 widgets grouping
         self.tabifyDockWidget(self.regEdit0, self.regEdit1)
@@ -60,10 +60,10 @@ class MainWindow(QMainWindow):
         self.sConfig1.loadState()
 
         self.boardControl = BoardControl(self)
-        self.addDockWidget(Qt.BottomDockWidgetArea, self.boardControl)
+        self.addDockWidget(Qt.RightDockWidgetArea, self.boardControl)
 
         self.cmdline = CommandLineWidget(self)
-        self.addDockWidget(Qt.BottomDockWidgetArea, self.cmdline)
+        self.addDockWidget(Qt.RightDockWidgetArea, self.cmdline)
 
         self.tabifyDockWidget(self.boardControl, self.cmdline)
 

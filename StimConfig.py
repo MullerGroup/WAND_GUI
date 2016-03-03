@@ -5,9 +5,6 @@ from waveformconfig import WaveformEditor
 from ui.ui_stimConfig_unit import Ui_StimConfigUnit
 import pickle
 
-
-# TODO: change to support 2 NMs (128 channels) with 8 stimulators - will need 2 separate modules since the 4 stimulators are physically distinct per NM
-
 class WaveformList(QAbstractListModel):
     def __init__(self, parent=None):
         super().__init__(parent)

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1105</width>
-    <height>562</height>
+    <width>925</width>
+    <height>723</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -20,8 +20,72 @@
    <string>ADC Control</string>
   </property>
   <widget class="QWidget" name="dockWidgetContents">
-   <layout class="QVBoxLayout" name="verticalLayout">
-    <item>
+   <layout class="QGridLayout" name="gridLayout">
+    <item row="5" column="3">
+     <widget class="QSpinBox" name="samples">
+      <property name="minimum">
+       <number>1</number>
+      </property>
+      <property name="maximum">
+       <number>10000</number>
+      </property>
+      <property name="singleStep">
+       <number>100</number>
+      </property>
+      <property name="value">
+       <number>1000</number>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="2" rowspan="4">
+     <widget class="QLabel" name="label_4">
+      <property name="text">
+       <string>Plots</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="3" rowspan="4">
+     <widget class="QComboBox" name="numPlotsDisplayed">
+      <property name="editable">
+       <bool>false</bool>
+      </property>
+      <property name="currentIndex">
+       <number>0</number>
+      </property>
+      <property name="maxVisibleItems">
+       <number>5</number>
+      </property>
+      <item>
+       <property name="text">
+        <string>1</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>2</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>4</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>8</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>16</string>
+       </property>
+      </item>
+     </widget>
+    </item>
+    <item row="0" column="0" colspan="4">
      <widget class="GraphicsLayoutWidget" name="plot">
       <property name="sizePolicy">
        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
@@ -34,59 +98,39 @@
       </property>
      </widget>
     </item>
-    <item>
-     <layout class="QGridLayout" name="gridLayout">
-      <item row="1" column="2">
-       <widget class="QSpinBox" name="samples">
-        <property name="minimum">
-         <number>1</number>
-        </property>
-        <property name="maximum">
-         <number>10000</number>
-        </property>
-        <property name="singleStep">
-         <number>100</number>
-        </property>
-        <property name="value">
-         <number>1000</number>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="1">
-       <widget class="QPushButton" name="singleBtn">
-        <property name="text">
-         <string>Update</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="1">
-       <widget class="QLabel" name="label_3">
-        <property name="text">
-         <string>Samples:</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="2">
-       <widget class="QPushButton" name="autoBtn">
-        <property name="text">
-         <string>Auto</string>
-        </property>
-        <property name="checkable">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="0">
-       <widget class="QCheckBox" name="autorange">
-        <property name="text">
-         <string>Autorange</string>
-        </property>
-       </widget>
-      </item>
-     </layout>
+    <item row="5" column="2">
+     <widget class="QLabel" name="label_3">
+      <property name="text">
+       <string>Samples:</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+      </property>
+     </widget>
+    </item>
+    <item row="5" column="1">
+     <widget class="QPushButton" name="singleBtn">
+      <property name="text">
+       <string>Update</string>
+      </property>
+     </widget>
+    </item>
+    <item row="4" column="1">
+     <widget class="QPushButton" name="autoBtn">
+      <property name="text">
+       <string>Auto</string>
+      </property>
+      <property name="checkable">
+       <bool>true</bool>
+      </property>
+     </widget>
+    </item>
+    <item row="3" column="1">
+     <widget class="QCheckBox" name="autorange">
+      <property name="text">
+       <string>Autorange</string>
+      </property>
+     </widget>
     </item>
    </layout>
   </widget>
