@@ -47,7 +47,6 @@ class DataVisualizer(QDockWidget):
                 return True
             return False
 
-# TODO: may be better to disable mouse interaction with plots - scaling controlled back-end
 
     def __init__(self, parent=None):
         def populate(listbox, start, stop, step):
@@ -187,7 +186,9 @@ class DataVisualizer(QDockWidget):
         if self.topPlot+self.numPlotsDisplayed > self.numPlots:
             self.topPlot = self.numPlots - self.numPlotsDisplayed
         for i in range(self.topPlot, self.topPlot + self.numPlotsDisplayed):
-            self.plots[i] = self.ui.plot.addPlot(row=i-self.topPlot, col=0, viewBox=pg.ViewBox(enableMouse=False))
+            viewBox = pg.ViewBox(enableMouse=False)
+            viewBox.setRange(xRange=[0,self.xRange])
+            self.plots[i] = self.ui.plot.addPlot(row=i-self.topPlot, col=0, viewBox=viewBox)
             self.plots[i].setTitle(title='Ch {}'.format(i), size='8px')
 
             #TODO: implement fft plotting. Can place plots in col=1

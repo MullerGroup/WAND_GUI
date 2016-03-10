@@ -34,7 +34,7 @@ class CMWorker(QThread):
         s = struct.pack(">cI", bytes([reg.value]), value)
         #print("reg wr: {}".format(s))
         self.ser.write(s)
-        self.ser.flushOutput()
+        # self.ser.flushOutput()
 
     def _resetIF(self):
         # reset AM
