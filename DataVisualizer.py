@@ -47,7 +47,7 @@ class DataVisualizer(QDockWidget):
                 return True
             return False
 
-# TODO: change pyqtgraph to RectMode instead of PanMode - this should allow mouse and key events inside the plot area
+# TODO: may be better to disable mouse interaction with plots - scaling controlled back-end
 
     def __init__(self, parent=None):
         def populate(listbox, start, stop, step):
@@ -57,28 +57,22 @@ class DataVisualizer(QDockWidget):
         self.ui = Ui_DataVisualizer()
         self.ui.setupUi(self)
         self.data = []
-        self.lastfile = ""
         self.numPlots = 128
+        self.xRange = 5000 # number of ms (samples) over which to plot continuous data
+
+        self.dataPlot = np.zeros((self.numPlots, self.xRange)) # aggregation of data to plot (scrolling style)
+        self.plotPointer = 0 # pointer to current x position in plot (for plotting scrolling style)
+
         self.numPlotsDisplayed = int(self.ui.numPlotsDisplayed.currentText())
-        # self.xRange = 5 # number of seconds over which to plot continuous data
-        self.plots = []
+        self.plots = [] # stores pyqtgraph objects
         self.topPlot = 0 # which channel to begin display w/ (used for scrolling through plots)
         self.fftPlots = []
         self.plotEn = [] # each plot can be enabled/disabled by pressing spacebar on top of it
         self.plotColors = []
 
-        # self.ui.plot.scene().sigMouseClicked.connect(self.getPos)
-
-        # self.filter = self.PlotEventFilter(self)
-        # self.ui.plot.sigMouseReleased.connect(self.getPos)
-        # self.ui.plot.sigMouseClicked.connect(self.getPos)
-        # self.filter.keySpace.connect(self.enablePlot)
-        # self.filter.mouseClick.connect(self.getPos)
-        # self.filter.mouseDoubleClick.connect(self.enablePlot)
-
         self.setWindowTitle("Data Visualizer")
 
-        # populate array of plots
+        # populate arrays
         for i in range(0,self.numPlots):
             self.plots.append(pg.PlotItem().plot())
             self.plotEn.append(True)
@@ -176,11 +170,10 @@ class DataVisualizer(QDockWidget):
         self.data = data
         self.updatePlot()
         if self.ui.autoBtn.isChecked():
-            QTimer.singleShot(250, self.on_singleBtn_clicked())
+            QTimer.singleShot(250, self.on_singleBtn_clicked()) # TODO: figure out error on singleShot()
 
     @pyqtSlot()
     def on_singleBtn_clicked(self):
-        self.readAdc.emit(self.ui.samples.value())
         self.readAdc.emit(self.ui.samples.value())
 
     @pyqtSlot()
@@ -194,7 +187,7 @@ class DataVisualizer(QDockWidget):
         if self.topPlot+self.numPlotsDisplayed > self.numPlots:
             self.topPlot = self.numPlots - self.numPlotsDisplayed
         for i in range(self.topPlot, self.topPlot + self.numPlotsDisplayed):
-            self.plots[i] = self.ui.plot.addPlot(row=i-self.topPlot, col=0)
+            self.plots[i] = self.ui.plot.addPlot(row=i-self.topPlot, col=0, viewBox=pg.ViewBox(enableMouse=False))
             self.plots[i].setTitle(title='Ch {}'.format(i), size='8px')
 
             #TODO: implement fft plotting. Can place plots in col=1
@@ -204,19 +197,25 @@ class DataVisualizer(QDockWidget):
 
     @pyqtSlot()
     def updatePlot(self):
+        # if not self.data:
+        #     return
+        # data = []
+        # for ch in range(0,self.numPlots): # store data for all channels in array
+        #     data.append((np.array([i[ch] for i in self.data])))
+
         if not self.data:
             return
-        data = []
-        for ch in range(0,self.numPlots): # store data for all channels in array
-            data.append((np.array([i[ch] for i in self.data])))
-
-# TODO: implement scrolling, o-scope style plotting. Pre-allocate data array for self.xRange*1000 samples (xRange seconds)
-# TODO: and add data to this. When you reach the end, loop back to beginning.
+        for t in range(0, self.ui.samples.value()):
+            if self.plotPointer==self.xRange:
+                self.plotPointer = 0
+            for ch in range(0, self.numPlots):
+                self.dataPlot[ch][self.plotPointer] = self.data.pop(0) # could return error if pop returns null, but shouldn't be an issue if we always get all channels
+            self.plotPointer += 1
 
 #TODO: scale all y axes together?
 
         for ch in range(self.topPlot, self.topPlot + self.numPlotsDisplayed): # only plot currently displayed plots
-            dp = data[ch]
+            dp = self.dataPlot[ch]
             self.plots[ch].clear()
             # self.fftPlots[ch].clear()
             if self.plotEn[ch]:
