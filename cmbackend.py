@@ -24,7 +24,7 @@ class CMWorker(QThread):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.ser = serial.Serial(baudrate=1250000, timeout=1)
+        self.ser = serial.Serial(baudrate=1000000, timeout=1)
 
     def __del__(self):
         # wait for the thread to finish before destroying object

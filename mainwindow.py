@@ -68,11 +68,11 @@ class MainWindow(QMainWindow):
         self.tabifyDockWidget(self.boardControl, self.cmdline)
 
         s = QSettings()
-        # if s.value("mainwindow/geometry") is not None:
-        #     self.restoreGeometry(s.value("mainwindow/geometry"))
-        #     self.restoreState(s.value("mainwindow/state"))
-        # # run loadState when the event loop starts
-        # QTimer.singleShot(0, self.loadState)
+        if s.value("mainwindow/geometry") is not None:
+            self.restoreGeometry(s.value("mainwindow/geometry"))
+            self.restoreState(s.value("mainwindow/state"))
+        # run loadState when the event loop starts
+        QTimer.singleShot(0, self.loadState)
 
     def setWorker(self, worker):
         self.worker = worker

@@ -57,7 +57,8 @@ class DataVisualizer(QDockWidget):
         self.ui.setupUi(self)
         self.data = []
         self.numPlots = 128
-        self.xRange = 5000 # number of ms (samples) over which to plot continuous data
+        self.xRange = 100 # number of ms (samples) over which to plot continuous data
+        #TODO: add button to change xRange value
 
         self.dataPlot = np.zeros((self.numPlots, self.xRange)) # aggregation of data to plot (scrolling style)
         self.plotPointer = 0 # pointer to current x position in plot (for plotting scrolling style)
@@ -209,8 +210,9 @@ class DataVisualizer(QDockWidget):
         for t in range(0, self.ui.samples.value()):
             if self.plotPointer==self.xRange:
                 self.plotPointer = 0
+            temp = self.data.pop(0) # pop data for sample = 0, 1, 2, ...
             for ch in range(0, self.numPlots):
-                self.dataPlot[ch][self.plotPointer] = self.data.pop(0) # could return error if pop returns null, but shouldn't be an issue if we always get all channels
+                self.dataPlot[ch][self.plotPointer] = temp.pop(0) # pop data for channel = 0, 1, 2, ...
             self.plotPointer += 1
 
 #TODO: scale all y axes together?
