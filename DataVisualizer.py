@@ -57,8 +57,7 @@ class DataVisualizer(QDockWidget):
         self.ui.setupUi(self)
         self.data = []
         self.numPlots = 128
-        self.xRange = 100 # number of ms (samples) over which to plot continuous data
-        #TODO: add button to change xRange value
+        self.xRange = self.ui.xRange.value() # number of ms (samples) over which to plot continuous data
 
         self.dataPlot = np.zeros((self.numPlots, self.xRange)) # aggregation of data to plot (scrolling style)
         self.plotPointer = 0 # pointer to current x position in plot (for plotting scrolling style)
@@ -97,6 +96,7 @@ class DataVisualizer(QDockWidget):
         # self.ui.numBands.currentIndexChanged.connect(self.updateBands)
         self.ui.autorange.clicked.connect(self.updatePlot)
         self.ui.numPlotsDisplayed.currentIndexChanged.connect(self.updatePlotDisplay)
+        self.ui.xRange.valueChanged.connect(self.updatePlotDisplay)
 
         # set some defaults
         # self.ui.numBands.setCurrentIndex(0)
@@ -149,28 +149,40 @@ class DataVisualizer(QDockWidget):
                     self.topPlot -= 1
                     self.updatePlotDisplay()
 
-    def keyPressEvent(self, QKeyEvent):
+    # def mousePressEvent(self, QMouseEvent):
+    #     print("mouse press event")
+    #     if QMouseEvent.button() == Qt.LeftButton:
+    #         print(QMouseEvent.globalPos())
+    #         print(QMouseEvent.pos())
+    #         pos = QMouseEvent.globalPos()
+    #         print(self.ui.plot.scene().itemAt(pos))
+    #         plotClicked = self.ui.plot.scene().itemAt(pos)
+    #         plotClicked.setXRange(0, 10)
+    #         print(plotClicked.getState)
+
+
+    # def keyPressEvent(self, QKeyEvent):
         # print(self.ui.verticalLayout.itemAt(0))
         # print(self.ui.verticalLayout.itemAt(1))
         # print(self.ui.verticalLayout.itemAt(0).widget())
         # print(self.ui.verticalLayout.itemAt(0).widget().getItem(0,0))
         # self.ui.plot.itemAt(0)
         # enable/disable plot under cursor
-        if QKeyEvent.key() == Qt.Key_Space:
-            # if self.ui.plot.itemAt(QCursor.pos(), QCursor.pos()):
-            print(self.ui.plot.scene().itemAt(QCursor.pos()))
-            print(self.ui.plot.itemAt(QCursor.pos()))
-            print(self.ui.verticalLayout.itemAt(QCursor.pos()))
-            print(QCursor.pos())
-            print("spacebar") # TODO: implement enable/disable plots under cursor
-            self.updatePlotDisplay()
+        # if QKeyEvent.key() == Qt.Key_Space:
+        #     # if self.ui.plot.itemAt(QCursor.pos(), QCursor.pos()):
+        #     # print(self.ui.plot.scene().itemAt(QCursor.pos()))
+        #     # print(self.ui.plot.itemAt(QCursor.pos()))
+        #     # print(self.ui.verticalLayout.itemAt(QCursor.pos()))
+        #     # print(QCursor.pos())
+        #     print("spacebar") # TODO: implement enable/disable plots under cursor
+        #     self.updatePlotDisplay()
 
     @pyqtSlot(list)
     def adcData(self, data):
         self.data = data
         self.updatePlot()
         if self.ui.autoBtn.isChecked():
-            QTimer.singleShot(250, self.on_singleBtn_clicked()) # TODO: figure out error on singleShot()
+            QTimer().singleShot(250, self.on_singleBtn_clicked()) # TODO: figure out error on singleShot()
 
     @pyqtSlot()
     def on_singleBtn_clicked(self):
@@ -184,13 +196,14 @@ class DataVisualizer(QDockWidget):
                 self.ui.plot.removeItem(plotToDelete)
 
         self.numPlotsDisplayed = int(self.ui.numPlotsDisplayed.currentText())
+        self.xRange = self.ui.xRange.value()
         if self.topPlot+self.numPlotsDisplayed > self.numPlots:
             self.topPlot = self.numPlots - self.numPlotsDisplayed
         for i in range(self.topPlot, self.topPlot + self.numPlotsDisplayed):
-            viewBox = pg.ViewBox(enableMouse=False)
+            viewBox = pg.ViewBox(enableMouse=False, name=str(i))
             viewBox.setRange(xRange=[0,self.xRange])
             self.plots[i] = self.ui.plot.addPlot(row=i-self.topPlot, col=0, viewBox=viewBox)
-            self.plots[i].setTitle(title='Ch {}'.format(i), size='8px')
+            self.plots[i].setTitle(title='Ch {}'.format(i), size='10px')
 
             #TODO: implement fft plotting. Can place plots in col=1
 
