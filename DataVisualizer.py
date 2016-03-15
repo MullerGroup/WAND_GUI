@@ -19,14 +19,9 @@ class Bands(Enum):
     GammaLow=32
     GammaHigh=100
 
-class NMs(Enum):
-    NM0=0
-    NM1=1
-
 # TODO: FFT output doesn't look correct
-
 def calculateFFT(d):
-    fft = np.abs(np.fft.rfft(d, n=100)) # 100 point FFT
+    fft = np.abs(np.fft.rfft(d, n=100)) # 100 point FFT - change to be based on xRange?
     return fft
 
 class DataVisualizer(QDockWidget):
@@ -119,6 +114,7 @@ class DataVisualizer(QDockWidget):
         self.ui.fStart1.setEnabled(self.ui.numBands.currentIndex() >= 0)
         self.ui.fStop1.setEnabled(self.ui.numBands.currentIndex() >= 0)
 
+# TODO: add labels on GUI to explain how to scroll around plots
     def wheelEvent(self, QWheelEvent):
         # scrolling through plots
         modifiers = QApplication.keyboardModifiers()
@@ -205,18 +201,13 @@ class DataVisualizer(QDockWidget):
             self.plots[i] = self.ui.plot.addPlot(row=i-self.topPlot, col=0, viewBox=viewBox)
             self.plots[i].setTitle(title='Ch {}'.format(i), size='10px')
 
-            #TODO: implement fft plotting. Can place plots in col=1
+#TODO: implement fft plotting. Can place plots in col=1
 
         # need to also replot the data
         self.updatePlot()
 
     @pyqtSlot()
     def updatePlot(self):
-        # if not self.data:
-        #     return
-        # data = []
-        # for ch in range(0,self.numPlots): # store data for all channels in array
-        #     data.append((np.array([i[ch] for i in self.data])))
 
 # TODO: plotted data is lost when updatePlot is called and there is no new data. Need to remove the return statement and always replot stored data array(s)
 
@@ -230,16 +221,15 @@ class DataVisualizer(QDockWidget):
                 self.dataPlot[ch][self.plotPointer] = temp.pop(0) # pop data for channel = 0, 1, 2, ...
             self.plotPointer += 1
 
-# TODO: scale all y axes together?
+# TODO: scale all y axes together? turn off auto-scale?
 
-        # TODO: currently it replots entire data instead of appending new samples. This grows exponentially in processing time (?) and could slow down GUI
+# TODO: currently it replots entire data instead of appending new samples. This grows exponentially in processing time (?) and could slow down GUI
 
         for ch in range(self.topPlot, self.topPlot + self.numPlotsDisplayed): # only plot currently displayed plots
             dp = self.dataPlot[ch][0:self.xRange]
             self.plots[ch].clear()
             # self.fftPlots[ch].clear()
             if self.plotEn[ch]:
-                # self.plots[ch].plot(y=dp, pen=(102,204,255))
                 self.plots[ch].plot(y=dp, pen=self.plotColors[ch]) # different color for each plot
                 if self.ui.autorange.isChecked():
                     self.plots[ch].getViewBox().autoRange()
@@ -247,3 +237,4 @@ class DataVisualizer(QDockWidget):
                 # if self.ui.autorange.isChecked():
                     # self.fftPlots[ch].getViewBox().autoRange()
 
+# TODO: add FFT plotting + a way to enable/disable channels
