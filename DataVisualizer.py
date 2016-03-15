@@ -59,7 +59,7 @@ class DataVisualizer(QDockWidget):
         self.numPlots = 128
         self.xRange = self.ui.xRange.value() # number of ms (samples) over which to plot continuous data
 
-        self.dataPlot = np.zeros((self.numPlots, self.xRange)) # aggregation of data to plot (scrolling style)
+        self.dataPlot = np.zeros((self.numPlots, self.ui.xRange.maximum())) # aggregation of data to plot (scrolling style)
         self.plotPointer = 0 # pointer to current x position in plot (for plotting scrolling style)
 
         self.numPlotsDisplayed = int(self.ui.numPlotsDisplayed.currentText())
@@ -182,7 +182,7 @@ class DataVisualizer(QDockWidget):
         self.data = data
         self.updatePlot()
         if self.ui.autoBtn.isChecked():
-            QTimer().singleShot(250, self.on_singleBtn_clicked()) # TODO: figure out error on singleShot()
+            QTimer.singleShot(250, self.on_singleBtn_clicked()) # TODO: figure out error on singleShot()
 
     @pyqtSlot()
     def on_singleBtn_clicked(self):
@@ -200,7 +200,7 @@ class DataVisualizer(QDockWidget):
         if self.topPlot+self.numPlotsDisplayed > self.numPlots:
             self.topPlot = self.numPlots - self.numPlotsDisplayed
         for i in range(self.topPlot, self.topPlot + self.numPlotsDisplayed):
-            viewBox = pg.ViewBox(enableMouse=False, name=str(i))
+            viewBox = pg.ViewBox(enableMouse=False)
             viewBox.setRange(xRange=[0,self.xRange])
             self.plots[i] = self.ui.plot.addPlot(row=i-self.topPlot, col=0, viewBox=viewBox)
             self.plots[i].setTitle(title='Ch {}'.format(i), size='10px')
@@ -218,6 +218,8 @@ class DataVisualizer(QDockWidget):
         # for ch in range(0,self.numPlots): # store data for all channels in array
         #     data.append((np.array([i[ch] for i in self.data])))
 
+# TODO: plotted data is lost when updatePlot is called and there is no new data. Need to remove the return statement and always replot stored data array(s)
+
         if not self.data:
             return
         for t in range(0, self.ui.samples.value()):
@@ -228,10 +230,12 @@ class DataVisualizer(QDockWidget):
                 self.dataPlot[ch][self.plotPointer] = temp.pop(0) # pop data for channel = 0, 1, 2, ...
             self.plotPointer += 1
 
-#TODO: scale all y axes together?
+# TODO: scale all y axes together?
+
+        # TODO: currently it replots entire data instead of appending new samples. This grows exponentially in processing time (?) and could slow down GUI
 
         for ch in range(self.topPlot, self.topPlot + self.numPlotsDisplayed): # only plot currently displayed plots
-            dp = self.dataPlot[ch]
+            dp = self.dataPlot[ch][0:self.xRange]
             self.plots[ch].clear()
             # self.fftPlots[ch].clear()
             if self.plotEn[ch]:
