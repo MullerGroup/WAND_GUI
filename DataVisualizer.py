@@ -51,7 +51,7 @@ class DataVisualizer(QDockWidget):
         self.ui = Ui_DataVisualizer()
         self.ui.setupUi(self)
         self.data = []
-        self.numPlots = 128
+        self.numPlots = 64
         self.xRange = self.ui.xRange.value() # number of ms (samples) over which to plot continuous data
 
         self.dataPlot = np.zeros((self.numPlots, self.ui.xRange.maximum())) # aggregation of data to plot (scrolling style)
@@ -179,6 +179,7 @@ class DataVisualizer(QDockWidget):
         self.updatePlot()
         if self.ui.autoBtn.isChecked():
             QTimer.singleShot(250, self.on_singleBtn_clicked()) # TODO: figure out error on singleShot()
+            #TODO: data acquisition/plotting stops if UART doesn't receive all bytes - it should just continue after the failed read?
 
     @pyqtSlot()
     def on_singleBtn_clicked(self):
@@ -199,7 +200,8 @@ class DataVisualizer(QDockWidget):
             viewBox = pg.ViewBox(enableMouse=False)
             viewBox.setRange(xRange=[0,self.xRange])
             self.plots[i] = self.ui.plot.addPlot(row=i-self.topPlot, col=0, viewBox=viewBox)
-            self.plots[i].setTitle(title='Ch {}'.format(i), size='10px')
+            self.plots[i].setLabel('left', text="Ch {}".format(i))
+            # self.plots[i].setTitle(title='Ch {}'.format(i), size='10px')
 
 #TODO: implement fft plotting. Can place plots in col=1
 
@@ -213,13 +215,17 @@ class DataVisualizer(QDockWidget):
 
         if not self.data:
             return
-        for t in range(0, self.ui.samples.value()):
-            if self.plotPointer==self.xRange:
-                self.plotPointer = 0
-            temp = self.data.pop(0) # pop data for sample = 0, 1, 2, ...
-            for ch in range(0, self.numPlots):
-                self.dataPlot[ch][self.plotPointer] = temp.pop(0) # pop data for channel = 0, 1, 2, ...
-            self.plotPointer += 1
+        if self.data:
+
+            for t in range(0, self.ui.samples.value()):
+                if self.plotPointer == self.xRange:
+                    self.plotPointer = 0
+                temp = self.data[t]
+                # temp = self.data.pop(0) # pop data for sample = 0, 1, 2, ...
+                for ch in range(0, self.numPlots):
+                    self.dataPlot[ch][self.plotPointer] = temp[ch]
+                    # self.dataPlot[ch][self.plotPointer] = temp.pop(0) # pop data for channel = 0, 1, 2, ...
+                self.plotPointer += 1
 
 # TODO: scale all y axes together? turn off auto-scale?
 
