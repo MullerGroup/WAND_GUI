@@ -6,6 +6,9 @@ import numpy as np
 import scipy.io
 from enum import Enum
 import pyqtgraph as pg
+import tables
+from tables import *
+from datetime import datetime
 
 class Bands(Enum):
     DeltaLow=0
@@ -19,6 +22,11 @@ class Bands(Enum):
     GammaLow=32
     GammaHigh=100
 
+class omni_data(IsDescription):
+    data = UInt16Col(shape=(1,2))
+    time = StringCol(26)
+
+
 # TODO: FFT output doesn't look correct
 def calculateFFT(d):
     fft = np.abs(np.fft.rfft(d, n=100)) # 100 point FFT - change to be based on xRange?
@@ -27,6 +35,7 @@ def calculateFFT(d):
 class DataVisualizer(QDockWidget):
     readAdc = pyqtSignal(int)
 
+    # TODO: unused function - remove?
     class PlotEventFilter(QObject):
         mouseDoubleClick = pyqtSignal()
         mouseClick = pyqtSignal()
@@ -63,6 +72,12 @@ class DataVisualizer(QDockWidget):
         self.fftPlots = []
         self.plotEn = [] # each plot can be enabled/disabled by pressing spacebar on top of it
         self.plotColors = []
+
+        # hdf5 data storage
+        # TODO: add save file text box + checkbox on GUI
+        self.saveFile = tables.open_file("test.hdf", mode="w", title="Test")
+        self.dataGroup = self.saveFile.create_group("/", name='dataGroup', title='Recorded Data Group')
+        self.dataTable = self.saveFile.create_table(self.dataGroup, name='dataTable', title='Recorded Data Table', description=omni_data)
 
         self.setWindowTitle("Data Visualizer")
 
@@ -176,6 +191,7 @@ class DataVisualizer(QDockWidget):
     @pyqtSlot(list)
     def adcData(self, data):
         self.data = data
+        self.saveData()
         self.updatePlot()
         if self.ui.autoBtn.isChecked():
             QTimer.singleShot(250, self.on_singleBtn_clicked()) # TODO: figure out error on singleShot()
@@ -184,6 +200,23 @@ class DataVisualizer(QDockWidget):
     @pyqtSlot()
     def on_singleBtn_clicked(self):
         self.readAdc.emit(self.ui.samples.value())
+
+    def saveData(self):
+        for sample in range(0,len(self.data)):
+            data_point = self.dataTable.row
+            data_point['time'] = str(datetime.now())
+            data_point['data'] = self.data[sample]
+            data_point.append()
+        self.dataTable.flush
+
+# # appends new data to hdf5 file
+#     def saveData(self):
+#         old_size = self.h5Data.shape[1]
+#         new_size = old_size+len(self.data)
+#         self.h5Data.resize((self.numPlots,new_size))
+#         for sample in range(0,self.ui.samples.value()): # TODO: change samples.value() to len(self.data[0]) ?
+#             for ch in range(0,self.numPlots):
+#                 self.h5Data[ch,old_size+sample] = self.data[sample][ch]
 
     @pyqtSlot()
     def updatePlotDisplay(self):
@@ -228,8 +261,6 @@ class DataVisualizer(QDockWidget):
                 self.plotPointer += 1
 
 # TODO: scale all y axes together? turn off auto-scale?
-
-# TODO: currently it replots entire data instead of appending new samples. This grows exponentially in processing time (?) and could slow down GUI
 
         for ch in range(self.topPlot, self.topPlot + self.numPlotsDisplayed): # only plot currently displayed plots
             dp = self.dataPlot[ch][0:self.xRange]
