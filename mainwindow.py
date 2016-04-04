@@ -2,6 +2,7 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from ui.ui_mainwindow import Ui_MainWindow
 from RegisterEditor import *
+from RegisterEditor_v2 import *
 from PowerControl import *
 from StimConfig import *
 from BoardControl import BoardControl
@@ -26,7 +27,8 @@ class MainWindow(QMainWindow):
         self.regEdit0 = RegisterEditor(self, 0)
         self.addDockWidget(Qt.RightDockWidgetArea, self.regEdit0)
 
-        self.regEdit1 = RegisterEditor(self, 1)
+        # self.regEdit1 = RegisterEditor(self, 1)
+        self.regEdit1 = RegisterEditor_v2(self, 1)
         self.addDockWidget(Qt.RightDockWidgetArea, self.regEdit1)
 
         self.sConfig0 = StimConfig(self, 0)

@@ -51,6 +51,8 @@ class CMWorker(QThread):
             self._regWr(Reg.n1d2, 1<<10 | (cmd & 0x3FF))
             self._regWr(Reg.ctrl, 0x2020)
 
+#TODO: decrease timeout?
+
     def _regOp(self, nm, addr, data, write):
         if nm==0:
             self._regWr(Reg.n0d1, 1 if write else 0)

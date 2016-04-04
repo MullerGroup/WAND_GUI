@@ -191,7 +191,7 @@ class DataVisualizer(QDockWidget):
     @pyqtSlot(list)
     def adcData(self, data):
         self.data = data
-        self.saveData()
+        # self.saveData()
         self.updatePlot()
         if self.ui.autoBtn.isChecked():
             QTimer.singleShot(250, self.on_singleBtn_clicked()) # TODO: figure out error on singleShot()
