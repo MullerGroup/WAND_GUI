@@ -6,6 +6,7 @@ import struct
 import time
 from enum import Enum
 # from binascii import hexlify
+from pylibftdi import Driver, Device
 
 class Reg(Enum):
     ctrl = 0x00
@@ -24,7 +25,8 @@ class CMWorker(QThread):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.ser = serial.Serial(baudrate=1000000, timeout=1)
+        # self.ser = serial.Serial(baudrate=1000000, timeout=1)
+        self.ser = Device(lazy_open=True)
 
     def __del__(self):
         # wait for the thread to finish before destroying object
@@ -32,7 +34,7 @@ class CMWorker(QThread):
 
     def _regWr(self, reg, value):
         s = struct.pack(">cI", bytes([reg.value]), value)
-        #print("reg wr: {}".format(s))
+        print("reg wr: {}".format(s))
         self.ser.write(s)
         # self.ser.flushOutput()
 
@@ -51,18 +53,16 @@ class CMWorker(QThread):
             self._regWr(Reg.n1d2, 1<<10 | (cmd & 0x3FF))
             self._regWr(Reg.ctrl, 0x2020)
 
-#TODO: decrease timeout?
-
     def _regOp(self, nm, addr, data, write):
         if nm==0:
             self._regWr(Reg.n0d1, 1 if write else 0)
             self._regWr(Reg.n0d2, addr << 16 | data)
             self._regWr(Reg.ctrl, 0x1000)
             if not write:
-                self.ser.setTimeout(3)
+                # self.ser.setTimeout(3)
                 self._regWr(Reg.req, 0x0100)
                 d = self.ser.read(4)
-                self.ser.setTimeout(1)
+                # self.ser.setTimeout(1)
                 if len(d) != 4 or (d[1] << 8 | d[0]) != addr:
                     raise Exception("Reg read failed: {}/4 bytes, {}".format(len(d), d))
                 return d[3] << 8 | d[2]
@@ -72,68 +72,80 @@ class CMWorker(QThread):
             self._regWr(Reg.n1d2, addr << 16 | data)
             self._regWr(Reg.ctrl, 0x2000)
             if not write:
-                self.ser.setTimeout(3)
+                # self.ser.setTimeout(3)
                 self._regWr(Reg.req, 0x0200)
                 d = self.ser.read(4)
-                self.ser.setTimeout(1)
+                # self.ser.setTimeout(1)
                 if len(d) != 4 or (d[1] << 8 | d[0]) != addr:
                     raise Exception("Reg read failed: {}/4 bytes, {}".format(len(d), d))
                 return d[3] << 8 | d[2]
 
 
     def _getAdc(self, N):
-        # out = []
-        # self._regWr(Reg.req, 0x0003 | (N-1)<<16) # request N samples from both NMs
-        # self.ser.flushInput()
-        # self.ser.setTimeout(5+(2*N)/1000)
-        # data = self.ser.read(256*N) # read all channels - 2 NMs * 64 channels per NM * 2 bytes per channel
-        # if len(data) != 256*N:
-        #     raise Exception("Failed to read from ADC: returned {}/{} bytes".format(len(data), 256*N))
-        # for ct in range(0,N):
-        #     out.append([(data[i+1] << 8 | data[i]) & 0x7FFF for i in range(ct*256,(ct+1)*256,2)])
-        # self.ser.setTimeout(1)
-        # return out
-
         out = []
-        self._regWr(Reg.req, 0x0001 | (N-1)<<16) # request N samples from both NMs
-        self.ser.flushInput()
-        self.ser.setTimeout(5+(N)/1000)
-        data = self.ser.read(128*N) # read all channels - 2 NMs * 64 channels per NM * 2 bytes per channel
-        if len(data) != 128*N:
-            raise Exception("Failed to read from ADC: returned {}/{} bytes".format(len(data), 128*N))
+        self._regWr(Reg.req, 0x0003 | (N-1)<<16) # request N samples from both NMs
+        # self.ser.flush_input()
+        # self.ser.setTimeout(5+(2*N)/1000)
+        data = self.ser.read(256*N) # read all channels - 2 NMs * 64 channels per NM * 2 bytes per channel
+        if len(data) != 256*N:
+            raise Exception("Failed to read from ADC: returned {}/{} bytes".format(len(data), 256*N))
         for ct in range(0,N):
-            out.append([(data[i+1] << 8 | data[i]) & 0x7FFF for i in range(ct*128,(ct+1)*128,2)])
-        self.ser.setTimeout(1)
+            out.append([(data[i+1] << 8 | data[i]) & 0x7FFF for i in range(ct*256,(ct+1)*256,2)])
+        # self.ser.setTimeout(1)
         return out
+
+        # out = []
+        # self._regWr(Reg.req, 0x0001 | (N-1)<<16) # request N samples from both NMs
+        # self.ser.flush_input()
+        # self.ser.setTimeout(5+(N)/1000)
+        # data = self.ser.read(128*N) # read all channels - 2 NMs * 64 channels per NM * 2 bytes per channel
+        # if len(data) != 128*N:
+        #     raise Exception("Failed to read from ADC: returned {}/{} bytes".format(len(data), 128*N))
+        # for ct in range(0,N):
+        #     out.append([(data[i+1] << 8 | data[i]) & 0x7FFF for i in range(ct*128,(ct+1)*128,2)])
+        # # self.ser.setTimeout(1)
+        # return out
 
     @pyqtSlot(int)
     def readAdc(self, ns):
-        if not self.ser.isOpen():
+        if not self.ser._opened:
             return
         self.adcData.emit(self._getAdc(ns))
 
     @pyqtSlot()
     def refreshBoards(self):
-        ports = serial.tools.list_ports.comports()
-        l = [i[0] for i in ports]
-        self.boardsChanged.emit(l)
+        dev_list = []
+        for device in Driver().list_devices():
+            vendor, product, serial = map(lambda x: x.decode('latin1'), device)
+            dev_list.append(serial)
+        # ports = serial.tools.list_ports.comports()
+        # l = [i[0] for i in dev_list]
+        self.boardsChanged.emit(dev_list)
+        # print(self.ser._opened)
+
 
     @pyqtSlot(str)
     def connectToBoard(self, board):
-        self.ser.port = board
         self.ser.open()
-        self.connStateChanged.emit(self.ser.isOpen())
+        self.ser.flush()
+        print("Connected to FTDI and flushed FIFOs")
+        # self.ser.port = board
+        # self.ser.open()
+        self.connStateChanged.emit(self.ser._opened)
+        # print(self.ser._opened)
+
 
     @pyqtSlot()
     def resetSerial(self):
-        if not self.ser.isOpen():
+        if not self.ser._opened:
             return
         self._resetIF()
 
     @pyqtSlot()
     def disconnectBoard(self):
         self.ser.close()
-        self.connStateChanged.emit(self.ser.isOpen())
+        self.connStateChanged.emit(self.ser._opened)
+        # print(self.ser._opened)
 
     @pyqtSlot(bool, bool)
     def setPwrEn(self, en1v, en3v):
@@ -141,7 +153,7 @@ class CMWorker(QThread):
 
     @pyqtSlot(int, int)
     def nmicCommand(self, nm, cmd):
-        if not self.ser.isOpen():
+        if not self.ser._opened:
             return
         #if cmd == 0x04 or cmd == 0x09: # imp_start or stim start command
         #    # if recording is disabled, don't abort on timeout
@@ -168,7 +180,7 @@ class CMWorker(QThread):
 
     @pyqtSlot(int, int, int)
     def writeReg(self, nm, addr, value):
-        if not self.ser.isOpen():
+        if not self.ser._opened:
             return
         self._regOp(nm, addr, value, True)
         #print("Write register: {:04x} {:04x}".format(addr, value))
@@ -176,7 +188,7 @@ class CMWorker(QThread):
 
     @pyqtSlot(int, int)
     def readReg(self, nm, addr):
-        if not self.ser.isOpen():
+        if not self.ser._opened:
             return
         ret = self._regOp(nm, addr, 0, False)
         print("Read register from NM {}: {:04x} {:04x}".format(nm, addr, ret))
