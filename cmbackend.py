@@ -22,11 +22,13 @@ class CMWorker(QThread):
     boardsChanged = pyqtSignal(list)
     regReadData = pyqtSignal(int, int, int)
     adcData = pyqtSignal(list)
+    # streamAdcData = pyqtSignal(list)
+
 
     def __init__(self, parent=None):
         super().__init__(parent)
         # self.ser = serial.Serial(baudrate=1000000, timeout=1)
-        self.ser = Device(lazy_open=True)
+        self.ser = Device(lazy_open=True) # chunk size = 4 since register reads are 4 byte reads
 
     def __del__(self):
         # wait for the thread to finish before destroying object
@@ -35,6 +37,7 @@ class CMWorker(QThread):
     def _regWr(self, reg, value):
         s = struct.pack(">cI", bytes([reg.value]), value)
         print("reg wr: {}".format(s))
+        # print("reg wr: {:04x} {:04x}".format(reg.value, value))
         self.ser.write(s)
         # self.ser.flushOutput()
 
@@ -61,7 +64,7 @@ class CMWorker(QThread):
             if not write:
                 # self.ser.setTimeout(3)
                 self._regWr(Reg.req, 0x0100)
-                d = self.ser.read(4)
+                d = self.ser.read(4, timeout=3)
                 # self.ser.setTimeout(1)
                 if len(d) != 4 or (d[1] << 8 | d[0]) != addr:
                     raise Exception("Reg read failed: {}/4 bytes, {}".format(len(d), d))
@@ -74,43 +77,81 @@ class CMWorker(QThread):
             if not write:
                 # self.ser.setTimeout(3)
                 self._regWr(Reg.req, 0x0200)
-                d = self.ser.read(4)
+                d = self.ser.read(4, timeout=3)
                 # self.ser.setTimeout(1)
                 if len(d) != 4 or (d[1] << 8 | d[0]) != addr:
                     raise Exception("Reg read failed: {}/4 bytes, {}".format(len(d), d))
                 return d[3] << 8 | d[2]
 
-
+# ser.read returns prematurely with less data than expected (even before timeout)
     def _getAdc(self, N):
+        # out = []
+        # self._regWr(Reg.req, 0x0003 | (N-1)<<16) # request N samples from both NMs
+        # # self.ser.flush_input()
+        # # self.ser.setTimeout(5+(2*N)/1000)
+        # # data = []
+        # # while len(data) < 256*N:
+        # #     print("bytes in data: {}, bytes requested: {}".format(len(data),256*N-len(data)))
+        # #     data.append(self.ser.read(256*N-len(data), timeout=5+(2*N)/1000))
+        # # data = []
+        # # if len(data) < 256*N:
+        # #     data.append(self.ser)
+        # # data = self.ser.read(256*N)
+        # # while len(data) < 256*N:
+        # #     print(len(data))
+        # # data.append(temp)
+        # # data = b''.append(temp)
+        # # data = self.ser.read(256*N, timeout=0)
+        # t = QElapsedTimer()
+        # t.start()
+        # data = self.ser.read(256*N, timeout=5+(2*N)/1000) # read all channels - 2 NMs * 64 channels per NM * 2 bytes per channel
+        # print("elapsed time: {}".format(t.elapsed()))
+        # if len(data) != 256*N:
+        #     raise Exception("Failed to read from ADC: returned {}/{} bytes".format(len(data), 256*N))
+        # for ct in range(0,N):
+        #     out.append([(data[i+1] << 8 | data[i]) & 0x7FFF for i in range(ct*256,(ct+1)*256,2)])
+        # # self.ser.setTimeout(1)
+        # return out
+
         out = []
-        self._regWr(Reg.req, 0x0003 | (N-1)<<16) # request N samples from both NMs
+        self._regWr(Reg.req, 0x0001 | (N-1)<<16) # request N samples from both NMs
         # self.ser.flush_input()
-        # self.ser.setTimeout(5+(2*N)/1000)
-        data = self.ser.read(256*N) # read all channels - 2 NMs * 64 channels per NM * 2 bytes per channel
-        if len(data) != 256*N:
-            raise Exception("Failed to read from ADC: returned {}/{} bytes".format(len(data), 256*N))
+        # self.ser.setTimeout(5+(N)/1000)
+        t = QElapsedTimer()
+        t.start()
+        data = self.ser.read(128*N, timeout=5+(N)/1000) # read all channels - 2 NMs * 64 channels per NM * 2 bytes per channel
+        print("elapsed time: {}".format(t.elapsed()))
+        if len(data) != 128*N:
+            raise Exception("Failed to read from ADC: returned {}/{} bytes".format(len(data), 128*N))
         for ct in range(0,N):
-            out.append([(data[i+1] << 8 | data[i]) & 0x7FFF for i in range(ct*256,(ct+1)*256,2)])
+            out.append([(data[i+1] << 8 | data[i]) & 0x7FFF for i in range(ct*128,(ct+1)*128,2)])
         # self.ser.setTimeout(1)
         return out
 
-        # out = []
-        # self._regWr(Reg.req, 0x0001 | (N-1)<<16) # request N samples from both NMs
-        # self.ser.flush_input()
-        # self.ser.setTimeout(5+(N)/1000)
-        # data = self.ser.read(128*N) # read all channels - 2 NMs * 64 channels per NM * 2 bytes per channel
-        # if len(data) != 128*N:
-        #     raise Exception("Failed to read from ADC: returned {}/{} bytes".format(len(data), 128*N))
-        # for ct in range(0,N):
-        #     out.append([(data[i+1] << 8 | data[i]) & 0x7FFF for i in range(ct*128,(ct+1)*128,2)])
-        # # self.ser.setTimeout(1)
-        # return out
+    # def _streamAdc(self):
+    #     out = []
+    #     data = self.ser.read()
+    #     for ct in range(0,len(data)/256):
+    #         out.append([(data[i+1] << 8 | data[i]) & 0x7FFF for i in range(ct*256,(ct+1)*256,2)])
+    #     self.streamAdcData.emit(out)
 
     @pyqtSlot(int)
     def readAdc(self, ns):
         if not self.ser._opened:
             return
         self.adcData.emit(self._getAdc(ns))
+
+    # @pyqtSlot(bool)
+    # def streamAdc(self, stream):
+    #     if not self.ser._opened:
+    #         return
+    #     if stream:
+    #         self._regWr(Reg.req, 0x000C) # tell CM to stream data from NMs
+    #         # self._streamAdc()
+    #         self.streamAdcData.emit(self._streamAdc()) # need to run this continuously?
+    #     else:
+    #         self._regWr(Reg.req, 0x0000) # turn off streaming from NMs
+
 
     @pyqtSlot()
     def refreshBoards(self):
@@ -134,6 +175,22 @@ class CMWorker(QThread):
         self.connStateChanged.emit(self.ser._opened)
         # print(self.ser._opened)
 
+# flush_input() flushes FTDI Rx buffer (commands)
+# flush_output() flushes FTDI Tx buffer (data from CM)
+
+    @pyqtSlot()
+    def flushCommandFifo(self):
+        if not self.ser._opened:
+            return
+        self.ser.flush_input()
+        print("Flushed FTDI input (command) FIFO")
+
+    @pyqtSlot()
+    def flushDataFifo(self):
+        if not self.ser._opened:
+            return
+        self.ser.flush_output()
+        print("Flushed FTDI output (data) FIFO")
 
     @pyqtSlot()
     def resetSerial(self):

@@ -7,6 +7,8 @@ class BoardControl(QDockWidget):
     connectToBoard = pyqtSignal(str)
     disconnectBoard = pyqtSignal()
     resetSerial = pyqtSignal()
+    flushCommandFifo = pyqtSignal()
+    flushDataFifo = pyqtSignal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -20,6 +22,8 @@ class BoardControl(QDockWidget):
         self.connectToBoard.connect(worker.connectToBoard)
         self.disconnectBoard.connect(worker.disconnectBoard)
         self.resetSerial.connect(worker.resetSerial)
+        self.flushCommandFifo.connect(worker.flushCommandFifo)
+        self.flushDataFifo.connect(worker.flushDataFifo)
         worker.boardsChanged.connect(self.boardsChanged)
         worker.connStateChanged.connect(self.connStateChanged)
         self.refreshBoards.emit()
@@ -42,6 +46,14 @@ class BoardControl(QDockWidget):
         currBoard = self.ui.selectBox.currentText()
         if currBoard:
             self.connectToBoard.emit(currBoard)
+
+    @pyqtSlot()
+    def on_flushCommandBtn_clicked(self):
+        self.flushCommandFifo.emit()
+
+    @pyqtSlot()
+    def on_flushDataBtn_clicked(self):
+        self.flushDataFifo.emit()
 
     @pyqtSlot()
     def on_resetBtn_clicked(self):

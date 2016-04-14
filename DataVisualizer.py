@@ -9,6 +9,7 @@ import pyqtgraph as pg
 import tables
 from tables import *
 from datetime import datetime
+import time
 
 class Bands(Enum):
     DeltaLow=0
@@ -34,6 +35,7 @@ def calculateFFT(d):
 
 class DataVisualizer(QDockWidget):
     readAdc = pyqtSignal(int)
+    # streamAdc = pyqtSignal(bool)
 
     # TODO: unused function - remove?
     class PlotEventFilter(QObject):
@@ -107,15 +109,19 @@ class DataVisualizer(QDockWidget):
         self.ui.autorange.clicked.connect(self.updatePlot)
         self.ui.numPlotsDisplayed.currentIndexChanged.connect(self.updatePlotDisplay)
         self.ui.xRange.valueChanged.connect(self.updatePlotDisplay)
+        self.ui.clearBtn.clicked.connect(self.clearPlots)
 
         # set some defaults
         # self.ui.numBands.setCurrentIndex(0)
         self.ui.autorange.setChecked(True)
+        self.ui.plotEn.setChecked(True)
         # self.updateBands()
 
     def setWorker(self, w):
         self.readAdc.connect(w.readAdc)
         w.adcData.connect(self.adcData)
+        # self.streamAdc.connect(w.streamAdc)
+        # w.streamAdcData.connect(self.streamAdcData)
 
     def updateBands(self):
         self.ui.fStart5.setEnabled(self.ui.numBands.currentIndex() >= 4)
@@ -160,46 +166,33 @@ class DataVisualizer(QDockWidget):
                     self.topPlot -= 1
                     self.updatePlotDisplay()
 
-    # def mousePressEvent(self, QMouseEvent):
-    #     print("mouse press event")
-    #     if QMouseEvent.button() == Qt.LeftButton:
-    #         print(QMouseEvent.globalPos())
-    #         print(QMouseEvent.pos())
-    #         pos = QMouseEvent.globalPos()
-    #         print(self.ui.plot.scene().itemAt(pos))
-    #         plotClicked = self.ui.plot.scene().itemAt(pos)
-    #         plotClicked.setXRange(0, 10)
-    #         print(plotClicked.getState)
-
-
-    # def keyPressEvent(self, QKeyEvent):
-        # print(self.ui.verticalLayout.itemAt(0))
-        # print(self.ui.verticalLayout.itemAt(1))
-        # print(self.ui.verticalLayout.itemAt(0).widget())
-        # print(self.ui.verticalLayout.itemAt(0).widget().getItem(0,0))
-        # self.ui.plot.itemAt(0)
-        # enable/disable plot under cursor
-        # if QKeyEvent.key() == Qt.Key_Space:
-        #     # if self.ui.plot.itemAt(QCursor.pos(), QCursor.pos()):
-        #     # print(self.ui.plot.scene().itemAt(QCursor.pos()))
-        #     # print(self.ui.plot.itemAt(QCursor.pos()))
-        #     # print(self.ui.verticalLayout.itemAt(QCursor.pos()))
-        #     # print(QCursor.pos())
-        #     print("spacebar") # TODO: implement enable/disable plots under cursor
-        #     self.updatePlotDisplay()
-
     @pyqtSlot(list)
     def adcData(self, data):
         self.data = data
-        # self.saveData()
-        self.updatePlot()
-        if self.ui.autoBtn.isChecked():
-            QTimer.singleShot(250, self.on_singleBtn_clicked()) # TODO: figure out error on singleShot()
+        if self.ui.saveEn.isChecked():
+            self.saveData()
+        if self.ui.plotEn.isChecked():
+            self.updatePlot()
+        if self.ui.streamBtn.isChecked():
+            try:
+                self.on_singleBtn_clicked()
+                # QTimer.singleShot(self.ui.samples.value(), self.on_singleBtn_clicked()) # TODO: figure out error on singleShot()
+            except:
+                pass
             #TODO: data acquisition/plotting stops if UART doesn't receive all bytes - it should just continue after the failed read?
+
+    # @pyqtSlot(list)
+    # def streamAdcData(self, data):
+    #     self.data = data
+    #     self.updatePlot()
 
     @pyqtSlot()
     def on_singleBtn_clicked(self):
         self.readAdc.emit(self.ui.samples.value())
+
+    # @pyqtSlot()
+    # def on_streamBtn_clicked(self):
+    #     self.streamAdc.emit(self.ui.streamBtn.isChecked())
 
     def saveData(self):
         for sample in range(0,len(self.data)):
@@ -217,6 +210,11 @@ class DataVisualizer(QDockWidget):
 #         for sample in range(0,self.ui.samples.value()): # TODO: change samples.value() to len(self.data[0]) ?
 #             for ch in range(0,self.numPlots):
 #                 self.h5Data[ch,old_size+sample] = self.data[sample][ch]
+
+    @pyqtSlot()
+    def clearPlots(self):
+        for ch in range(self.topPlot, self.topPlot + self.numPlotsDisplayed):
+            self.plots[ch].clear()
 
     @pyqtSlot()
     def updatePlotDisplay(self):
@@ -246,6 +244,8 @@ class DataVisualizer(QDockWidget):
 
 # TODO: plotted data is lost when updatePlot is called and there is no new data. Need to remove the return statement and always replot stored data array(s)
 
+#TODO: button to clear plots
+#TODO: checkboxes for plotting/saving/both
         if not self.data:
             return
         if self.data:
