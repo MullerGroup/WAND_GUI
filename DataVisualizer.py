@@ -35,24 +35,8 @@ def calculateFFT(d):
 
 class DataVisualizer(QDockWidget):
     readAdc = pyqtSignal(int)
-    # streamAdc = pyqtSignal(bool)
-
-    # TODO: unused function - remove?
-    class PlotEventFilter(QObject):
-        mouseDoubleClick = pyqtSignal()
-        mouseClick = pyqtSignal()
-        keySpace = pyqtSignal()
-
-        def eventFilter(self, object, event):
-            if event.type() == QtCore.QEvent.KeyPress:
-                if event.key() == QtCore.Qt.Key_Space:
-                    self.keySpace.emit()
-                    return True
-            if event.type() == QtCore.QEvent.MouseButtonDblClick:
-                self.mouseDoubleClick.emit()
-                return True
-            return False
-
+    streamAdc = pyqtSignal()
+    setStreamBool = pyqtSignal(bool)
 
     def __init__(self, parent=None):
         def populate(listbox, start, stop, step):
@@ -74,6 +58,8 @@ class DataVisualizer(QDockWidget):
         self.fftPlots = []
         self.plotEn = [] # each plot can be enabled/disabled by pressing spacebar on top of it
         self.plotColors = []
+
+        self.streamEn = False
 
         # hdf5 data storage
         # TODO: add save file text box + checkbox on GUI
@@ -120,8 +106,9 @@ class DataVisualizer(QDockWidget):
     def setWorker(self, w):
         self.readAdc.connect(w.readAdc)
         w.adcData.connect(self.adcData)
-        # self.streamAdc.connect(w.streamAdc)
-        # w.streamAdcData.connect(self.streamAdcData)
+        self.streamAdc.connect(w.streamAdc)
+        self.setStreamBool.connect(w.setStreamBool)
+        w.streamAdcData.connect(self.streamAdcData)
 
     def updateBands(self):
         self.ui.fStart5.setEnabled(self.ui.numBands.currentIndex() >= 4)
@@ -173,26 +160,36 @@ class DataVisualizer(QDockWidget):
             self.saveData()
         if self.ui.plotEn.isChecked():
             self.updatePlot()
-        if self.ui.streamBtn.isChecked():
-            try:
-                self.on_singleBtn_clicked()
-                # QTimer.singleShot(self.ui.samples.value(), self.on_singleBtn_clicked()) # TODO: figure out error on singleShot()
-            except:
-                pass
+        # if self.ui.streamBtn.isChecked():
+        #     try:
+        #         self.on_singleBtn_clicked()
+        #         # QTimer.singleShot(self.ui.samples.value(), self.on_singleBtn_clicked())
+        #     except:
+        #         pass # used to suppress "error" message from singleShot
             #TODO: data acquisition/plotting stops if UART doesn't receive all bytes - it should just continue after the failed read?
 
-    # @pyqtSlot(list)
-    # def streamAdcData(self, data):
-    #     self.data = data
-    #     self.updatePlot()
+    @pyqtSlot(list)
+    def streamAdcData(self, data):
+        self.data = data
+        if self.ui.saveEn.isChecked():
+            self.saveData()
+        if self.ui.plotEn.isChecked():
+            self.updatePlot()
 
     @pyqtSlot()
     def on_singleBtn_clicked(self):
         self.readAdc.emit(self.ui.samples.value())
 
-    # @pyqtSlot()
-    # def on_streamBtn_clicked(self):
-    #     self.streamAdc.emit(self.ui.streamBtn.isChecked())
+    @pyqtSlot()
+    def on_streamBtn_clicked(self):
+        print("clicked stream btn")
+        self.streamEn = self.ui.streamBtn.isChecked()
+        print("DataVis.streamEn = {}".format(self.streamEn))
+        self.setStreamBool.emit(self.streamEn)
+        print("emitted setStreamBool")
+        if self.streamEn:
+            self.streamAdc.emit()
+            print("emitted streamAdc")
 
     def saveData(self):
         for sample in range(0,len(self.data)):
@@ -249,8 +246,7 @@ class DataVisualizer(QDockWidget):
         if not self.data:
             return
         if self.data:
-
-            for t in range(0, self.ui.samples.value()):
+            for t in range(0, len(self.data)):
                 if self.plotPointer == self.xRange:
                     self.plotPointer = 0
                 temp = self.data[t]

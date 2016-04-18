@@ -7,6 +7,8 @@ import time
 from enum import Enum
 # from binascii import hexlify
 from pylibftdi import Driver, Device
+import ui.ui_DataVisualizer as ui_DataVisualizer
+import DataVisualizer
 
 class Reg(Enum):
     ctrl = 0x00
@@ -22,13 +24,14 @@ class CMWorker(QThread):
     boardsChanged = pyqtSignal(list)
     regReadData = pyqtSignal(int, int, int)
     adcData = pyqtSignal(list)
-    # streamAdcData = pyqtSignal(list)
-
+    streamAdcData = pyqtSignal(list)
 
     def __init__(self, parent=None):
         super().__init__(parent)
         # self.ser = serial.Serial(baudrate=1000000, timeout=1)
         self.ser = Device(lazy_open=True) # chunk size = 4 since register reads are 4 byte reads
+        self.streamEn = False
+        self.streamChunkSize = 10
 
     def __del__(self):
         # wait for the thread to finish before destroying object
@@ -122,36 +125,47 @@ class CMWorker(QThread):
         data = self.ser.read(128*N, timeout=5+(N)/1000) # read all channels - 2 NMs * 64 channels per NM * 2 bytes per channel
         print("elapsed time: {}".format(t.elapsed()))
         if len(data) != 128*N:
-            raise Exception("Failed to read from ADC: returned {}/{} bytes".format(len(data), 128*N))
+            raise Exception("Failed to read from ADC: returned {}/{} bytes. Missing: {} bytes ({} samples).".format(len(data), 128*N, 128*N-len(data), (128*N-len(data))/128))
         for ct in range(0,N):
             out.append([(data[i+1] << 8 | data[i]) & 0x7FFF for i in range(ct*128,(ct+1)*128,2)])
         # self.ser.setTimeout(1)
         return out
 
-    # def _streamAdc(self):
-    #     out = []
-    #     data = self.ser.read()
-    #     for ct in range(0,len(data)/256):
-    #         out.append([(data[i+1] << 8 | data[i]) & 0x7FFF for i in range(ct*256,(ct+1)*256,2)])
-    #     self.streamAdcData.emit(out)
+    # setter for self.streamEn. Needed so that we can set it to false and break out of loop inside streamAdc()
+    @pyqtSlot(bool)
+    def setStreamBool(self, streamEn):
+        self.streamEn = streamEn
+        print("cmbackend.streamEn = {}".format(self.streamEn)) #true
+
+    @pyqtSlot(bool)
+    def streamAdc(self):
+        if not self.ser._opened:
+            return
+        t = QElapsedTimer()
+        self._regWr(Reg.req, 0x0010 | (self.streamChunkSize)<<16) # put CM into streaming mode for NM0 only
+        # self._regWr(Reg.req, 0x0020 | (self.streamChunkSize)<<16) # put CM into streaming mode for NM1 only
+        # self._regWr(Reg.req, 0x0030 | (self.streamChunkSize)<<16) # put CM into streaming mode for both NMs
+        while self.streamEn:
+            out = []
+            t.start()
+            data = self.ser.read(128*self.streamChunkSize, timeout=None)
+            for ct in range(0, self.streamChunkSize):
+                out.append([(data[i+1] << 8 | data[i]) & 0x7FFF for i in range(ct*128,(ct+1)*128,2)])
+            self.streamAdcData.emit(out)
+            # if len(data):
+            #     print("elapsed time: {}".format(t.elapsed()))
+            # print("cmbackend.DataVis.streamEn = {}".format(DataVisualizer.DataVisualizer.streamEn)) #false
+            # print("cmbackend.streamEn = {}".format(self.streamEn)) #true
+            if not self.streamEn:
+                self._regWr(Reg.req, 0x0000) # turn off streaming mode
+                print("stopped")
+                break
 
     @pyqtSlot(int)
     def readAdc(self, ns):
         if not self.ser._opened:
             return
         self.adcData.emit(self._getAdc(ns))
-
-    # @pyqtSlot(bool)
-    # def streamAdc(self, stream):
-    #     if not self.ser._opened:
-    #         return
-    #     if stream:
-    #         self._regWr(Reg.req, 0x000C) # tell CM to stream data from NMs
-    #         # self._streamAdc()
-    #         self.streamAdcData.emit(self._streamAdc()) # need to run this continuously?
-    #     else:
-    #         self._regWr(Reg.req, 0x0000) # turn off streaming from NMs
-
 
     @pyqtSlot()
     def refreshBoards(self):
