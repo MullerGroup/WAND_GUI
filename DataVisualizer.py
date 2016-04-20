@@ -10,6 +10,8 @@ import tables
 from tables import *
 from datetime import datetime
 import time
+# import QThread
+import cmbackend
 
 class Bands(Enum):
     DeltaLow=0
@@ -24,7 +26,7 @@ class Bands(Enum):
     GammaHigh=100
 
 class omni_data(IsDescription):
-    data = UInt16Col(shape=(1,2))
+    data = UInt16Col(shape=(1,64))
     time = StringCol(26)
 
 
@@ -36,7 +38,6 @@ def calculateFFT(d):
 class DataVisualizer(QDockWidget):
     readAdc = pyqtSignal(int)
     streamAdc = pyqtSignal()
-    setStreamBool = pyqtSignal(bool)
 
     def __init__(self, parent=None):
         def populate(listbox, start, stop, step):
@@ -59,10 +60,13 @@ class DataVisualizer(QDockWidget):
         self.plotEn = [] # each plot can be enabled/disabled by pressing spacebar on top of it
         self.plotColors = []
 
-        self.streamEn = False
+        # initialize streaming mode thread
+        self.streamAdcThread = cmbackend.streamAdcThread()
+        self.connect(self.streamAdcThread, SIGNAL("finished()"), self.streamingDone)
+        self.connect(self.streamAdcThread, SIGNAL('streamDataOut(PyQt_PyObject)'), self.streamAdcData)
 
         # hdf5 data storage
-        # TODO: add save file text box + checkbox on GUI
+        # TODO: add save file text box
         self.saveFile = tables.open_file("test.hdf", mode="w", title="Test")
         self.dataGroup = self.saveFile.create_group("/", name='dataGroup', title='Recorded Data Group')
         self.dataTable = self.saveFile.create_table(self.dataGroup, name='dataTable', title='Recorded Data Table', description=omni_data)
@@ -77,21 +81,9 @@ class DataVisualizer(QDockWidget):
 
         self.updatePlotDisplay()
 
-        # populate combo boxes
-        # populate(self.ui.numBands, 1, 5, 1)
-        # populate(self.ui.fStart1, 0, 100, 5)
-        # populate(self.ui.fStart2, 0, 100, 5)
-        # populate(self.ui.fStart3, 0, 100, 5)
-        # populate(self.ui.fStart4, 0, 100, 5)
-        # populate(self.ui.fStart5, 0, 100, 5)
-        # populate(self.ui.fStop1, 0, 100, 5)
-        # populate(self.ui.fStop2, 0, 100, 5)
-        # populate(self.ui.fStop3, 0, 100, 5)
-        # populate(self.ui.fStop4, 0, 100, 5)
-        # populate(self.ui.fStop5, 0, 100, 5)
-
         # every time the # of bands changes, update the band selection boxes
         # self.ui.numBands.currentIndexChanged.connect(self.updateBands)
+
         self.ui.autorange.clicked.connect(self.updatePlot)
         self.ui.numPlotsDisplayed.currentIndexChanged.connect(self.updatePlotDisplay)
         self.ui.xRange.valueChanged.connect(self.updatePlotDisplay)
@@ -103,12 +95,13 @@ class DataVisualizer(QDockWidget):
         self.ui.plotEn.setChecked(True)
         # self.updateBands()
 
+    @pyqtSlot()
+    def streamingDone(self):
+        self.ui.singleBtn.setEnabled(True)
+
     def setWorker(self, w):
         self.readAdc.connect(w.readAdc)
         w.adcData.connect(self.adcData)
-        self.streamAdc.connect(w.streamAdc)
-        self.setStreamBool.connect(w.setStreamBool)
-        w.streamAdcData.connect(self.streamAdcData)
 
     def updateBands(self):
         self.ui.fStart5.setEnabled(self.ui.numBands.currentIndex() >= 4)
@@ -122,7 +115,6 @@ class DataVisualizer(QDockWidget):
         self.ui.fStart1.setEnabled(self.ui.numBands.currentIndex() >= 0)
         self.ui.fStop1.setEnabled(self.ui.numBands.currentIndex() >= 0)
 
-# TODO: add labels on GUI to explain how to scroll around plots
     def wheelEvent(self, QWheelEvent):
         # scrolling through plots
         modifiers = QApplication.keyboardModifiers()
@@ -160,13 +152,6 @@ class DataVisualizer(QDockWidget):
             self.saveData()
         if self.ui.plotEn.isChecked():
             self.updatePlot()
-        # if self.ui.streamBtn.isChecked():
-        #     try:
-        #         self.on_singleBtn_clicked()
-        #         # QTimer.singleShot(self.ui.samples.value(), self.on_singleBtn_clicked())
-        #     except:
-        #         pass # used to suppress "error" message from singleShot
-            #TODO: data acquisition/plotting stops if UART doesn't receive all bytes - it should just continue after the failed read?
 
     @pyqtSlot(list)
     def streamAdcData(self, data):
@@ -182,14 +167,11 @@ class DataVisualizer(QDockWidget):
 
     @pyqtSlot()
     def on_streamBtn_clicked(self):
-        print("clicked stream btn")
-        self.streamEn = self.ui.streamBtn.isChecked()
-        print("DataVis.streamEn = {}".format(self.streamEn))
-        self.setStreamBool.emit(self.streamEn)
-        print("emitted setStreamBool")
-        if self.streamEn:
-            self.streamAdc.emit()
-            print("emitted streamAdc")
+        if self.ui.streamBtn.isChecked():
+            self.streamAdcThread.start()
+            self.ui.singleBtn.setDisabled(True)
+        else:
+            self.streamAdcThread.stop()
 
     def saveData(self):
         for sample in range(0,len(self.data)):
@@ -198,15 +180,6 @@ class DataVisualizer(QDockWidget):
             data_point['data'] = self.data[sample]
             data_point.append()
         self.dataTable.flush
-
-# # appends new data to hdf5 file
-#     def saveData(self):
-#         old_size = self.h5Data.shape[1]
-#         new_size = old_size+len(self.data)
-#         self.h5Data.resize((self.numPlots,new_size))
-#         for sample in range(0,self.ui.samples.value()): # TODO: change samples.value() to len(self.data[0]) ?
-#             for ch in range(0,self.numPlots):
-#                 self.h5Data[ch,old_size+sample] = self.data[sample][ch]
 
     @pyqtSlot()
     def clearPlots(self):
@@ -241,8 +214,6 @@ class DataVisualizer(QDockWidget):
 
 # TODO: plotted data is lost when updatePlot is called and there is no new data. Need to remove the return statement and always replot stored data array(s)
 
-#TODO: button to clear plots
-#TODO: checkboxes for plotting/saving/both
         if not self.data:
             return
         if self.data:
