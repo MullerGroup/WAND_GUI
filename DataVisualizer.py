@@ -23,7 +23,7 @@ class Bands(Enum):
     GammaHigh=100
 
 class omni_data(IsDescription):
-    data = UInt16Col(shape=(1,2))
+    data = UInt16Col(shape=(128))
     time = StringCol(26)
 
 
@@ -60,7 +60,7 @@ class DataVisualizer(QDockWidget):
         self.ui = Ui_DataVisualizer()
         self.ui.setupUi(self)
         self.data = []
-        self.numPlots = 64
+        self.numPlots = 128
         self.xRange = self.ui.xRange.value() # number of ms (samples) over which to plot continuous data
 
         self.dataPlot = np.zeros((self.numPlots, self.ui.xRange.maximum())) # aggregation of data to plot (scrolling style)
