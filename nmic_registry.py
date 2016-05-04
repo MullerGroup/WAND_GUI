@@ -1,6 +1,6 @@
 from RegisterEditor import *
 
-class NmicRegistry():
+class NmicRegistry_v2():
     def __init__(self, parent=None):
         super().__init__()
         self.regs = [ Register(0x00, "CHIP_ID",    0X0000, [("CHIP_ID", 8),("CHIP_REV1",4),("CHIP_REV2",4)], self),

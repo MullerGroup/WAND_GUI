@@ -6,9 +6,7 @@ from cmdline import StdoutHandler, CmdInterp
 if __name__ == '__main__':
     import sys
     app = QApplication(sys.argv)
-    app.setApplicationName('NMIC Test App')
-    app.setOrganizationName('Cortera Neurotechnologies Inc.')
-    app.setOrganizationDomain('corteraneuro.com')
+    app.setApplicationName('OMNI control app')
 
     stdout = StdoutHandler()
     worker = CMWorker()

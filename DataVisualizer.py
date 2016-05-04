@@ -9,6 +9,9 @@ import pyqtgraph as pg
 import tables
 from tables import *
 from datetime import datetime
+import time
+# import QThread
+import cmbackend
 
 class Bands(Enum):
     DeltaLow=0
@@ -22,8 +25,9 @@ class Bands(Enum):
     GammaLow=32
     GammaHigh=100
 
-class omni_data(IsDescription):
-    data = UInt16Col(shape=(128))
+class omni_data(IsDescription)
+    # data = UInt16Col(shape=(1,64))
+    data = UInt16Col(shape=(1,128))
     time = StringCol(26)
 
 
@@ -34,23 +38,7 @@ def calculateFFT(d):
 
 class DataVisualizer(QDockWidget):
     readAdc = pyqtSignal(int)
-
-    # TODO: unused function - remove?
-    class PlotEventFilter(QObject):
-        mouseDoubleClick = pyqtSignal()
-        mouseClick = pyqtSignal()
-        keySpace = pyqtSignal()
-
-        def eventFilter(self, object, event):
-            if event.type() == QtCore.QEvent.KeyPress:
-                if event.key() == QtCore.Qt.Key_Space:
-                    self.keySpace.emit()
-                    return True
-            if event.type() == QtCore.QEvent.MouseButtonDblClick:
-                self.mouseDoubleClick.emit()
-                return True
-            return False
-
+    streamAdc = pyqtSignal()
 
     def __init__(self, parent=None):
         def populate(listbox, start, stop, step):
@@ -60,7 +48,8 @@ class DataVisualizer(QDockWidget):
         self.ui = Ui_DataVisualizer()
         self.ui.setupUi(self)
         self.data = []
-        self.numPlots = 128
+        self.numPlots = 64
+        # self.numPlots = 128
         self.xRange = self.ui.xRange.value() # number of ms (samples) over which to plot continuous data
 
         self.dataPlot = np.zeros((self.numPlots, self.ui.xRange.maximum())) # aggregation of data to plot (scrolling style)
@@ -73,8 +62,13 @@ class DataVisualizer(QDockWidget):
         self.plotEn = [] # each plot can be enabled/disabled by pressing spacebar on top of it
         self.plotColors = []
 
+        # initialize streaming mode thread
+        self.streamAdcThread = cmbackend.streamAdcThread()
+        self.connect(self.streamAdcThread, SIGNAL("finished()"), self.streamingDone)
+        self.connect(self.streamAdcThread, SIGNAL('streamDataOut(PyQt_PyObject)'), self.streamAdcData)
+
         # hdf5 data storage
-        # TODO: add save file text box + checkbox on GUI
+        # TODO: add save file text box
         self.saveFile = tables.open_file("test.hdf", mode="w", title="Test")
         self.dataGroup = self.saveFile.create_group("/", name='dataGroup', title='Recorded Data Group')
         self.dataTable = self.saveFile.create_table(self.dataGroup, name='dataTable', title='Recorded Data Table', description=omni_data)
@@ -89,29 +83,23 @@ class DataVisualizer(QDockWidget):
 
         self.updatePlotDisplay()
 
-        # populate combo boxes
-        # populate(self.ui.numBands, 1, 5, 1)
-        # populate(self.ui.fStart1, 0, 100, 5)
-        # populate(self.ui.fStart2, 0, 100, 5)
-        # populate(self.ui.fStart3, 0, 100, 5)
-        # populate(self.ui.fStart4, 0, 100, 5)
-        # populate(self.ui.fStart5, 0, 100, 5)
-        # populate(self.ui.fStop1, 0, 100, 5)
-        # populate(self.ui.fStop2, 0, 100, 5)
-        # populate(self.ui.fStop3, 0, 100, 5)
-        # populate(self.ui.fStop4, 0, 100, 5)
-        # populate(self.ui.fStop5, 0, 100, 5)
-
         # every time the # of bands changes, update the band selection boxes
         # self.ui.numBands.currentIndexChanged.connect(self.updateBands)
+
         self.ui.autorange.clicked.connect(self.updatePlot)
         self.ui.numPlotsDisplayed.currentIndexChanged.connect(self.updatePlotDisplay)
         self.ui.xRange.valueChanged.connect(self.updatePlotDisplay)
+        self.ui.clearBtn.clicked.connect(self.clearPlots)
 
         # set some defaults
         # self.ui.numBands.setCurrentIndex(0)
         self.ui.autorange.setChecked(True)
+        self.ui.plotEn.setChecked(True)
         # self.updateBands()
+
+    @pyqtSlot()
+    def streamingDone(self):
+        self.ui.singleBtn.setEnabled(True)
 
     def setWorker(self, w):
         self.readAdc.connect(w.readAdc)
@@ -129,7 +117,6 @@ class DataVisualizer(QDockWidget):
         self.ui.fStart1.setEnabled(self.ui.numBands.currentIndex() >= 0)
         self.ui.fStop1.setEnabled(self.ui.numBands.currentIndex() >= 0)
 
-# TODO: add labels on GUI to explain how to scroll around plots
     def wheelEvent(self, QWheelEvent):
         # scrolling through plots
         modifiers = QApplication.keyboardModifiers()
@@ -160,46 +147,33 @@ class DataVisualizer(QDockWidget):
                     self.topPlot -= 1
                     self.updatePlotDisplay()
 
-    # def mousePressEvent(self, QMouseEvent):
-    #     print("mouse press event")
-    #     if QMouseEvent.button() == Qt.LeftButton:
-    #         print(QMouseEvent.globalPos())
-    #         print(QMouseEvent.pos())
-    #         pos = QMouseEvent.globalPos()
-    #         print(self.ui.plot.scene().itemAt(pos))
-    #         plotClicked = self.ui.plot.scene().itemAt(pos)
-    #         plotClicked.setXRange(0, 10)
-    #         print(plotClicked.getState)
-
-
-    # def keyPressEvent(self, QKeyEvent):
-        # print(self.ui.verticalLayout.itemAt(0))
-        # print(self.ui.verticalLayout.itemAt(1))
-        # print(self.ui.verticalLayout.itemAt(0).widget())
-        # print(self.ui.verticalLayout.itemAt(0).widget().getItem(0,0))
-        # self.ui.plot.itemAt(0)
-        # enable/disable plot under cursor
-        # if QKeyEvent.key() == Qt.Key_Space:
-        #     # if self.ui.plot.itemAt(QCursor.pos(), QCursor.pos()):
-        #     # print(self.ui.plot.scene().itemAt(QCursor.pos()))
-        #     # print(self.ui.plot.itemAt(QCursor.pos()))
-        #     # print(self.ui.verticalLayout.itemAt(QCursor.pos()))
-        #     # print(QCursor.pos())
-        #     print("spacebar") # TODO: implement enable/disable plots under cursor
-        #     self.updatePlotDisplay()
-
     @pyqtSlot(list)
     def adcData(self, data):
         self.data = data
-        self.saveData()
-        self.updatePlot()
-        if self.ui.autoBtn.isChecked():
-            QTimer.singleShot(250, self.on_singleBtn_clicked()) # TODO: figure out error on singleShot()
-            #TODO: data acquisition/plotting stops if UART doesn't receive all bytes - it should just continue after the failed read?
+        if self.ui.saveEn.isChecked():
+            self.saveData()
+        if self.ui.plotEn.isChecked():
+            self.updatePlot()
+
+    @pyqtSlot(list)
+    def streamAdcData(self, data):
+        self.data = data
+        if self.ui.saveEn.isChecked():
+            self.saveData()
+        if self.ui.plotEn.isChecked():
+            self.updatePlot()
 
     @pyqtSlot()
     def on_singleBtn_clicked(self):
         self.readAdc.emit(self.ui.samples.value())
+
+    @pyqtSlot()
+    def on_streamBtn_clicked(self):
+        if self.ui.streamBtn.isChecked():
+            self.streamAdcThread.start()
+            self.ui.singleBtn.setDisabled(True)
+        else:
+            self.streamAdcThread.stop()
 
     def saveData(self):
         for sample in range(0,len(self.data)):
@@ -209,14 +183,10 @@ class DataVisualizer(QDockWidget):
             data_point.append()
         self.dataTable.flush
 
-# # appends new data to hdf5 file
-#     def saveData(self):
-#         old_size = self.h5Data.shape[1]
-#         new_size = old_size+len(self.data)
-#         self.h5Data.resize((self.numPlots,new_size))
-#         for sample in range(0,self.ui.samples.value()): # TODO: change samples.value() to len(self.data[0]) ?
-#             for ch in range(0,self.numPlots):
-#                 self.h5Data[ch,old_size+sample] = self.data[sample][ch]
+    @pyqtSlot()
+    def clearPlots(self):
+        for ch in range(self.topPlot, self.topPlot + self.numPlotsDisplayed):
+            self.plots[ch].clear()
 
     @pyqtSlot()
     def updatePlotDisplay(self):
@@ -246,11 +216,11 @@ class DataVisualizer(QDockWidget):
 
 # TODO: plotted data is lost when updatePlot is called and there is no new data. Need to remove the return statement and always replot stored data array(s)
 
+#TODO: plotting crashes when decreasing x-axis range
         if not self.data:
             return
         if self.data:
-
-            for t in range(0, self.ui.samples.value()):
+            for t in range(0, len(self.data)):
                 if self.plotPointer == self.xRange:
                     self.plotPointer = 0
                 temp = self.data[t]
