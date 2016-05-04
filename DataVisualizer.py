@@ -26,7 +26,8 @@ class Bands(Enum):
     GammaHigh=100
 
 class omni_data(IsDescription):
-    data = UInt16Col(shape=(1,64))
+    # data = UInt16Col(shape=(1,64))
+    data = UInt16Col(shape=(1,128))
     time = StringCol(26)
 
 
@@ -48,6 +49,7 @@ class DataVisualizer(QDockWidget):
         self.ui.setupUi(self)
         self.data = []
         self.numPlots = 64
+        # self.numPlots = 128
         self.xRange = self.ui.xRange.value() # number of ms (samples) over which to plot continuous data
 
         self.dataPlot = np.zeros((self.numPlots, self.ui.xRange.maximum())) # aggregation of data to plot (scrolling style)
@@ -214,6 +216,7 @@ class DataVisualizer(QDockWidget):
 
 # TODO: plotted data is lost when updatePlot is called and there is no new data. Need to remove the return statement and always replot stored data array(s)
 
+#TODO: plotting crashes when decreasing x-axis range
         if not self.data:
             return
         if self.data:

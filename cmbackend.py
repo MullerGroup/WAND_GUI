@@ -9,6 +9,7 @@ from enum import Enum
 from pylibftdi import Driver, Device
 import ui.ui_DataVisualizer as ui_DataVisualizer
 import DataVisualizer
+import datetime
 
 class Reg(Enum):
     ctrl = 0x00
@@ -22,7 +23,9 @@ class Reg(Enum):
 class streamAdcThread(QThread):
 
     # streamAdcData = pyqtSignal(list)
-    streamChunkSize = 100
+    streamChunkSize = 1
+    plotChunkSize = 100
+    read_count = 0
 
     def __init__(self):
         QThread.__init__(self)
@@ -40,27 +43,65 @@ class streamAdcThread(QThread):
         self._running = False
 
     def run(self):
-        # reset
-        if not self._running:
-            self._running = True
-
         # make sure serial device is open
         if not CMWorker.ser._opened:
             return
 
-        # t = QElapsedTimer()
+        # reset
+        if not self._running:
+            CMWorker.ser.flush()
+            self._running = True
+
+        start = datetime.datetime.now()
         CMWorker()._regWr(Reg.req, 0x0010 | self.streamChunkSize<<16) # put CM into streaming mode for NM0 only
-        # CMWorker._regWr(Reg.req, 0x0020 | self.streamChunkSize<<16) # put CM into streaming mode for NM1 only
-        # CMWorker._regWr(Reg.req, 0x0030 | self.streamChunkSize<<16) # put CM into streaming mode for both NMs
+        # CMWorker()._regWr(Reg.req, 0x0020 | self.streamChunkSize<<16) # put CM into streaming mode for NM1 only
+        # CMWorker()._regWr(Reg.req, 0x0030 | self.streamChunkSize<<16) # put CM into streaming mode for both NMs
+
+        avg_time_fail = 0
+        num_fail = 0
+        out = []
+        self.read_count = 0
         while self._running:
-            out = []
+            # out = []
             # t.start()
+            print((datetime.datetime.now()-start).microseconds)
+            start = datetime.datetime.now()
             data = CMWorker.ser.read(128*self.streamChunkSize, timeout=None)
+            # data = CMWorker.ser.read(256*self.streamChunkSize, timeout=None)
+            # print("elapsed time: {}".format(t.elapsed()))
+            self.read_count += len(data)
             for ct in range(0, self.streamChunkSize):
-                out.append([(data[i+1] << 8 | data[i]) & 0x7FFF for i in range(ct*128,(ct+1)*128,2)])
-            self.emit(SIGNAL('streamDataOut(PyQt_PyObject)'), out)
+                # out.append([(data[i+1] << 8 | data[i]) & 0x7FFF for i in range(ct*128,(ct+1)*128,2)])
+                # out.append([(data[i+1] << 8 | data[i]) & 0x7FFF for i in range(ct*256,(ct+1)*256,2)])
+                out.append([data[i] for i in range(ct*128,(ct+1)*128)])
+            # print(out)
+            # print(data)
+            if data[len(data)-64:len(data)]!=bytes(64):
+                # failed
+                # now = datetime.datetime.now()
+                # elapsed = (now-start).microseconds/1000000 + (now-start).seconds
+                # print("time elapsed {} s".format(elapsed))
+                # avg_time_fail = (avg_time_fail*num_fail + elapsed) / (num_fail+1)
+                # num_fail += 1
+                # print("avg time to drop byte(s) = {} s".format(avg_time_fail))
+                # print(data[64:len(data)])
+                print(out[len(out)-1][64:128])
+                print("read count: {} bytes, {} samples".format(self.read_count, self.read_count/128))
+                self.read_count = 0
+                start = datetime.datetime.now()
+                print("missed byte(s) around byte {} (sample {})".format(self.read_count,self.read_count/128))
+                self._running = False
+                break
+                CMWorker.ser.flush()
+            if len(out)>=self.plotChunkSize:
+                self.emit(SIGNAL('streamDataOut(PyQt_PyObject)'), out)
+                # self.read_count += len(out)
+                # print(out)
+                out = []
+                # print("request count = {}, read_count = {}".format(self.req_count/128, self.read_count))
             # if len(data):
             #     print("len(data): {}, elapsed time: {}".format(len(data), t.elapsed()))
+            # previous = data[0]
 
         # only get here if we've called stop(), so turn off streaming mode
         CMWorker()._regWr(Reg.req, 0x0000) # turn off streaming mode
@@ -160,18 +201,21 @@ class CMWorker(QThread):
         # return out
 
         out = []
+        # self._regWr(Reg.req, 0x0010 | N<<16)
         self._regWr(Reg.req, 0x0001 | (N-1)<<16) # request N samples from both NMs
-        # self.ser.flush_input()
-        # self.ser.setTimeout(5+(N)/1000)
-        t = QElapsedTimer()
-        t.start()
+        # t = QElapsedTimer()
+        # t.start()
         data = self.ser.read(128*N, timeout=5+(N)/1000) # read all channels - 2 NMs * 64 channels per NM * 2 bytes per channel
-        print("elapsed time: {}".format(t.elapsed()))
+        # print("elapsed time: {}".format(t.elapsed()))
         if len(data) != 128*N:
+            print(data)
+            self.flushDataFifo() # assume we missed sample(s), and flush FIFO on FTDI
             raise Exception("Failed to read from ADC: returned {}/{} bytes. Missing: {} bytes ({} samples).".format(len(data), 128*N, 128*N-len(data), (128*N-len(data))/128))
+        # print(data)
         for ct in range(0,N):
-            out.append([(data[i+1] << 8 | data[i]) & 0x7FFF for i in range(ct*128,(ct+1)*128,2)])
-        # self.ser.setTimeout(1)
+            # out.append([(data[i+1] << 8 | data[i]) & 0x7FFF for i in range(ct*128,(ct+1)*128,2)])
+            out.append([data[i] for i in range(ct*128,(ct+1)*128)])
+        # print(out)
         return out
 
     @pyqtSlot(int)
