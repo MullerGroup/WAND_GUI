@@ -229,6 +229,18 @@ class CMWorker(QThread):
             out.append([(data[i+1] << 8 | data[i]) & 0x7FFF for i in list(range(1,129,2)) + list(range(131,259,2))])
         return out
 
+        # out = []
+        # self._regWr(Reg.req, 0x0001 | (N-1)<<16) # request N samples from both NMs
+        # self.ser.flushInput()
+        # self.ser.setTimeout(5+(N)/1000)
+        # data = self.ser.read(128*N) # read all channels - 2 NMs * 64 channels per NM * 2 bytes per channel
+        # if len(data) != 128*N:
+        #     raise Exception("Failed to read from ADC: returned {}/{} bytes".format(len(data), 128*N))
+        # for ct in range(0,N):
+        #     out.append([(data[i+1] << 8 | data[i]) & 0x7FFF for i in range(ct*128,(ct+1)*128,2)])
+        # self.ser.setTimeout(1)
+        # return out
+
     @pyqtSlot(int)
     def readAdc(self, ns):
         if not self.ser._opened:

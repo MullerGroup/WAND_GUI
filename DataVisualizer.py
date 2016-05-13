@@ -25,7 +25,7 @@ class Bands(Enum):
     GammaLow=32
     GammaHigh=100
 
-class omni_data(IsDescription):
+class omni_data(IsDescription)
     # data = UInt16Col(shape=(1,64))
     data = UInt16Col(shape=(1,128))
     time = StringCol(26)
