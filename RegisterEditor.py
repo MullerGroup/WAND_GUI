@@ -154,6 +154,7 @@ class RegisterEditor(QDockWidget):
     def on_readButton_clicked(self):
         for r in self.regs:
             self.readReg.emit(self.nm, r.addr)
+        # self.readReg.emit(self.nm, self.regs[0].addr)
 
     @pyqtSlot()
     def on_writeButton_clicked(self):

@@ -2,7 +2,7 @@ from RegisterEditor import *
 
 class NmicRegistry():
     def __init__(self, parent=None):
-        super().__init__()
+        self.init__ = super().__init__()
         self.regs = [ Register(0x00, "CHIP_ID",    0X0000, [("CHIP_ID", 8),("CHIP_REV1",4),("CHIP_REV2",4)], self, True),
                       Register(0x01, "STATUS",     0x0000, [("STIM_ACTV",1),("",8),("ERR_POR",1),("ERR_CRC",1),("ERR_CFG",1),("ERR_COMP",4)], self, True),
                       Register(0x02, "PWR_CONFIG", 0x0000, [("HI_PWR_EN",1),("HV_CLKSHDN",1),("LV_CLKSEL",2),("HV_CLKSEL",3),("HV_TRI",1),("HV_DIS",1),("HV_VOLT",2),("FORCE_CP",1),("FORCE_LDO",1),("FORCE_POR3",1),("FORCE_POR1",1),("LV_RATIO",1)], self),
