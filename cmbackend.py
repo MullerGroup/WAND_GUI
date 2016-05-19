@@ -217,7 +217,7 @@ class CMWorker(QThread):
             # read data from both NMs
             data = self.ser.read(260, timeout=5+(2*N)/1000)
             if len(data) != 260:
-                raise Exception("Failed to read from ADC: returned {}/{} bytes".format(len(data), 260))
+                raise Exception("Failed to read from ADC: returned {}/{} bytes, sample {}".format(len(data), 260, loop))
             # check data misalignment
             if data[0]!=0xAA and data[len(data)-1]!=b'U':
                 print("packet misalignment, flushing FTDI fifos")
