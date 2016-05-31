@@ -24,8 +24,8 @@ class MainWindow(QMainWindow):
         self.DataVisualizer = DataVisualizer(self)
         self.addDockWidget(Qt.LeftDockWidgetArea, self.DataVisualizer)
         
-        self.regEdit0 = RegisterEditor(self, 0)
-        # self.regEdit0 = RegisterEditor_v2(self, 0)
+        # self.regEdit0 = RegisterEditor(self, 0)
+        self.regEdit0 = RegisterEditor_v2(self, 0)
         self.addDockWidget(Qt.RightDockWidgetArea, self.regEdit0)
 
         # self.regEdit1 = RegisterEditor(self, 1)
