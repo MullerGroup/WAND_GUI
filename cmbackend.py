@@ -11,6 +11,7 @@ import ui.ui_DataVisualizer as ui_DataVisualizer
 import DataVisualizer
 import datetime
 
+# CM register addresses
 class Reg(Enum):
     ctrl = 0x00
     rst = 0x04
@@ -67,7 +68,8 @@ class streamAdcThread(QThread):
         num_dropped = 0
         dropped_count = 0
         while self._running:
-            data = CMWorker.ser.read(2*130*self.streamChunkSize, timeout=None)
+            # changed the number of bytes to read to 200: this includes 96 channels + 6 bytes of accelerometer data
+            data = CMWorker.ser.read(200*self.streamChunkSize, timeout=None)
             if data[0]!=0xAA and data[len(data)-1]!=b'U':
                 # print("packet misalignment, flushing FTDI fifos")
                 fail+=1
@@ -85,7 +87,9 @@ class streamAdcThread(QThread):
             #     dropped_count += diff
             # prev_sample = data[1]
             for ct in range(0, self.streamChunkSize):
-                out.append([(data[i+1] << 8 | data[i]) & 0x7FFF for i in list(range(1,129,2)) + list(range(131,259,2))])
+                # changed the range of data here to only append the 96 channles, NOT the accelerometer data
+                # TODO: add accelerometer information, may need to be able to plot
+                out.append([(data[i+1] << 8 | data[i]) & 0x7FFF for i in list(range(1,193,2))])
                 # out.append([(data[i+1] << 8 | data[i]) & 0x7FFF for i in range(ct*256,(ct+1)*256,2)])
                 # out.append([data[i] for i in range(ct*128,(ct+1)*128)])
                 # out.append([data[i] for i in range(ct*128+1,((ct+1)*128)+1)])
@@ -215,9 +219,9 @@ class CMWorker(QThread):
         self._regWr(Reg.req, 0x0003 | (N-1)<<16) # request N samples from both NMs
         for loop in range(0,N):
             # read data from both NMs
-            data = self.ser.read(260, timeout=5+(2*N)/1000)
-            if len(data) != 260:
-                raise Exception("Failed to read from ADC: returned {}/{} bytes, sample {}".format(len(data), 260, loop))
+            data = self.ser.read(200, timeout=5+(2*N)/1000)
+            if len(data) != 200:
+                raise Exception("Failed to read from ADC: returned {}/{} bytes, sample {}".format(len(data), 200, loop))
             # check data misalignment
             if data[0]!=0xAA and data[len(data)-1]!=b'U':
                 print("packet misalignment, flushing FTDI fifos")
@@ -226,7 +230,7 @@ class CMWorker(QThread):
                     temp = self.ser.read(1, timeout=None)
                     if temp==b'U': break
             # append each NM's data to out, skipping over the start and end of packet bytes
-            out.append([(data[i+1] << 8 | data[i]) & 0x7FFF for i in list(range(1,129,2)) + list(range(131,259,2))])
+            out.append([(data[i+1] << 8 | data[i]) & 0x7FFF for i in list(range(1,193,2))])
         return out
 
         # out = []
