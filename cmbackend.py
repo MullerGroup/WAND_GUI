@@ -90,6 +90,7 @@ class streamAdcThread(QThread):
                 # changed the range of data here to only append the 96 channles, NOT the accelerometer data
                 # TODO: add accelerometer information, may need to be able to plot
                 out.append([(data[i+1] << 8 | data[i]) & 0x7FFF for i in list(range(1,193,2))])
+                out.append([(data[i + 1] << 8 | data[i]) & 0xFFFF for i in list(range(193, 199, 2))])
                 # out.append([(data[i+1] << 8 | data[i]) & 0x7FFF for i in range(ct*256,(ct+1)*256,2)])
                 # out.append([data[i] for i in range(ct*128,(ct+1)*128)])
                 # out.append([data[i] for i in range(ct*128+1,((ct+1)*128)+1)])
@@ -231,6 +232,7 @@ class CMWorker(QThread):
                     if temp==b'U': break
             # append each NM's data to out, skipping over the start and end of packet bytes
             out.append([(data[i+1] << 8 | data[i]) & 0x7FFF for i in list(range(1,193,2))])
+            out.append([(data[i + 1] << 8 | data[i]) & 0xFFFF for i in list(range(193, 199, 2))])
         return out
 
         # out = []

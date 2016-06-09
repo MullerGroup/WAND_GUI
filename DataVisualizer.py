@@ -27,7 +27,9 @@ class Bands(Enum):
 
 class omni_data(IsDescription):
     # data = UInt16Col(shape=(1,64))
-    data = UInt16Col(shape=(1,96))
+    # data = UInt16Col(shape=(1,96))
+    # 96 neural channels, 3 accelerometer channels
+    data = UInt16Col(shape=(1,99))
     time = StringCol(26)
 
 
@@ -49,7 +51,8 @@ class DataVisualizer(QDockWidget):
         self.ui.setupUi(self)
         self.data = []
         # self.numPlots = 64
-        self.numPlots = 96
+        # added 3 more channels just to display accel data
+        self.numPlots = 99
         self.xRange = self.ui.xRange.value() # number of ms (samples) over which to plot continuous data
 
         self.dataPlot = np.zeros((self.numPlots, self.ui.xRange.maximum())) # aggregation of data to plot (scrolling style)

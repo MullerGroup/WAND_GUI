@@ -64,7 +64,7 @@ class SysCtrl(QObject):
             print("No data to save")
             return False
         data = []
-        for ch in range(0,96):
+        for ch in range(0,99):
             data.append((np.array([i[ch] for i in self.data])))
         data = np.array(data)
         scipy.io.savemat(filename, dict(chan_data=data))
