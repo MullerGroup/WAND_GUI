@@ -152,6 +152,8 @@ class DataVisualizer(QDockWidget):
 
     @pyqtSlot(list)
     def adcData(self, data):
+        global t_start
+        t_start = datetime.now()
         self.data = data
         if self.ui.saveEn.isChecked():
             self.saveData()
@@ -160,6 +162,8 @@ class DataVisualizer(QDockWidget):
 
     @pyqtSlot(list)
     def streamAdcData(self, data):
+        global t_start
+        t_start = datetime.now()
         self.data = data
         if self.ui.saveEn.isChecked():
             self.saveData()
@@ -180,8 +184,16 @@ class DataVisualizer(QDockWidget):
 
     def saveData(self):
         for sample in range(0,len(self.data)):
+            #Creates a row in the data table for a sample
             data_point = self.dataTable.row
-            data_point['time'] = str(datetime.now())
+            #Sets the time of the beginning of the sample
+            t_elapsed = datetime.now()
+            #The following three lines add values into the row of the data table for this sample
+            #Start of the data of sample, t_start set in streamAdcdata(self, data)
+            data_point['start of data'] = t_start
+            #time since the start of the data is the difference between t_elapsed and t_start
+            data_point['time since start of data'] = str(int(t_elapsed.day) - int(data_point['start of sample'].day)) + ' days ' + str(int(t_elapsed.hour) - int(data_point['start of sample'].hour)) + ' hours ' + str(int(t_elapsed.minute) - int(data_point['start of sample'].minute)) + ' minutes ' + str(int(t_elapsed.second) - int(data_point['start of sample'].second)) + ' seconds'
+            #Adds the data into the row of the data table for this sample
             data_point['data'] = self.data[sample]
             data_point.append()
         self.dataTable.flush
