@@ -60,7 +60,7 @@ class DataVisualizer(QDockWidget):
 
         self.numPlotsDisplayed = int(self.ui.numPlotsDisplayed.currentText())
         self.plots = [] # stores pyqtgraph objects
-        self.topPlot = 0 # which channel to begin display w/ (used for scrolling through plots)
+        self.topPlot = 95 # which channel to begin display w/ (used for scrolling through plots)
         self.fftPlots = []
         self.plotEn = [] # each plot can be enabled/disabled by pressing spacebar on top of it
         self.plotColors = []
@@ -250,15 +250,15 @@ class DataVisualizer(QDockWidget):
         for ch in range(self.topPlot, self.topPlot + self.numPlotsDisplayed): # only plot currently displayed plots
             dp = self.dataPlot[ch][0:self.xRange]
 
-            # formatting the data for neural/accelerometer channels
-            if ch > 95:
-                # accelerometer data, 2's complement
-                dp = (dp + 2**15) % 2**16 - 2**15
-            else:
-                # neural data, sign + magnitude
-                if dp & 2**15:
-                    # negative
-                    dp = -(dp & 0x7FFF)
+            # # formatting the data for neural/accelerometer channels
+            # if ch > 95:
+            #     # accelerometer data, 2's complement
+            #     dp = (dp + 2**15) % 2**16 - 2**15
+            # else:
+            #     # neural data, sign + magnitude
+            #     if dp & 2**15:
+            #         # negative
+            #         dp = -(dp & 0x7FFF)
 
             self.plots[ch].clear()
             # self.fftPlots[ch].clear()
