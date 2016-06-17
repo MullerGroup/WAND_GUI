@@ -72,9 +72,9 @@ class DataVisualizer(QDockWidget):
 
         # hdf5 data storage
         # TODO: add save file text box
-        self.saveFile = tables.open_file("test.hdf", mode="w", title="Test")
-        self.dataGroup = self.saveFile.create_group("/", name='dataGroup', title='Recorded Data Group')
-        self.dataTable = self.saveFile.create_table(self.dataGroup, name='dataTable', title='Recorded Data Table', description=omni_data)
+        # self.saveFile = tables.open_file("test.hdf", mode="w", title="Test")
+        # self.dataGroup = self.saveFile.create_group("/", name='dataGroup', title='Recorded Data Group')
+        # self.dataTable = self.saveFile.create_table(self.dataGroup, name='dataTable', title='Recorded Data Table', description=omni_data)
 
         self.setWindowTitle("Data Visualizer")
 
