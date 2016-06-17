@@ -12,6 +12,7 @@ from datetime import datetime
 import time
 # import QThread
 import cmbackend
+import csv
 
 class Bands(Enum):
     DeltaLow=0
@@ -75,6 +76,9 @@ class DataVisualizer(QDockWidget):
         # self.saveFile = tables.open_file("test.hdf", mode="w", title="Test")
         # self.dataGroup = self.saveFile.create_group("/", name='dataGroup', title='Recorded Data Group')
         # self.dataTable = self.saveFile.create_table(self.dataGroup, name='dataTable', title='Recorded Data Table', description=omni_data)
+
+        self.file = open('gui_data.csv','w')
+        self.csvfile = csv.writer(self.file)
 
         self.setWindowTitle("Data Visualizer")
 
@@ -182,21 +186,25 @@ class DataVisualizer(QDockWidget):
         else:
             self.streamAdcThread.stop()
 
+    # def saveData(self):
+    #     for sample in range(0,len(self.data)):
+    #         #Creates a row in the data table for a sample
+    #         data_point = self.dataTable.row
+    #         #Sets the time of the beginning of the sample
+    #         t_elapsed = datetime.now()
+    #         #The following three lines add values into the row of the data table for this sample
+    #         #Start of the data of sample, t_start set in streamAdcdata(self, data)
+    #         data_point['start of data'] = t_start
+    #         #time since the start of the data is the difference between t_elapsed and t_start
+    #         data_point['time since start of data'] = str(int(t_elapsed.day) - int(data_point['start of sample'].day)) + ' days ' + str(int(t_elapsed.hour) - int(data_point['start of sample'].hour)) + ' hours ' + str(int(t_elapsed.minute) - int(data_point['start of sample'].minute)) + ' minutes ' + str(int(t_elapsed.second) - int(data_point['start of sample'].second)) + ' seconds'
+    #         #Adds the data into the row of the data table for this sample
+    #         data_point['data'] = self.data[sample]
+    #         data_point.append()
+    #     self.dataTable.flush
+
     def saveData(self):
-        for sample in range(0,len(self.data)):
-            #Creates a row in the data table for a sample
-            data_point = self.dataTable.row
-            #Sets the time of the beginning of the sample
-            t_elapsed = datetime.now()
-            #The following three lines add values into the row of the data table for this sample
-            #Start of the data of sample, t_start set in streamAdcdata(self, data)
-            data_point['start of data'] = t_start
-            #time since the start of the data is the difference between t_elapsed and t_start
-            data_point['time since start of data'] = str(int(t_elapsed.day) - int(data_point['start of sample'].day)) + ' days ' + str(int(t_elapsed.hour) - int(data_point['start of sample'].hour)) + ' hours ' + str(int(t_elapsed.minute) - int(data_point['start of sample'].minute)) + ' minutes ' + str(int(t_elapsed.second) - int(data_point['start of sample'].second)) + ' seconds'
-            #Adds the data into the row of the data table for this sample
-            data_point['data'] = self.data[sample]
-            data_point.append()
-        self.dataTable.flush
+        for sample in range(0, len(self.data)):
+            self.csvfile.writerow(self.data[sample])
 
     @pyqtSlot()
     def clearPlots(self):
