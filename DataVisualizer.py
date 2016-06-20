@@ -243,8 +243,8 @@ class DataVisualizer(QDockWidget):
 # TODO: plotted data is lost when updatePlot is called and there is no new data. Need to remove the return statement and always replot stored data array(s)
 
 #TODO: plotting crashes when decreasing x-axis range
-        if not self.data:
-            return
+        # if not self.data:
+        #     return
         if self.data:
             for t in range(0, len(self.data)):
                 if self.plotPointer == self.xRange:
@@ -255,6 +255,7 @@ class DataVisualizer(QDockWidget):
                     self.dataPlot[ch][self.plotPointer] = temp[ch]
                     # self.dataPlot[ch][self.plotPointer] = temp.pop(0) # pop data for channel = 0, 1, 2, ...
                 self.plotPointer += 1
+            self.data = []
 
 # TODO: scale all y axes together? turn off auto-scale?
 
