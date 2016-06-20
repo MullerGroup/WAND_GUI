@@ -208,6 +208,9 @@ class DataVisualizer(QDockWidget):
 
     @pyqtSlot()
     def clearPlots(self):
+        self.plotPointer = 0
+        self.dataPlot = np.zeros(
+            (self.numPlots, self.ui.xRange.maximum()))  # aggregation of data to plot (scrolling style)
         for ch in range(self.topPlot, self.topPlot + self.numPlotsDisplayed):
             self.plots[ch].clear()
 

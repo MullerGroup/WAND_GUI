@@ -225,22 +225,37 @@ class CMWorker(QThread):
         self._regWr(Reg.req, 0x0003 | (N-1)<<16) # request N samples from both NMs
         for loop in range(0,N):
             # read data from both NMs
-            data = self.ser.read(200, timeout=5+(2*N)/1000)
-            if len(data) != 200:
-                raise Exception("Failed to read from ADC: returned {}/{} bytes, sample {}".format(len(data), 200, loop))
-            # check data misalignment
-            if data[0]!=0xAA and data[len(data)-1]!=b'U':
-                print("packet misalignment, flushing FTDI fifos")
-                # keep reading from serial until we reach end-of-packet byte (flush until next packet)
-                while True:
-                    temp = self.ser.read(1, timeout=None)
-                    if temp==b'U': break
-            # append each NM's data to out, skipping over the start and end of packet bytes
-            #out.append([(data[i+1] << 8 | data[i]) & 0xFFFF for i in list(range(1,199,2))])
-            # out.append([(((data[i + 1] << 8 | data[i]) & 0xFFFF) + 2 ** 15) % 2 ** 16 - 2 ** 15 if i > 192 else (
-            # -((data[i + 1] << 8 | data[i]) & 0x7FFF) if (data[i + 1] & 2 ** 7) else (data[i + 1] << 8 | data[
-            #     i]) & 0x7FFF) for i in list(range(1, 199, 2))])
+            # data = self.ser.read(200, timeout=1)
+            # if len(data) != 200:
+            #     raise Exception("Failed to read from ADC: returned {}/{} bytes, sample {}".format(len(data), 200, loop))
 
+            data = []
+            count1 = 0
+            while (len(data) != 200):
+                data = self.ser.read(200, timeout=0)
+                count1 += 1
+                if count1 == 2:
+                    break
+
+            if len(data) == 200:
+
+                # check data misalignment
+                if data[0]!=0xAA and data[len(data)-1]!=b'U':
+                    print("packet misalignment, flushing FTDI fifos")
+                    # keep reading from serial until we reach end-of-packet byte (flush until next packet)
+                    count2 = 0
+                    while True:
+                        temp = self.ser.read(1, timeout=0)
+                        if temp==b'U': break
+                        count2 += 1
+                        if count2 == 200:
+                            break
+                # append each NM's data to out, skipping over the start and end of packet bytes
+                #out.append([(data[i+1] << 8 | data[i]) & 0xFFFF for i in list(range(1,199,2))])
+                # out.append([(((data[i + 1] << 8 | data[i]) & 0xFFFF) + 2 ** 15) % 2 ** 16 - 2 ** 15 if i > 192 else (
+                # -((data[i + 1] << 8 | data[i]) & 0x7FFF) if (data[i + 1] & 2 ** 7) else (data[i + 1] << 8 | data[
+                #     i]) & 0x7FFF) for i in list(range(1, 199, 2))])
+                else:
                     # neural data (i<192) is unsigned 15-bit (16th bit is stim info)
                     # accelerometer data is 2's complement
                     out.append([(
@@ -249,8 +264,8 @@ class CMWorker(QThread):
                                                                                                                            i + 1] << 8 |
                                                                                                                        data[
                                                                                                                            i]) & 0x7FFF
-                                for i in list(range(1, 199, 2))])
-            #out.append([(data[i + 1] << 8 | data[i]) & 0xFFFF for i in list(range(193, 199, 2))])
+                                        for i in list(range(1, 199, 2))])
+                    #out.append([(data[i + 1] << 8 | data[i]) & 0xFFFF for i in list(range(193, 199, 2))])
         return out
 
         # out = []

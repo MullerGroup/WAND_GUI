@@ -107,7 +107,7 @@ class Ui_DataVisualizer(object):
         self.samples.setMinimum(1)
         self.samples.setMaximum(10000)
         self.samples.setSingleStep(100)
-        self.samples.setProperty("value", 1000)
+        self.samples.setProperty("value", 50)
         self.samples.setObjectName(_fromUtf8("samples"))
         self.gridLayout.addWidget(self.samples, 4, 4, 1, 1)
         DataVisualizer.setWidget(self.dockWidgetContents)
