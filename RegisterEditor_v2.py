@@ -1,6 +1,7 @@
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from LabeledBinaryEdit import *
+import time
 
 from ui.ui_registereditor_fileIO import Ui_RegisterEditor
 
@@ -164,6 +165,7 @@ class RegisterEditor_v2(QDockWidget):
             if r.needsWrite():
                 self.writeReg.emit(self.nm, r.addr, r.value())
                 r.clearWrite()
+                time.sleep(0.1)
 
     @pyqtSlot()
     def on_writeAllBtn_clicked(self):
@@ -171,6 +173,7 @@ class RegisterEditor_v2(QDockWidget):
             if not r.readOnly:
                 self.writeReg.emit(self.nm, r.addr, r.value())
                 r.clearWrite()
+                time.sleep(0.1)
 
     @pyqtSlot()
     def on_txtReadButton_clicked(self):
