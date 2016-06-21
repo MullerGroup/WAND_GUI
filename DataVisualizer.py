@@ -169,13 +169,20 @@ class DataVisualizer(QDockWidget):
         global t_start
         t_start = datetime.now()
         self.data = data
-        if self.ui.saveEn.isChecked():
-            self.saveData()
         if self.ui.plotEn.isChecked():
             self.updatePlot()
 
     @pyqtSlot()
     def on_singleBtn_clicked(self):
+
+        # add in save file dialog
+        if self.ui.saveEn.isChecked():
+            filt = 'CSV files (*.csv);;All files (*.*)'
+            self.file = QtGui.QFileDialog.getSaveFileName(parent=self,
+                                                   caption="Select File",
+                                                   filter=filt)
+            self.fn = open(self.file, 'w')
+            self.csvfile = csv.writer(self.fn)
         self.readAdc.emit(self.ui.samples.value())
 
     @pyqtSlot()

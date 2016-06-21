@@ -1,4 +1,5 @@
 from PyQt4.QtCore import *
+from PyQt4 import QtGui
 import serial
 import serial.tools.list_ports # _osx ?
 from bitarray import *
@@ -10,6 +11,7 @@ from pylibftdi import Driver, Device
 import ui.ui_DataVisualizer as ui_DataVisualizer
 import DataVisualizer
 import datetime
+import csv
 
 # CM register addresses
 class Reg(Enum):
@@ -42,6 +44,8 @@ class streamAdcThread(QThread):
     def stop(self):
         # self.terminate()
         self._running = False
+        CMWorker()._regWr(Reg.req, 0x0000)
+
 
     def run(self):
         # make sure serial device is open
@@ -52,6 +56,15 @@ class streamAdcThread(QThread):
         if not self._running:
             CMWorker.ser.flush()
             self._running = True
+
+
+        # get file for saving
+        filt = 'CSV files (*.csv);;All files (*.*)'
+        self.file = QtGui.QFileDialog.getSaveFileName(parent=None,
+                                                      caption="Select File",
+                                                      filter=filt)
+        self.fn = open(self.file, 'w')
+        self.csvfile = csv.writer(self.fn)
 
         start = datetime.datetime.now()
         # CMWorker()._regWr(Reg.req, 0x0010 | self.streamChunkSize<<16) # put CM into streaming mode for NM0 only
@@ -95,6 +108,8 @@ class streamAdcThread(QThread):
                     # neural data (i<192) is unsigned 15-bit (16th bit is stim info)
                     # accelerometer data is 2's complement
                     out.append([(((data[i+1] << 8 | data[i]) & 0xFFFF) + 2**15) % 2**16 - 2**15 if i > 192 else (data[i+1] << 8 | data[i]) & 0x7FFF for i in list(range(1,199,2))])
+                    self.csvfile.writerow(out[0])
+                    out = []
                     #out.append([(data[i + 1] << 8 | data[i]) & 0xFFFF for i in list(range(193, 199, 2))])
                     # out.append([(data[i+1] << 8 | data[i]) & 0x7FFF for i in range(ct*256,(ct+1)*256,2)])
                     # out.append([data[i] for i in range(ct*128,(ct+1)*128)])
@@ -136,15 +151,15 @@ class streamAdcThread(QThread):
             #     CMWorker.ser.flush()
             #     break
             # prev_sample = data[len(data)-65]
-            if len(out)>=self.plotChunkSize:
-                # now = datetime.datetime.now()
-                # elapsed = (now-start).microseconds/1000000 + (now-start).seconds
-                # print("time to plot {} samples: {} s".format(self.plotChunkSize, elapsed))
-                # start = datetime.datetime.now()
-                self.emit(SIGNAL('streamDataOut(PyQt_PyObject)'), out)
-                # self.read_count += len(out)
-                # print(out)
-                out = []
+            # if len(out)>=self.plotChunkSize:
+            #     # now = datetime.datetime.now()
+            #     # elapsed = (now-start).microseconds/1000000 + (now-start).seconds
+            #     # print("time to plot {} samples: {} s".format(self.plotChunkSize, elapsed))
+            #     # start = datetime.datetime.now()
+            #     self.emit(SIGNAL('streamDataOut(PyQt_PyObject)'), out)
+            #     # self.read_count += len(out)
+            #     # print(out)
+            #     out = []
                 # print("request count = {}, read_count = {}".format(self.req_count/128, self.read_count))
             # if len(data):
             #     print("len(data): {}, elapsed time: {}".format(len(data), t.elapsed()))
@@ -153,8 +168,13 @@ class streamAdcThread(QThread):
         # only get here if we've called stop(), so turn off streaming mode
         print("success: {}. fail: {}. %: {}".format(success, fail, 100*success/(success+fail)))
         print("num_dropped: {}, dropped_count: {}, effective rate: {}".format(num_dropped, dropped_count, (dropped_count+success)/success))
-        CMWorker()._regWr(Reg.req, 0x0000) # turn off streaming mode
 
+        time.sleep(0.5)
+
+        CMWorker()._regWr(Reg.req, 0x0000) # turn off streaming mode
+        print("End of Stream")
+        CMWorker.ser.flush()
+        print("Fifos Flushed")
 
 class CMWorker(QThread):
     connStateChanged = pyqtSignal(bool)
