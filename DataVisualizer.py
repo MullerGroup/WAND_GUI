@@ -158,6 +158,30 @@ class DataVisualizer(QDockWidget):
                     self.topPlot -= 1
                     self.updatePlotDisplay()
 
+    def measureDist(d):
+        indx = 11
+        dfft = np.abs(np.fft.fft(d))
+        fund = dfft[indx]
+        dist = 0
+        for i in range(2, 32):
+            dist += dfft[i * indx] ** 2
+        return 20 * np.log10(dist ** 0.5 / fund)
+
+    def measureRms(d):
+        ff = np.abs(np.fft.fft(d)) / len(d)
+        ff[0] = 0
+        # notch out 60 hz harmonics
+        rms60 = 0
+        for i in range(1, 5):
+            rms60 += ff[60 * i] ** 2
+            ff[60 * i] = 0
+        rms60 **= 0.5
+        rms = np.sum(ff[0:500] ** 2) ** 0.5
+        # print("RMS: {}   60 Hz: {}".format(rms, rms60))
+        # rms_full = np.std(d)
+        # print("RMS: {}".format(rms_full))
+        return rms
+
     @pyqtSlot(list)
     def adcData(self, data):
         global t_start
@@ -264,7 +288,46 @@ class DataVisualizer(QDockWidget):
 #TODO: plotting crashes when decreasing x-axis range
         # if not self.data:
         #     return
+
+
+        noisedata = []
+
+
         if self.data:
+            # creates structure of arrays indexed by channel first, then sample
+            for ch in range(0, self.numPlots):
+                # data.append((np.array([i[ch] for i in self.data])-32768/2)*(100e-3/32768)*1e6)
+                noisedata.append((np.array([i[ch] for i in self.data])))
+
+            for ch in range(0, self.numPlots):
+                if self.ui.noise.isChecked():
+                    d = noisedata[ch]
+                    rms = np.std(d)
+                    # ff = np.abs(np.fft.fft(d)) / len(d)
+                    # ff[0] = 0
+                    # # notch out 60 hz harmonics
+                    # rms60 = 0
+                    # for i in range(1, 5):
+                    #     rms60 += ff[60 * i] ** 2
+                    #     ff[60 * i] = 0
+                    # rms60 **= 0.5
+                    # rms = np.sum(ff[0:500] ** 2) ** 0.5
+                    if ch == 0: print("Channel {} Noise: {:0.1f} rms".format(ch,rms))
+                    #print("{}".format(dp))
+                    #print("{:0.1f} rms".format(self.measureRms(dp)))
+
+                if self.ui.thd.isChecked():
+                    d = noisedata[ch]
+
+                    indx = 11
+                    dfft = np.abs(np.fft.fft(d))
+                    fund = dfft[indx]
+                    dist = 0
+                    for i in range(2, 32):
+                        dist += dfft[i * indx] ** 2
+                    db =  20 * np.log10(dist ** 0.5 / fund)
+                    print("{:0.0f} dB".format(db))
+
             for t in range(0, len(self.data)):
                 if self.plotPointer == self.xRange:
                     self.plotPointer = 0
