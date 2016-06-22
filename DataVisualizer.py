@@ -42,6 +42,8 @@ def calculateFFT(d):
 class DataVisualizer(QDockWidget):
     readAdc = pyqtSignal(int)
     streamAdc = pyqtSignal()
+    testCommOn = pyqtSignal()
+    testCommOff = pyqtSignal()
 
     def __init__(self, parent=None):
         def populate(listbox, start, stop, step):
@@ -109,6 +111,8 @@ class DataVisualizer(QDockWidget):
         self.ui.singleBtn.setEnabled(True)
 
     def setWorker(self, w):
+        self.testCommOn.connect(w.testCommOn)
+        self.testCommOff.connect(w.testCommOff)
         self.readAdc.connect(w.readAdc)
         w.adcData.connect(self.adcData)
 
@@ -193,6 +197,14 @@ class DataVisualizer(QDockWidget):
         else:
             self.streamAdcThread.stop()
 
+    @pyqtSlot()
+    def on_testBtn_clicked(self):
+        if self.ui.testBtn.isChecked():
+            #print("Test Comm On")
+            self.testCommOn.emit()
+        else:
+            #print("Test Comm Off")
+            self.testCommOff.emit()
     # def saveData(self):
     #     for sample in range(0,len(self.data)):
     #         #Creates a row in the data table for a sample

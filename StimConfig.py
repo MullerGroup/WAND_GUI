@@ -4,6 +4,7 @@ from ui.ui_stimconfig import Ui_StimConfig
 from waveformconfig import WaveformEditor
 from ui.ui_stimConfig_unit import Ui_StimConfigUnit
 import pickle
+import time
 
 class WaveformList(QAbstractListModel):
     def __init__(self, parent=None):
@@ -183,6 +184,7 @@ class StimConfig(QDockWidget):
     writeReg = pyqtSignal(int, int, int)
 
     def __init__(self, parent=None, nm=0):
+        print("Init Stim Config")
         super().__init__(parent)
         self.nm = nm
         self.ui = Ui_StimConfig()
@@ -311,13 +313,19 @@ class StimConfig(QDockWidget):
 
     @pyqtSlot()
     def on_waveformConfigButton_clicked(self):
+        print('Waveform Config NM{}'.format(self.nm))
         dlg = WaveformEditor(self.wfmlist, (self.ui.stimMultBox.currentIndex()+1)*20)
         dlg.exec()
 
-    @pyqtSlot(int)
-    def on_writeRegs_clicked(self, nm):
+#    @pyqtSlot(int)
+#    def on_writeRegs_clicked(self, nm):
+    @pyqtSlot()
+    def on_writeRegs_clicked(self):
+        print("Writing Stem Regs NM{}".format(self.nm))
         for address in range(16,32):
-            self.writeReg.emit(nm, address, self.createRegisterData(address))
+            self.writeReg.emit(self.nm, address, self.createRegisterData(address))
+ #           self.writeReg.emit(nm, address, self.createRegisterData(address))
+            time.sleep(0.1)
 
     def createBitMask(self, bitShift, bitSpan):
         bitMask = 0

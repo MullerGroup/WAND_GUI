@@ -206,6 +206,7 @@ class CMWorker(QThread):
         self._regWr(Reg.ctrl, 0x102)
 
     def _sendCmd(self, nm, cmd):
+        print('Send Command')
         if nm==0:
             self._regWr(Reg.n0d2, 1<<10 | (cmd & 0x3FF))
             self._regWr(Reg.ctrl, 0x1010)
@@ -403,3 +404,13 @@ class CMWorker(QThread):
         ret = self._regOp(nm, addr, 0, False)
         print("Read register from NM {}: {:04x} {:04x}".format(nm, addr, ret))
         self.regReadData.emit(nm, addr, ret)
+
+    @pyqtSlot()
+    def testCommOn(self):
+        print("Test Comm On")
+        self._regWr(Reg.req, 0x00000080) # enable test
+
+    @pyqtSlot()
+    def testCommOff(self):
+        print("Test Comm Off")
+        self._regWr(Reg.req, 0x00000040)  # disable test
