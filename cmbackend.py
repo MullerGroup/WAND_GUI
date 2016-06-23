@@ -301,6 +301,8 @@ class CMWorker(QThread):
                                                                                                                            i]) & 0x7FFF
                                         for i in list(range(1, 199, 2))])
                     #out.append([(data[i + 1] << 8 | data[i]) & 0xFFFF for i in list(range(193, 199, 2))])
+        time.sleep(0.1)
+        self.ser.flush()
         return out
 
         # out = []

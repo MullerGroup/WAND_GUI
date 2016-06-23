@@ -25,7 +25,7 @@ except AttributeError:
 class Ui_StimConfig(object):
     def setupUi(self, StimConfig):
         StimConfig.setObjectName(_fromUtf8("StimConfig"))
-        StimConfig.resize(1005, 325)
+        StimConfig.resize(980, 325)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -33,9 +33,20 @@ class Ui_StimConfig(object):
         StimConfig.setSizePolicy(sizePolicy)
         StimConfig.setMinimumSize(QtCore.QSize(941, 325))
         StimConfig.setMaximumSize(QtCore.QSize(524287, 325))
+        self.dockWidgetContents_main = QtGui.QWidget()
+        self.dockWidgetContents_main.setObjectName(_fromUtf8("dockWidgetContents_main"))
+        self.dockWidgetContents_main.setStyleSheet('font-size: 12pt;')
+
+        self.verticalLayout = QtGui.QVBoxLayout(self.dockWidgetContents_main)
+        self.verticalLayout.setObjectName(_fromUtf8("verticalLayout"))
+        self.scrollArea = QtGui.QScrollArea(self.dockWidgetContents_main)
+        self.scrollArea.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
+        self.scrollArea.setWidgetResizable(True)
+        self.scrollArea.setObjectName(_fromUtf8("scrollArea"))
         self.dockWidgetContents = QtGui.QWidget()
-        self.dockWidgetContents.setObjectName(_fromUtf8("dockWidgetContents"))
-        self.dockWidgetContents.setStyleSheet('font-size: 10pt;')
+        self.dockWidgetContents.setGeometry(QtCore.QRect(0,0,950,305))
+        self.dockWidgetContents.setObjectName(_fromUtf8("scrollAreaWidgetContents"))
+
         self.gridLayout = QtGui.QGridLayout(self.dockWidgetContents)
         self.gridLayout.setObjectName(_fromUtf8("gridLayout"))
         self.pchgModCheck = QtGui.QCheckBox(self.dockWidgetContents)
@@ -161,7 +172,11 @@ class Ui_StimConfig(object):
         self.waveformConfigButton.setSizePolicy(sizePolicy)
         self.waveformConfigButton.setObjectName(_fromUtf8("waveformConfigButton"))
         self.gridLayout.addWidget(self.waveformConfigButton, 0, 1, 1, 6)
-        StimConfig.setWidget(self.dockWidgetContents)
+
+        self.scrollArea.setWidget(self.dockWidgetContents)
+        self.verticalLayout.addWidget(self.scrollArea)
+
+        StimConfig.setWidget(self.dockWidgetContents_main)
 
         self.retranslateUi(StimConfig)
         QtCore.QMetaObject.connectSlotsByName(StimConfig)

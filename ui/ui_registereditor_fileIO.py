@@ -28,7 +28,7 @@ class Ui_RegisterEditor(object):
         RegisterEditor.resize(530, 329)
         self.dockWidgetContents = QtGui.QWidget()
         self.dockWidgetContents.setObjectName(_fromUtf8("dockWidgetContents"))
-        self.dockWidgetContents.setStyleSheet('font-size: 10pt;')
+        self.dockWidgetContents.setStyleSheet('font-size: 12pt;')
         self.verticalLayout = QtGui.QVBoxLayout(self.dockWidgetContents)
         self.verticalLayout.setObjectName(_fromUtf8("verticalLayout"))
         self.scrollArea = QtGui.QScrollArea(self.dockWidgetContents)
