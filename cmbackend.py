@@ -58,11 +58,15 @@ class streamAdcThread(QThread):
             self._running = True
 
 
-        # get file for saving
-        filt = 'CSV files (*.csv);;All files (*.*)'
-        self.file = QtGui.QFileDialog.getSaveFileName(parent=None,
-                                                      caption="Select File",
-                                                      filter=filt)
+        # # get file for saving using dialog box
+        # filt = 'CSV files (*.csv);;All files (*.*)'
+        # self.file = QtGui.QFileDialog.getSaveFileName(parent=None,
+        #                                               caption="Select File",
+        #                                               filter=filt)
+
+        # # get file for saving using datetime
+        self.file = 'streams/' + datetime.datetime.now().strftime("%Y%m%d-%H%M%S") + '.csv'
+
         self.fn = open(self.file, 'w')
         self.csvfile = csv.writer(self.fn)
 
@@ -87,7 +91,7 @@ class streamAdcThread(QThread):
         t_0 = time.time()
         while self._running:
             # changed the number of bytes to read to 200: this includes 96 channels + 6 bytes of accelerometer data
-            data = CMWorker.ser.read(200*self.streamChunkSize, timeout=None)
+            data = CMWorker.ser.read(200*self.streamChunkSize, timeout=1)
             if data[0]!=0xAA and data[len(data)-1]!=b'U':
                 # print("packet misalignment, flushing FTDI fifos")
                 fail+=1
