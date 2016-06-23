@@ -194,7 +194,7 @@ class CMWorker(QThread):
     adcData = pyqtSignal(list)
     updateChannels = pyqtSignal(list)
 
-    enabledChannels = [0,0,0,0,0,0,0,0]
+    enabledChannels = [65535,65535,65535,65535,65535,65535,0,0]
 
     ser = Device(lazy_open=True)
 

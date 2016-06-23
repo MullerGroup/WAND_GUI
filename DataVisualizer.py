@@ -67,7 +67,7 @@ class DataVisualizer(QDockWidget):
         self.fftPlots = []
         self.plotEn = [] # each plot can be enabled/disabled by pressing spacebar on top of it
         self.plotColors = []
-        self.enabledChannels = [0,0,0,0,0,0,0,0]
+        self.enabledChannels = [65535,65535,65535,65535,65535,65535,0,0]
 
         # initialize streaming mode thread
         self.streamAdcThread = cmbackend.streamAdcThread()
