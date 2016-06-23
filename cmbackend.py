@@ -66,6 +66,8 @@ class streamAdcThread(QThread):
         self.fn = open(self.file, 'w')
         self.csvfile = csv.writer(self.fn)
 
+        self.csvfile.writerow(CMWorker.enabledChannels)
+
         start = datetime.datetime.now()
         print("Stream started at: {}".format(start))
         self.csvfile.writerow([start])
@@ -190,6 +192,8 @@ class CMWorker(QThread):
     boardsChanged = pyqtSignal(list)
     regReadData = pyqtSignal(int, int, int)
     adcData = pyqtSignal(list)
+
+    enabledChannels = [0,0,0,0,0,0,0,0]
 
     ser = Device(lazy_open=True)
 
@@ -405,6 +409,26 @@ class CMWorker(QThread):
         self._regOp(nm, addr, value, True)
         #print("Write register: {:04x} {:04x}".format(addr, value))
         self.regReadData.emit(nm, addr, value)
+        if addr == 0x04:
+            if nm == 0:
+                self.enabledChannels[0] = value
+            else:
+                self.enabledChannels[4] = value
+        elif addr == 0x05:
+            if nm == 0:
+                self.enabledChannels[1] = value
+            else:
+                self.enabledChannels[5] = value
+        elif addr == 0x06:
+            if nm == 0:
+                self.enabledChannels[2] = value
+            else:
+                self.enabledChannels[6] = value
+        elif addr == 0x07:
+            if nm == 0:
+                self.enabledChannels[3] = value
+            else:
+                self.enabledChannels[7] = value
 
     @pyqtSlot(int, int)
     def readReg(self, nm, addr):
