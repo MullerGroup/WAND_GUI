@@ -325,7 +325,7 @@ class DataVisualizer(QDockWidget):
                     #     ff[60 * i] = 0
                     # rms60 **= 0.5
                     # rms = np.sum(ff[0:500] ** 2) ** 0.5
-                    if ch == 0: print("Channel {} Noise: {:0.1f} rms".format(ch,rms))
+                    if ch < 96: print("Ch {} Noise: {:0.1f} rms".format(ch,rms))
                     #print("{}".format(dp))
                     #print("{:0.1f} rms".format(self.measureRms(dp)))
 
@@ -339,7 +339,7 @@ class DataVisualizer(QDockWidget):
                     for i in range(2, 32):
                         dist += dfft[i * indx] ** 2
                     db =  20 * np.log10(dist ** 0.5 / fund)
-                    print("{:0.0f} dB".format(db))
+                    if ch < 96: print("Ch {} THD: {:0.0f} dB".format(ch,db))
 
             for t in range(0, len(self.data)):
                 if self.plotPointer == self.xRange:
