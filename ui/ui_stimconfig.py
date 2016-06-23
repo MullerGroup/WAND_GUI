@@ -35,6 +35,7 @@ class Ui_StimConfig(object):
         StimConfig.setMaximumSize(QtCore.QSize(524287, 325))
         self.dockWidgetContents = QtGui.QWidget()
         self.dockWidgetContents.setObjectName(_fromUtf8("dockWidgetContents"))
+        self.dockWidgetContents.setStyleSheet('font-size: 10pt;')
         self.gridLayout = QtGui.QGridLayout(self.dockWidgetContents)
         self.gridLayout.setObjectName(_fromUtf8("gridLayout"))
         self.pchgModCheck = QtGui.QCheckBox(self.dockWidgetContents)
