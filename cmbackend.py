@@ -192,6 +192,7 @@ class CMWorker(QThread):
     boardsChanged = pyqtSignal(list)
     regReadData = pyqtSignal(int, int, int)
     adcData = pyqtSignal(list)
+    updateChannels = pyqtSignal(list)
 
     enabledChannels = [0,0,0,0,0,0,0,0]
 
@@ -429,6 +430,7 @@ class CMWorker(QThread):
                 self.enabledChannels[3] = value
             else:
                 self.enabledChannels[7] = value
+        self.updateChannels.emit(self.enabledChannels)
 
     @pyqtSlot(int, int)
     def readReg(self, nm, addr):
@@ -436,6 +438,27 @@ class CMWorker(QThread):
             return
         ret = self._regOp(nm, addr, 0, False)
         print("Read register from NM {}: {:04x} {:04x}".format(nm, addr, ret))
+        if addr == 0x04:
+            if nm == 0:
+                self.enabledChannels[0] = ret
+            else:
+                self.enabledChannels[4] = ret
+        elif addr == 0x05:
+            if nm == 0:
+                self.enabledChannels[1] = ret
+            else:
+                self.enabledChannels[5] = ret
+        elif addr == 0x06:
+            if nm == 0:
+                self.enabledChannels[2] = ret
+            else:
+                self.enabledChannels[6] = ret
+        elif addr == 0x07:
+            if nm == 0:
+                self.enabledChannels[3] = ret
+            else:
+                self.enabledChannels[7] = ret
+        self.updateChannels.emit(self.enabledChannels)
         self.regReadData.emit(nm, addr, ret)
 
     @pyqtSlot()

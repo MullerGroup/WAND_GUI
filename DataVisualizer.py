@@ -67,6 +67,7 @@ class DataVisualizer(QDockWidget):
         self.fftPlots = []
         self.plotEn = [] # each plot can be enabled/disabled by pressing spacebar on top of it
         self.plotColors = []
+        self.enabledChannels = [0,0,0,0,0,0,0,0]
 
         # initialize streaming mode thread
         self.streamAdcThread = cmbackend.streamAdcThread()
@@ -115,6 +116,7 @@ class DataVisualizer(QDockWidget):
         self.testCommOff.connect(w.testCommOff)
         self.readAdc.connect(w.readAdc)
         w.adcData.connect(self.adcData)
+        w.updateChannels.connect(self.updateChannels)
 
     def updateBands(self):
         self.ui.fStart5.setEnabled(self.ui.numBands.currentIndex() >= 4)
@@ -181,6 +183,10 @@ class DataVisualizer(QDockWidget):
         # rms_full = np.std(d)
         # print("RMS: {}".format(rms_full))
         return rms
+
+    @pyqtSlot(list)
+    def updateChannels(self,chan):
+        self.enabledChannels = chan
 
     @pyqtSlot(list)
     def adcData(self, data):
@@ -272,7 +278,15 @@ class DataVisualizer(QDockWidget):
             viewBox = pg.ViewBox(enableMouse=False)
             viewBox.setRange(xRange=[0,self.xRange])
             self.plots[i] = self.ui.plot.addPlot(row=i-self.topPlot, col=0, viewBox=viewBox)
-            self.plots[i].setLabel('left', text="Ch {}".format(i))
+            count = 0
+            plotChannel = 'Off'
+            for chan in range(0,128):
+                if format(self.enabledChannels[int(chan/16)],"16b")[chan%16] == '1':
+                    count = count + 1
+                    if count == i + 1:
+                        plotChannel = chan
+
+            self.plots[i].setLabel('left', text="Ch {}".format(plotChannel))
             # self.plots[i].setTitle(title='Ch {}'.format(i), size='10px')
 
 #TODO: implement fft plotting. Can place plots in col=1
@@ -288,7 +302,6 @@ class DataVisualizer(QDockWidget):
 #TODO: plotting crashes when decreasing x-axis range
         # if not self.data:
         #     return
-
 
         noisedata = []
 
