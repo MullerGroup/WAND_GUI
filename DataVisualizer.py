@@ -281,7 +281,7 @@ class DataVisualizer(QDockWidget):
             count = 0
             plotChannel = 'Off'
             for chan in range(0,128):
-                if format(self.enabledChannels[int(chan/16)],"16b")[chan%16] == '1':
+                if format(self.enabledChannels[int(chan/16)],"16b")[15-(chan%16)] == '1':
                     count = count + 1
                     if count == i + 1:
                         plotChannel = chan
