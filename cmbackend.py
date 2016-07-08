@@ -108,7 +108,7 @@ class streamAdcThread(QThread):
                 # prev_sample = data[1]
                 if len(data)==200:
                     success += 1
-                    for ct in range(0, self.streamChunkSize):
+                    #for ct in range(0, self.streamChunkSize):
                         # changed the range of data here to only append the 96 channles, NOT the accelerometer data
                         # TODO: add accelerometer information, may need to be able to plot
                         #out.append([(data[i + 1] << 8 | data[i]) & 0xFFFF for i in list(range(1, 199, 2))])
@@ -116,14 +116,13 @@ class streamAdcThread(QThread):
                         # neural data (i<192) is unsigned 15-bit (16th bit is stim info)
                         # accelerometer data is 2's complement
                         #out.append([(((data[i+1] << 8 | data[i]) & 0xFFFF) + 2**15) % 2**16 - 2**15 if i > 192 else (data[i+1] << 8 | data[i]) & 0x7FFF for i in list(range(1,199,2))])
-                        out.append([(
-                                                                                                                           data[
-                                                                                                                               i + 1] << 8 |
-                                                                                                                           data[
-                                                                                                                               i]) & 0x7FFF if i < 193 else time.time()-t_0
-                                    for i in list(range(1, 195, 2))])
-                        self.csvfile.writerow(out[0])
-                        out = []
+                    out = [(
+                                                                                                                       data[
+                                                                                                                           i + 1] << 8 |
+                                                                                                                       data[
+                                                                                                                           i]) & 0x7FFF if i < 193 else time.time()-t_0
+                                for i in list(range(1, 195, 2))]
+                    self.csvfile.writerow(out)
                         #out.append([(data[i + 1] << 8 | data[i]) & 0xFFFF for i in list(range(193, 199, 2))])
                         # out.append([(data[i+1] << 8 | data[i]) & 0x7FFF for i in range(ct*256,(ct+1)*256,2)])
                         # out.append([data[i] for i in range(ct*128,(ct+1)*128)])
