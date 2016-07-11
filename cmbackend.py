@@ -82,6 +82,7 @@ class streamAdcThread(QThread):
         out = []
         self.read_count = 0
         success = 0
+        crcs = 0
         fail = 0
         samples = 0
         misalignments = []
@@ -116,12 +117,29 @@ class streamAdcThread(QThread):
                         # neural data (i<192) is unsigned 15-bit (16th bit is stim info)
                         # accelerometer data is 2's complement
                         #out.append([(((data[i+1] << 8 | data[i]) & 0xFFFF) + 2**15) % 2**16 - 2**15 if i > 192 else (data[i+1] << 8 | data[i]) & 0x7FFF for i in list(range(1,199,2))])
-                    out = [(
-                                                                                                                       data[
-                                                                                                                           i + 1] << 8 |
-                                                                                                                       data[
-                                                                                                                           i]) & 0x7FFF if i < 193 else time.time()-t_0
-                                for i in list(range(1, 195, 2))]
+                    out = [data[0] if i == -1 else ((data[i + 1] << 8 | data[i]) & 0x7FFF if i < 193 else time.time()-t_0) for i in list(range(-1, 195, 2))]
+                    self.csvfile.writerow(out)
+
+            elif data[0] == 0xFF and data[len(data) - 1] == 0x55:
+                # if(data[1]!=(prev_sample+1)%256):
+                #     num_dropped += 1
+                #     diff = (data[1]-(prev_sample+1))
+                #     if diff < 0:
+                #         diff += 255
+                #     dropped_count += diff
+                # prev_sample = data[1]
+                if len(data) == 200:
+                    crcs += 1
+                    success += 1
+                    # for ct in range(0, self.streamChunkSize):
+                    # changed the range of data here to only append the 96 channles, NOT the accelerometer data
+                    # TODO: add accelerometer information, may need to be able to plot
+                    # out.append([(data[i + 1] << 8 | data[i]) & 0xFFFF for i in list(range(1, 199, 2))])
+                    # out.append([(((data[i+1] << 8 | data[i]) & 0xFFFF) + 2**15) % 2**16 - 2**15 if i > 192 else (-((data[i+1] << 8 | data[i]) & 0x7FFF) if (data[i+1] & 2**7) else (data[i+1] << 8 | data[i]) & 0x7FFF )for i in list(range(1,199,2))])
+                    # neural data (i<192) is unsigned 15-bit (16th bit is stim info)
+                    # accelerometer data is 2's complement
+                    # out.append([(((data[i+1] << 8 | data[i]) & 0xFFFF) + 2**15) % 2**16 - 2**15 if i > 192 else (data[i+1] << 8 | data[i]) & 0x7FFF for i in list(range(1,199,2))])
+                    out = [data[0] if i == -1 else ((data[i + 1] << 8 | data[i]) & 0x7FFF if i < 193 else time.time() - t_0) for i in list(range(-1, 195, 2))]
                     self.csvfile.writerow(out)
                         #out.append([(data[i + 1] << 8 | data[i]) & 0xFFFF for i in list(range(193, 199, 2))])
                         # out.append([(data[i+1] << 8 | data[i]) & 0x7FFF for i in range(ct*256,(ct+1)*256,2)])
@@ -190,6 +208,7 @@ class streamAdcThread(QThread):
         print("success: {}. fail: {}. %: {}".format(success, fail, 100*success/(success+fail)))
         print("Misalignments:")
         print(str(misalignments).strip('[]'))
+        print("CRCs: {}".format(crcs))
         time.sleep(0.5)
 
         CMWorker()._regWr(Reg.req, 0x0000) # turn off streaming mode
@@ -272,6 +291,7 @@ class CMWorker(QThread):
         badlengths = 0
         misalignments = []
         emptylengths = 0
+        crcs = 0
         for loop in range(0,N):
             # read data from both NMs
             # data = self.ser.read(200, timeout=1)
@@ -309,6 +329,18 @@ class CMWorker(QThread):
                                                                                                                        data[
                                                                                                                            i]) & 0x7FFF
                                         for i in list(range(1, 199, 2))])
+                elif data[0] == 0xFF and data[len(data) - 1] == 0x55:
+                    crcs += 1
+                    # neural data (i<192) is unsigned 15-bit (16th bit is stim info)
+                    # accelerometer data is 2's complement
+                    out.append([(
+                                    ((data[i + 1] << 8 | data[
+                                        i]) & 0xFFFF) + 2 ** 15) % 2 ** 16 - 2 ** 15 if i > 192 else (
+                                                                                                         data[
+                                                                                                             i + 1] << 8 |
+                                                                                                         data[
+                                                                                                             i]) & 0x7FFF
+                                for i in list(range(1, 199, 2))])
                 else:
                     #print("packet misalignment, flushing FTDI fifos")
                     # keep reading from serial until we reach end-of-packet byte (flush until next packet)
@@ -334,6 +366,7 @@ class CMWorker(QThread):
         print("Read {} bad lengths".format(badlengths))
         print("Misalignments:")
         print(str(misalignments).strip('[]'))
+        print("CRCs: {}".format(crcs))
         time.sleep(0.1)
         self.ser.flush()
         return out
