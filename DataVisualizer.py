@@ -72,7 +72,7 @@ class DataVisualizer(QDockWidget):
         # initialize streaming mode thread
         self.streamAdcThread = cmbackend.streamAdcThread()
         self.connect(self.streamAdcThread, SIGNAL("finished()"), self.streamingDone)
-        self.connect(self.streamAdcThread, SIGNAL('streamDataOut(PyQt_PyObject)'), self.streamAdcData)
+        # self.connect(self.streamAdcThread, SIGNAL('streamDataOut(PyQt_PyObject)'), self.streamAdcData)
 
         # hdf5 data storage
         # TODO: add save file text box
@@ -198,13 +198,13 @@ class DataVisualizer(QDockWidget):
         if self.ui.plotEn.isChecked():
             self.updatePlot()
 
-    @pyqtSlot(list)
-    def streamAdcData(self, data):
-        global t_start
-        t_start = datetime.now()
-        self.data = data
-        if self.ui.plotEn.isChecked():
-            self.updatePlot()
+    # @pyqtSlot(list)
+    # def streamAdcData(self, data):
+    #     global t_start
+    #     t_start = datetime.now()
+    #     self.data = data
+    #     if self.ui.plotEn.isChecked():
+    #         self.updatePlot()
 
     @pyqtSlot()
     def on_singleBtn_clicked(self):
@@ -357,10 +357,10 @@ class DataVisualizer(QDockWidget):
         for ch in range(self.topPlot, self.topPlot + self.numPlotsDisplayed): # only plot currently displayed plots
             dp = self.dataPlot[ch][0:self.xRange]
             # add back in to test new autorange
-            # avg = np.mean(dp)
-            # sd = np.std(dp)
-            # if sd < 10:
-            #     sd = 10
+            avg = np.mean(dp)
+            sd = np.std(dp)
+            if sd < 10:
+                sd = 10
 
             # # formatting the data for neural/accelerometer channels
             # if ch > 95:
@@ -377,10 +377,10 @@ class DataVisualizer(QDockWidget):
             if self.plotEn[ch]:
                 self.plots[ch].plot(y=dp, pen=self.plotColors[ch]) # different color for each plot
                 # add back in to test new autorange
-                # self.plots[ch].getViewBox().setMouseEnabled(x=True,y=True)
-                # self.plots[ch].getViewBox().setMouseMode(self.plots[ch].getViewBox().PanMode)
-                # self.plots[ch].getViewBox().setLimits(xMin=0,xMax=self.xRange,yMin=-100,yMax=32868)
-                # self.plots[ch].getViewBox().setRange(xRange=(avg-(3*sd),avg+(2*sd)),update=True)
+                self.plots[ch].getViewBox().setMouseEnabled(x=True,y=True)
+                self.plots[ch].getViewBox().setMouseMode(self.plots[ch].getViewBox().RectMode)
+                self.plots[ch].getViewBox().setLimits(xMin=0,xMax=self.xRange,yMin=-100,yMax=32868)
+                self.plots[ch].getViewBox().setRange(yRange=(avg-(2.5*sd),avg+(2.5*sd)),update=True)
                 if self.ui.autorange.isChecked():
                     self.plots[ch].getViewBox().autoRange()
                 # self.fftPlots[ch].plot(y=calculateFFT(dp), pen=(102,204,255))

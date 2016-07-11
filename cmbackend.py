@@ -265,7 +265,7 @@ class CMWorker(QThread):
             if not write:
                 # self.ser.setTimeout(3)
                 self._regWr(Reg.req, 0x0100)
-                d = self.ser.read(4, timeout=2)
+                d = self.ser.read(4, timeout=1)
                 # self.ser.setTimeout(1)
                 if len(d) != 4 or (d[1] << 8 | d[0]) != addr:
                     raise Exception("Reg read failed: {}/4 bytes, {}".format(len(d), d))
@@ -278,7 +278,7 @@ class CMWorker(QThread):
             if not write:
                 # self.ser.setTimeout(3)
                 self._regWr(Reg.req, 0x0200)
-                d = self.ser.read(4, timeout=3)
+                d = self.ser.read(4, timeout=1)
                 # self.ser.setTimeout(1)
                 if len(d) != 4 or (d[1] << 8 | d[0]) != addr:
                     raise Exception("Reg read failed: {}/4 bytes, {}".format(len(d), d))
