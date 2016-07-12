@@ -139,7 +139,7 @@ class streamAdcThread(QThread):
                     # neural data (i<192) is unsigned 15-bit (16th bit is stim info)
                     # accelerometer data is 2's complement
                     # out.append([(((data[i+1] << 8 | data[i]) & 0xFFFF) + 2**15) % 2**16 - 2**15 if i > 192 else (data[i+1] << 8 | data[i]) & 0x7FFF for i in list(range(1,199,2))])
-                    out = [data[0] if i == -1 else ((data[i + 1] << 8 | data[i]) & 0x7FFF if i < 193 else time.time() - t_0) for i in list(range(-1, 195, 2))]
+                    out = [data[0] if i == -1 else ((data[i + 1] << 8 | data[i]) & 0x7FFF if i < 193 else (time.time() - t_0 if i > 193 else (data[i+1] << 8 | data[i]))) for i in list(range(-1, 197, 2))]
                     self.csvfile.writerow(out)
                         #out.append([(data[i + 1] << 8 | data[i]) & 0xFFFF for i in list(range(193, 199, 2))])
                         # out.append([(data[i+1] << 8 | data[i]) & 0x7FFF for i in range(ct*256,(ct+1)*256,2)])
@@ -322,25 +322,15 @@ class CMWorker(QThread):
                 if data[0] == 0xAA and data[len(data) - 1] == 0x55:
                     # neural data (i<192) is unsigned 15-bit (16th bit is stim info)
                     # accelerometer data is 2's complement
-                    out.append([(
-                                ((data[i + 1] << 8 | data[i]) & 0xFFFF) + 2 ** 15) % 2 ** 16 - 2 ** 15 if i > 192 else (
-                                                                                                                       data[
-                                                                                                                           i + 1] << 8 |
-                                                                                                                       data[
-                                                                                                                           i]) & 0x7FFF
-                                        for i in list(range(1, 199, 2))])
+                    #out.append([(((data[i + 1] << 8 | data[i]) & 0xFFFF) + 2 ** 15) % 2 ** 16 - 2 ** 15 if i > 192 else (data[i + 1] << 8 | data[i]) & 0x7FFF for i in list(range(1, 199, 2))])
+                    out.append([((data[i + 1] << 8 | data[i]) & 0xFFFF) if i > 192 else (data[i + 1] << 8 | data[i]) & 0x7FFF for i in list(range(1, 199, 2))])
+
                 elif data[0] == 0xFF and data[len(data) - 1] == 0x55:
                     crcs += 1
                     # neural data (i<192) is unsigned 15-bit (16th bit is stim info)
                     # accelerometer data is 2's complement
-                    out.append([(
-                                    ((data[i + 1] << 8 | data[
-                                        i]) & 0xFFFF) + 2 ** 15) % 2 ** 16 - 2 ** 15 if i > 192 else (
-                                                                                                         data[
-                                                                                                             i + 1] << 8 |
-                                                                                                         data[
-                                                                                                             i]) & 0x7FFF
-                                for i in list(range(1, 199, 2))])
+                    #out.append([(((data[i + 1] << 8 | data[i]) & 0xFFFF) + 2 ** 15) % 2 ** 16 - 2 ** 15 if i > 192 else (data[i + 1] << 8 | data[i]) & 0x7FFF for i in list(range(1, 199, 2))])
+                    out.append([((data[i + 1] << 8 | data[i]) & 0xFFFF) if i > 192 else (data[i + 1] << 8 | data[i]) & 0x7FFF for i in list(range(1, 199, 2))])
                 else:
                     #print("packet misalignment, flushing FTDI fifos")
                     # keep reading from serial until we reach end-of-packet byte (flush until next packet)
