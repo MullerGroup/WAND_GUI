@@ -117,7 +117,7 @@ class streamAdcThread(QThread):
                         # neural data (i<192) is unsigned 15-bit (16th bit is stim info)
                         # accelerometer data is 2's complement
                         #out.append([(((data[i+1] << 8 | data[i]) & 0xFFFF) + 2**15) % 2**16 - 2**15 if i > 192 else (data[i+1] << 8 | data[i]) & 0x7FFF for i in list(range(1,199,2))])
-                    out = [data[0] if i == -1 else ((data[i + 1] << 8 | data[i]) & 0x7FFF if i < 193 else time.time()-t_0) for i in list(range(-1, 195, 2))]
+                    out = [data[0] if i == -1 else ((data[i + 1] << 8 | data[i]) & 0x7FFF if i < 193 else (time.time() - t_0 if i > 193 else (data[i + 1] << 8 | data[i]))) for i in list(range(-1, 197, 2))]
                     self.csvfile.writerow(out)
 
             elif data[0] == 0xFF and data[len(data) - 1] == 0x55:

@@ -287,6 +287,8 @@ class DataVisualizer(QDockWidget):
                         plotChannel = chan
             if i == 99:
                 self.plots[i].setLabel('left', text='Means')
+            elif i < 99 and i > 95:
+                self.plots[i].setLabel('left', text='Ramp')
             else:
                 self.plots[i].setLabel('left', text="Ch {}".format(plotChannel))
             # self.plots[i].setTitle(title='Ch {}'.format(i), size='10px')
@@ -396,7 +398,10 @@ class DataVisualizer(QDockWidget):
                     # add back in to test new autorange
                     self.plots[ch].getViewBox().setMouseEnabled(x=True,y=True)
                     self.plots[ch].getViewBox().setMouseMode(self.plots[ch].getViewBox().RectMode)
-                    self.plots[ch].getViewBox().setLimits(xMin=0,xMax=self.xRange,yMin=-100,yMax=32868)
+                    if ch < 99 and ch > 95:
+                        self.plots[ch].getViewBox().setLimits(xMin=0,xMax=self.xRange,yMin=-100,yMax=65636)
+                    else:
+                        self.plots[ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=-100, yMax=32868)
                     self.plots[ch].getViewBox().setRange(yRange=(avg-(2.5*sd),avg+(2.5*sd)),update=True)
                     if self.ui.autorange.isChecked():
                         self.plots[ch].getViewBox().autoRange()
