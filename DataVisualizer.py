@@ -209,14 +209,7 @@ class DataVisualizer(QDockWidget):
     @pyqtSlot()
     def on_singleBtn_clicked(self):
 
-        # add in save file dialog
-        if self.ui.saveEn.isChecked():
-            filt = 'CSV files (*.csv);;All files (*.*)'
-            self.file = QtGui.QFileDialog.getSaveFileName(parent=self,
-                                                   caption="Select File",
-                                                   filter=filt)
-            self.fn = open(self.file, 'w')
-            self.csvfile = csv.writer(self.fn)
+
         self.readAdc.emit(self.ui.samples.value())
 
     @pyqtSlot()
@@ -252,6 +245,12 @@ class DataVisualizer(QDockWidget):
     #     self.dataTable.flush
 
     def saveData(self):
+        filt = 'CSV files (*.csv);;All files (*.*)'
+        self.file = QtGui.QFileDialog.getSaveFileName(parent=self,
+                                                      caption="Select File",
+                                                      filter=filt)
+        self.fn = open(self.file, 'w')
+        self.csvfile = csv.writer(self.fn)
         for sample in range(0, len(self.data)):
             self.csvfile.writerow(self.data[sample])
 
