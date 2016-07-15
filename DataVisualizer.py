@@ -104,7 +104,7 @@ class DataVisualizer(QDockWidget):
         # set some defaults
         # self.ui.numBands.setCurrentIndex(0)
         self.ui.autorange.setChecked(True)
-        self.ui.plotEn.setChecked(True)
+        # self.ui.plotEn.setChecked(True)
         # self.updateBands()
 
     @pyqtSlot()
@@ -195,8 +195,8 @@ class DataVisualizer(QDockWidget):
         self.data = data
         if self.ui.saveEn.isChecked():
             self.saveData()
-        if self.ui.plotEn.isChecked():
-            self.updatePlot()
+        #if self.ui.plotEn.isChecked():
+        self.updatePlot()
 
     # @pyqtSlot(list)
     # def streamAdcData(self, data):
@@ -208,9 +208,18 @@ class DataVisualizer(QDockWidget):
 
     @pyqtSlot()
     def on_singleBtn_clicked(self):
-
-
         self.readAdc.emit(self.ui.samples.value())
+
+    @pyqtSlot()
+    def on_saveBtn_clicked(self):
+        filt = 'CSV files (*.csv);;All files (*.*)'
+        self.file = QtGui.QFileDialog.getSaveFileName(parent=self,
+                                                      caption="Select File",
+                                                      filter=filt)
+        self.fn = open(self.file, 'w')
+        self.csvfile = csv.writer(self.fn)
+        for sample in range(0, len(self.dataPlot)):
+            self.csvfile.writerow(self.dataPlot[sample])
 
     @pyqtSlot()
     def on_streamBtn_clicked(self):
