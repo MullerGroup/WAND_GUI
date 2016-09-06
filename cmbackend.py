@@ -238,6 +238,8 @@ class CMWorker(QThread):
         s = struct.pack(">cI", bytes([reg.value]), value)
         # print("reg wr: {}".format(s))
         # print("reg wr: {:04x} {:04x}".format(reg.value, value))
+        if reg.value==0x14:
+            print("writeNMreg(0, 0x{:04x}, 0x{:04x});".format(value>>16, value&0xffff))
         self.ser.write(s)
         # self.ser.flushOutput()
 
