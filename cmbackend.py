@@ -58,12 +58,6 @@ class streamAdcThread(QThread):
             self._running = True
 
 
-        # # get file for saving using dialog box
-        # filt = 'CSV files (*.csv);;All files (*.*)'
-        # self.file = QtGui.QFileDialog.getSaveFileName(parent=None,
-        #                                               caption="Select File",
-        #                                               filter=filt)
-
         # # get file for saving using datetime
         self.file = 'streams/' + datetime.datetime.now().strftime("%Y%m%d-%H%M%S") + '.csv'
 
@@ -75,8 +69,6 @@ class streamAdcThread(QThread):
         start = datetime.datetime.now()
         print("Stream started at: {}".format(start))
         self.csvfile.writerow([start])
-        # CMWorker()._regWr(Reg.req, 0x0010 | self.streamChunkSize<<16) # put CM into streaming mode for NM0 only
-        # CMWorker()._regWr(Reg.req, 0x0020 | self.streamChunkSize<<16) # put CM into streaming mode for NM1 only
         CMWorker()._regWr(Reg.req, 0x0030 | self.streamChunkSize<<16) # put CM into streaming mode for both NMs
 
         out = []
@@ -100,108 +92,32 @@ class streamAdcThread(QThread):
                     self.stop()
 
             if data[0]==0xAA and data[len(data)-1]==0x55:
-                # if(data[1]!=(prev_sample+1)%256):
-                #     num_dropped += 1
-                #     diff = (data[1]-(prev_sample+1))
-                #     if diff < 0:
-                #         diff += 255
-                #     dropped_count += diff
-                # prev_sample = data[1]
                 if len(data)==200:
                     success += 1
-                    #for ct in range(0, self.streamChunkSize):
-                        # changed the range of data here to only append the 96 channles, NOT the accelerometer data
-                        # TODO: add accelerometer information, may need to be able to plot
-                        #out.append([(data[i + 1] << 8 | data[i]) & 0xFFFF for i in list(range(1, 199, 2))])
-                        #out.append([(((data[i+1] << 8 | data[i]) & 0xFFFF) + 2**15) % 2**16 - 2**15 if i > 192 else (-((data[i+1] << 8 | data[i]) & 0x7FFF) if (data[i+1] & 2**7) else (data[i+1] << 8 | data[i]) & 0x7FFF )for i in list(range(1,199,2))])
-                        # neural data (i<192) is unsigned 15-bit (16th bit is stim info)
-                        # accelerometer data is 2's complement
-                        #out.append([(((data[i+1] << 8 | data[i]) & 0xFFFF) + 2**15) % 2**16 - 2**15 if i > 192 else (data[i+1] << 8 | data[i]) & 0x7FFF for i in list(range(1,199,2))])
+                    #out.append([(((data[i+1] << 8 | data[i]) & 0xFFFF) + 2**15) % 2**16 - 2**15 if i > 192 else (-((data[i+1] << 8 | data[i]) & 0x7FFF) if (data[i+1] & 2**7) else (data[i+1] << 8 | data[i]) & 0x7FFF )for i in list(range(1,199,2))])
+                    # neural data (i<192) is unsigned 15-bit (16th bit is stim info)
+                    # accelerometer data is 2's complement
+                    #out.append([(((data[i+1] << 8 | data[i]) & 0xFFFF) + 2**15) % 2**16 - 2**15 if i > 192 else (data[i+1] << 8 | data[i]) & 0x7FFF for i in list(range(1,199,2))])
                     out = [data[0] if i == -1 else ((data[i + 1] << 8 | data[i]) & 0x7FFF if i < 193 else (time.time() - t_0 if i > 193 else (data[i + 1] << 8 | data[i]))) for i in list(range(-1, 197, 2))]
                     self.csvfile.writerow(out)
 
             elif data[0] == 0xFF and data[len(data) - 1] == 0x55:
-                # if(data[1]!=(prev_sample+1)%256):
-                #     num_dropped += 1
-                #     diff = (data[1]-(prev_sample+1))
-                #     if diff < 0:
-                #         diff += 255
-                #     dropped_count += diff
-                # prev_sample = data[1]
                 if len(data) == 200:
                     crcs += 1
                     success += 1
-                    # for ct in range(0, self.streamChunkSize):
-                    # changed the range of data here to only append the 96 channles, NOT the accelerometer data
-                    # TODO: add accelerometer information, may need to be able to plot
-                    # out.append([(data[i + 1] << 8 | data[i]) & 0xFFFF for i in list(range(1, 199, 2))])
                     # out.append([(((data[i+1] << 8 | data[i]) & 0xFFFF) + 2**15) % 2**16 - 2**15 if i > 192 else (-((data[i+1] << 8 | data[i]) & 0x7FFF) if (data[i+1] & 2**7) else (data[i+1] << 8 | data[i]) & 0x7FFF )for i in list(range(1,199,2))])
                     # neural data (i<192) is unsigned 15-bit (16th bit is stim info)
                     # accelerometer data is 2's complement
                     # out.append([(((data[i+1] << 8 | data[i]) & 0xFFFF) + 2**15) % 2**16 - 2**15 if i > 192 else (data[i+1] << 8 | data[i]) & 0x7FFF for i in list(range(1,199,2))])
                     out = [data[0] if i == -1 else ((data[i + 1] << 8 | data[i]) & 0x7FFF if i < 193 else (time.time() - t_0 if i > 193 else (data[i+1] << 8 | data[i]))) for i in list(range(-1, 197, 2))]
                     self.csvfile.writerow(out)
-                        #out.append([(data[i + 1] << 8 | data[i]) & 0xFFFF for i in list(range(193, 199, 2))])
-                        # out.append([(data[i+1] << 8 | data[i]) & 0x7FFF for i in range(ct*256,(ct+1)*256,2)])
-                        # out.append([data[i] for i in range(ct*128,(ct+1)*128)])
-                        # out.append([data[i] for i in range(ct*128+1,((ct+1)*128)+1)])
 
-                # data = CMWorker.ser.read(130*self.streamChunkSize, timeout=None)
-                # if (data[0]!=0xAA and data[129]!=b'U'):
-                #     print("packet misalignment, flushing FTDI fifos")
-                #     fail+=1
-                #     # keep reading from serial until we reach end-of-packet byte (flush until next packet)
-                #     while(True):
-                #         temp = CMWorker.ser.read(1, timeout=None)
-                #         if(temp==b'U'): break
-                #     continue
-                # success+=1
-                # for ct in range(0, self.streamChunkSize):
-                #     # out.append([data[i] for i in range(ct*128+1,((ct+1)*128)+1)])
-                #     out.append([(data[i+1] << 8 | data[i]) & 0x7FFF for i in range(ct*128+1,((ct+1)*128)+1,2)])
-
-                # print(out)
-                # print(data)
-                # if (data[len(data)-65:len(data)-1]!=bytes(64) and (data[len(data)-65]!=prev_sample+self.streamChunkSize)):
-                #     # failed
-                #     # now = datetime.datetime.now()
-                #     # elapsed = (now-start).microseconds/1000000 + (now-start).seconds
-                #     # print("time elapsed {} s".format(elapsed))
-                #     # avg_time_fail = (avg_time_fail*num_fail + elapsed) / (num_fail+1)
-                #     # num_fail += 1
-                #     # print("avg time to drop byte(s) = {} s".format(avg_time_fail))
-                #     # print(data[64:len(data)])
-                #     print(out[len(out)-1])
-                #     print(data)
-                #     print("read count: {} bytes, {} samples".format(self.read_count, self.read_count/128))
-                #     print("prev_sample: {}, current sample: {}".format(prev_sample, data[len(data)-65]))
-                #     self.read_count = 0
-                #     start = datetime.datetime.now()
-                #     # print("missed byte(s) around byte {} (sample {})".format(self.read_count,self.read_count/128))
-                #     self._running = False
-                #     CMWorker.ser.flush()
-                #     break
-                # prev_sample = data[len(data)-65]
-                # if len(out)>=self.plotChunkSize:
-                #     # now = datetime.datetime.now()
-                #     # elapsed = (now-start).microseconds/1000000 + (now-start).seconds
-                #     # print("time to plot {} samples: {} s".format(self.plotChunkSize, elapsed))
-                #     # start = datetime.datetime.now()
-                #     self.emit(SIGNAL('streamDataOut(PyQt_PyObject)'), out)
-                #     # self.read_count += len(out)
-                #     # print(out)
-                #     out = []
-                    # print("request count = {}, read_count = {}".format(self.req_count/128, self.read_count))
-                # if len(data):
-                #     print("len(data): {}, elapsed time: {}".format(len(data), t.elapsed()))
-                # previous = data[0]
             else:
-                # print("packet misalignment, flushing FTDI fifos")
                 fail += 1
                 misalignments.append(samples)
                 # keep reading from serial until we reach end-of-packet byte (flush until next packet)
                 temp = 0
-                while (temp != b'U'):
+                while (temp != b'U'): # b'U' is 0x55 (end of packet byte)
                     temp = CMWorker.ser.read(1, timeout=0)
 
         # only get here if we've called stop(), so turn off streaming mode
@@ -238,10 +154,7 @@ class CMWorker(QThread):
         s = struct.pack(">cI", bytes([reg.value]), value)
         # print("reg wr: {}".format(s))
         # print("reg wr: {:04x} {:04x}".format(reg.value, value))
-        if reg.value==0x14:
-            print("writeNMreg(0, 0x{:04x}, 0x{:04x});".format(value>>16, value&0xffff))
         self.ser.write(s)
-        # self.ser.flushOutput()
 
     def _resetIF(self):
         # reset AM
@@ -269,8 +182,10 @@ class CMWorker(QThread):
                 self._regWr(Reg.req, 0x0100)
                 d = self.ser.read(4, timeout=1)
                 # self.ser.setTimeout(1)
-                if len(d) != 4 or (d[1] << 8 | d[0]) != addr:
+                if len(d) != 4:
                     raise Exception("Reg read failed: {}/4 bytes, {}".format(len(d), d))
+                if (d[1] << 8 | d[0]) != addr:
+                    raise Exception("Reg read failed - wrong register value: {}".format(d))
                 return d[3] << 8 | d[2]
 
         if nm==1:
@@ -282,8 +197,10 @@ class CMWorker(QThread):
                 self._regWr(Reg.req, 0x0200)
                 d = self.ser.read(4, timeout=1)
                 # self.ser.setTimeout(1)
-                if len(d) != 4 or (d[1] << 8 | d[0]) != addr:
+                if len(d) != 4:
                     raise Exception("Reg read failed: {}/4 bytes, {}".format(len(d), d))
+                if (d[1] << 8 | d[0]) != addr:
+                    raise Exception("Reg read failed - wrong register value: {}".format(d))
                 return d[3] << 8 | d[2]
 
     def _getAdc(self, N):
@@ -295,11 +212,6 @@ class CMWorker(QThread):
         emptylengths = 0
         crcs = 0
         for loop in range(0,N):
-            # read data from both NMs
-            # data = self.ser.read(200, timeout=1)
-            # if len(data) != 200:
-            #     raise Exception("Failed to read from ADC: returned {}/{} bytes, sample {}".format(len(data), 200, loop))
-
             data = []
             count1 = 0
             while (len(data) != 200):
@@ -307,20 +219,10 @@ class CMWorker(QThread):
                 data.extend(temp)
                 count1 += 1
                 if count1 == 20:
+                    print("break while reading 200 bytes of data")
                     break
-            # data = CMWorker.ser.read(200, timeout=1)
-
 
             if len(data) == 200:
-
-                # check data misalignment
-
-
-                # append each NM's data to out, skipping over the start and end of packet bytes
-                #out.append([(data[i+1] << 8 | data[i]) & 0xFFFF for i in list(range(1,199,2))])
-                # out.append([(((data[i + 1] << 8 | data[i]) & 0xFFFF) + 2 ** 15) % 2 ** 16 - 2 ** 15 if i > 192 else (
-                # -((data[i + 1] << 8 | data[i]) & 0x7FFF) if (data[i + 1] & 2 ** 7) else (data[i + 1] << 8 | data[
-                #     i]) & 0x7FFF) for i in list(range(1, 199, 2))])
                 if data[0] == 0xAA and data[len(data) - 1] == 0x55:
                     # neural data (i<192) is unsigned 15-bit (16th bit is stim info)
                     # accelerometer data is 2's complement
@@ -334,11 +236,10 @@ class CMWorker(QThread):
                     #out.append([(((data[i + 1] << 8 | data[i]) & 0xFFFF) + 2 ** 15) % 2 ** 16 - 2 ** 15 if i > 192 else (data[i + 1] << 8 | data[i]) & 0x7FFF for i in list(range(1, 199, 2))])
                     out.append([((data[i + 1] << 8 | data[i]) & 0xFFFF) if i > 192 else (data[i + 1] << 8 | data[i]) & 0x7FFF for i in list(range(1, 199, 2))])
                 else:
-                    #print("packet misalignment, flushing FTDI fifos")
-                    # keep reading from serial until we reach end-of-packet byte (flush until next packet)
                     misalignments.append(loop)
                     count2 = 0
                     temp = 0
+                    # keep reading from serial until we reach end-of-packet byte (flush until next packet)
                     while (temp != b'U'):
                         temp = self.ser.read(1, timeout=0)
                         count2 += 1
@@ -347,14 +248,13 @@ class CMWorker(QThread):
 
             else:
                 if len(data) == 0:
-                    emptylengths +=1
+                    emptylengths += 1
                 else:
                     badlengths += 1
 
             if emptylengths > 2:
                 break
-                    #out.append([(data[i + 1] << 8 | data[i]) & 0xFFFF for i in list(range(193, 199, 2))])
-        #print("{} empty reads".format(emptylengths))
+
         print("Read {} bad lengths".format(badlengths))
         print("Misalignments:")
         print(str(misalignments).strip('[]'))
@@ -362,18 +262,6 @@ class CMWorker(QThread):
         time.sleep(0.1)
         self.ser.flush()
         return out
-
-        # out = []
-        # self._regWr(Reg.req, 0x0001 | (N-1)<<16) # request N samples from both NMs
-        # self.ser.flushInput()
-        # self.ser.setTimeout(5+(N)/1000)
-        # data = self.ser.read(128*N) # read all channels - 2 NMs * 64 channels per NM * 2 bytes per channel
-        # if len(data) != 128*N:
-        #     raise Exception("Failed to read from ADC: returned {}/{} bytes".format(len(data), 128*N))
-        # for ct in range(0,N):
-        #     out.append([(data[i+1] << 8 | data[i]) & 0x7FFF for i in range(ct*128,(ct+1)*128,2)])
-        # self.ser.setTimeout(1)
-        # return out
 
     @pyqtSlot(int)
     def readAdc(self, ns):
@@ -387,10 +275,7 @@ class CMWorker(QThread):
         for device in Driver().list_devices():
             vendor, product, serial = map(lambda x: x.decode('latin1'), device)
             dev_list.append(serial)
-        # ports = serial.tools.list_ports.comports()
-        # l = [i[0] for i in dev_list]
         self.boardsChanged.emit(dev_list)
-        # print(self.ser._opened)
 
 
     @pyqtSlot(str)
@@ -398,13 +283,7 @@ class CMWorker(QThread):
         self.ser.open()
         self.ser.flush()
         print("Connected to FTDI and flushed FIFOs")
-        # self.ser.port = board
-        # self.ser.open()
         self.connStateChanged.emit(self.ser._opened)
-        # print(self.ser._opened)
-
-# flush_input() flushes FTDI Rx buffer (commands)
-# flush_output() flushes FTDI Tx buffer (data from CM)
 
     @pyqtSlot()
     def flushCommandFifo(self):
@@ -430,7 +309,6 @@ class CMWorker(QThread):
     def disconnectBoard(self):
         self.ser.close()
         self.connStateChanged.emit(self.ser._opened)
-        # print(self.ser._opened)
 
     @pyqtSlot(bool, bool)
     def setPwrEn(self, en1v, en3v):
@@ -520,6 +398,7 @@ class CMWorker(QThread):
                 self.enabledChannels[7] = ret
         self.updateChannels.emit(self.enabledChannels)
         self.regReadData.emit(nm, addr, ret)
+        # time.sleep(0.1)
         self.ser.flush()
 
     @pyqtSlot()
