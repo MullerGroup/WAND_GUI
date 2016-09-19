@@ -5,13 +5,15 @@ import serial.tools.list_ports # _osx ?
 from bitarray import *
 import struct
 import time
-from enum import Enum
 # from binascii import hexlify
 from pylibftdi import Driver, Device
 import ui.ui_DataVisualizer as ui_DataVisualizer
 import DataVisualizer
 import datetime
 import csv
+import tables
+from tables import *
+from enum import Enum
 
 # CM register addresses
 class Reg(Enum):
@@ -22,6 +24,14 @@ class Reg(Enum):
     n1d1 = 0x20
     n1d2 = 0x24
     req = 0xff
+
+class stream_data(IsDescription):
+    crc = UInt8Col()
+    data = UInt16Col(shape=(97))
+    time = FloatCol()
+
+class stream_info(IsDescription):
+    channels = UInt16Col(shape=(8))
 
 class streamAdcThread(QThread):
 
@@ -58,17 +68,31 @@ class streamAdcThread(QThread):
             self._running = True
 
 
-        # # get file for saving using datetime
-        self.file = 'streams/' + datetime.datetime.now().strftime("%Y%m%d-%H%M%S") + '.csv'
+        # # # get file for saving using datetime
+        # self.file = 'streams/' + datetime.datetime.now().strftime("%Y%m%d-%H%M%S") + '.csv'
+        #
+        # self.fn = open(self.file, 'w')
+        # self.csvfile = csv.writer(self.fn)
+        #
+        # self.csvfile.writerow(CMWorker.enabledChannels)
+        #
+        # start = datetime.datetime.now()
+        # print("Stream started at: {}".format(start))
+        # self.csvfile.writerow([start])
 
-        self.fn = open(self.file, 'w')
-        self.csvfile = csv.writer(self.fn)
-
-        self.csvfile.writerow(CMWorker.enabledChannels)
+        self.saveFile = tables.open_file('streams/' + datetime.datetime.now().strftime("%Y%m%d-%H%M%S") + '.hdf', mode="w", title="Stream")
+        self.dataGroup = self.saveFile.create_group("/", name='dataGroup', title='Recorded Data Group')
+        self.dataTable = self.saveFile.create_table(self.dataGroup, name='dataTable', title='Recorded Data Table', description=stream_data, expectedrows=60000*5*1)
+        self.infoGroup = self.saveFile.create_group("/", name='infoGroup', title='Recording Information Group')
+        self.infoTable = self.saveFile.create_table(self.infoGroup, name='infoTable', title='Recording Information Table', description=stream_info)
 
         start = datetime.datetime.now()
         print("Stream started at: {}".format(start))
-        self.csvfile.writerow([start])
+        data_point = self.infoTable.row
+        data_point['channels'] = CMWorker.enabledChannels
+        data_point.append()
+        self.infoTable.flush()
+
         CMWorker()._regWr(Reg.req, 0x0030 | self.streamChunkSize<<16) # put CM into streaming mode for both NMs
 
         out = []
@@ -79,6 +103,7 @@ class streamAdcThread(QThread):
         samples = 0
         misalignments = []
         t_0 = time.time()
+        flush_count = 0
         while self._running:
             # changed the number of bytes to read to 200: this includes 96 channels + 6 bytes of accelerometer data
             samples += 1
@@ -89,36 +114,62 @@ class streamAdcThread(QThread):
                 data.extend(temp)
                 count1 += 1
                 if count1 == 200:
-                    self.stop()
+                    print('Stream dead')
+                    self._running = False
+                    CMWorker()._regWr(Reg.req, 0x0000)
+                    break
+            if len(data) == 200:
+                # flush_count+=1
+                if data[0]==0xAA and data[len(data)-1]==0x55:
+                    if len(data)==200:
+                        success += 1
+                        #out.append([(((data[i+1] << 8 | data[i]) & 0xFFFF) + 2**15) % 2**16 - 2**15 if i > 192 else (-((data[i+1] << 8 | data[i]) & 0x7FFF) if (data[i+1] & 2**7) else (data[i+1] << 8 | data[i]) & 0x7FFF )for i in list(range(1,199,2))])
+                        # neural data (i<192) is unsigned 15-bit (16th bit is stim info)
+                        # accelerometer data is 2's complement
+                        #out.append([(((data[i+1] << 8 | data[i]) & 0xFFFF) + 2**15) % 2**16 - 2**15 if i > 192 else (data[i+1] << 8 | data[i]) & 0x7FFF for i in list(range(1,199,2))])
+                        # out = [data[0] if i == -1 else ((data[i + 1] << 8 | data[i]) & 0x7FFF if i < 193 else (time.time() - t_0 if i > 193 else (data[i + 1] << 8 | data[i]))) for i in list(range(-1, 197, 2))]
+                        data_point = self.dataTable.row
+                        data_point['crc'] = data[0]
+                        data_point['data'] = [(data[i+1]<<8 | data[i]) if i < 193 else (data[i+1]<<8 | data[i]) for i in list(range(1,195,2))]
+                        data_point['time'] = time.time() - t_0
+                        data_point.append()
+                        self.dataTable.flush()
+                        # if flush_count > 100:
+                        #     self.dataTable.flush()
+                        #     flush_count = 0
 
-            if data[0]==0xAA and data[len(data)-1]==0x55:
-                if len(data)==200:
-                    success += 1
-                    #out.append([(((data[i+1] << 8 | data[i]) & 0xFFFF) + 2**15) % 2**16 - 2**15 if i > 192 else (-((data[i+1] << 8 | data[i]) & 0x7FFF) if (data[i+1] & 2**7) else (data[i+1] << 8 | data[i]) & 0x7FFF )for i in list(range(1,199,2))])
-                    # neural data (i<192) is unsigned 15-bit (16th bit is stim info)
-                    # accelerometer data is 2's complement
-                    #out.append([(((data[i+1] << 8 | data[i]) & 0xFFFF) + 2**15) % 2**16 - 2**15 if i > 192 else (data[i+1] << 8 | data[i]) & 0x7FFF for i in list(range(1,199,2))])
-                    out = [data[0] if i == -1 else ((data[i + 1] << 8 | data[i]) & 0x7FFF if i < 193 else (time.time() - t_0 if i > 193 else (data[i + 1] << 8 | data[i]))) for i in list(range(-1, 197, 2))]
-                    self.csvfile.writerow(out)
+                        # self.csvfile.writerow(out[45:-1])
+                        # self.csvfile.writerow(out)
 
-            elif data[0] == 0xFF and data[len(data) - 1] == 0x55:
-                if len(data) == 200:
-                    crcs += 1
-                    success += 1
-                    # out.append([(((data[i+1] << 8 | data[i]) & 0xFFFF) + 2**15) % 2**16 - 2**15 if i > 192 else (-((data[i+1] << 8 | data[i]) & 0x7FFF) if (data[i+1] & 2**7) else (data[i+1] << 8 | data[i]) & 0x7FFF )for i in list(range(1,199,2))])
-                    # neural data (i<192) is unsigned 15-bit (16th bit is stim info)
-                    # accelerometer data is 2's complement
-                    # out.append([(((data[i+1] << 8 | data[i]) & 0xFFFF) + 2**15) % 2**16 - 2**15 if i > 192 else (data[i+1] << 8 | data[i]) & 0x7FFF for i in list(range(1,199,2))])
-                    out = [data[0] if i == -1 else ((data[i + 1] << 8 | data[i]) & 0x7FFF if i < 193 else (time.time() - t_0 if i > 193 else (data[i+1] << 8 | data[i]))) for i in list(range(-1, 197, 2))]
-                    self.csvfile.writerow(out)
+                elif data[0] == 0xFF and data[len(data) - 1] == 0x55:
+                    if len(data) == 200:
+                        crcs += 1
+                        success += 1
+                        # out.append([(((data[i+1] << 8 | data[i]) & 0xFFFF) + 2**15) % 2**16 - 2**15 if i > 192 else (-((data[i+1] << 8 | data[i]) & 0x7FFF) if (data[i+1] & 2**7) else (data[i+1] << 8 | data[i]) & 0x7FFF )for i in list(range(1,199,2))])
+                        # neural data (i<192) is unsigned 15-bit (16th bit is stim info)
+                        # accelerometer data is 2's complement
+                        # out.append([(((data[i+1] << 8 | data[i]) & 0xFFFF) + 2**15) % 2**16 - 2**15 if i > 192 else (data[i+1] << 8 | data[i]) & 0x7FFF for i in list(range(1,199,2))])
+                        #out = [data[0] if i == -1 else ((data[i + 1] << 8 | data[i]) & 0x7FFF if i < 193 else (time.time() - t_0 if i > 193 else (data[i + 1] << 8 | data[i]))) for i in list(range(-1, 197, 2))]
+                        data_point = self.dataTable.row
+                        data_point['crc'] = data[0]
+                        data_point['data'] = [(data[i + 1] << 8 | data[i]) if i < 193 else (data[i + 1] << 8 | data[i]) for i in list(range(1, 195, 2))]
+                        data_point['time'] = time.time() - t_0
+                        data_point.append()
+                        self.dataTable.flush()
+                        # if flush_count > 100:
+                        #     self.dataTable.flush()
+                        #     flush_count = 0
 
-            else:
-                fail += 1
-                misalignments.append(samples)
-                # keep reading from serial until we reach end-of-packet byte (flush until next packet)
-                temp = 0
-                while (temp != b'U'): # b'U' is 0x55 (end of packet byte)
-                    temp = CMWorker.ser.read(1, timeout=0)
+                        # self.csvfile.writerow([out[45:-1]])
+                        # self.csvfile.writerow(out)
+
+                else:
+                    fail += 1
+                    misalignments.append(samples)
+                    # keep reading from serial until we reach end-of-packet byte (flush until next packet)
+                    temp = 0
+                    while (temp != b'U'): # b'U' is 0x55 (end of packet byte)
+                        temp = CMWorker.ser.read(1, timeout=0)
 
         # only get here if we've called stop(), so turn off streaming mode
         print("success: {}. fail: {}. %: {}".format(success, fail, 100*success/(success+fail)))
@@ -131,6 +182,8 @@ class streamAdcThread(QThread):
         print("End of Stream")
         CMWorker.ser.flush()
         print("Fifos Flushed")
+
+        self.saveFile.close()
 
 class CMWorker(QThread):
     connStateChanged = pyqtSignal(bool)
@@ -211,6 +264,7 @@ class CMWorker(QThread):
         misalignments = []
         emptylengths = 0
         crcs = 0
+        samples = 0
         for loop in range(0,N):
             data = []
             count1 = 0
@@ -219,17 +273,19 @@ class CMWorker(QThread):
                 data.extend(temp)
                 count1 += 1
                 if count1 == 20:
-                    print("break while reading 200 bytes of data")
+                    #print("break while reading 200 bytes of data")
                     break
 
             if len(data) == 200:
                 if data[0] == 0xAA and data[len(data) - 1] == 0x55:
+                    samples += 1
                     # neural data (i<192) is unsigned 15-bit (16th bit is stim info)
                     # accelerometer data is 2's complement
                     #out.append([(((data[i + 1] << 8 | data[i]) & 0xFFFF) + 2 ** 15) % 2 ** 16 - 2 ** 15 if i > 192 else (data[i + 1] << 8 | data[i]) & 0x7FFF for i in list(range(1, 199, 2))])
                     out.append([((data[i + 1] << 8 | data[i]) & 0xFFFF) if i > 192 else (data[i + 1] << 8 | data[i]) & 0x7FFF for i in list(range(1, 199, 2))])
 
                 elif data[0] == 0xFF and data[len(data) - 1] == 0x55:
+                    samples += 1
                     crcs += 1
                     # neural data (i<192) is unsigned 15-bit (16th bit is stim info)
                     # accelerometer data is 2's complement
@@ -254,7 +310,7 @@ class CMWorker(QThread):
 
             if emptylengths > 2:
                 break
-
+        print("Samples: {}".format(samples))
         print("Read {} bad lengths".format(badlengths))
         print("Misalignments:")
         print(str(misalignments).strip('[]'))
