@@ -26,8 +26,11 @@ class Reg(Enum):
     req = 0xff
 
 class stream_data(IsDescription):
-    crc = UInt8Col()
-    data = UInt16Col(shape=(97))
+    # crc = UInt8Col()
+    # data = UInt16Col(shape=(96))
+    # ramp = UInt16Col()
+    # time = FloatCol()
+    out = UInt16Col(98)
     time = FloatCol()
 
 class stream_info(IsDescription):
@@ -129,8 +132,10 @@ class streamAdcThread(QThread):
                         #out.append([(((data[i+1] << 8 | data[i]) & 0xFFFF) + 2**15) % 2**16 - 2**15 if i > 192 else (data[i+1] << 8 | data[i]) & 0x7FFF for i in list(range(1,199,2))])
                         # out = [data[0] if i == -1 else ((data[i + 1] << 8 | data[i]) & 0x7FFF if i < 193 else (time.time() - t_0 if i > 193 else (data[i + 1] << 8 | data[i]))) for i in list(range(-1, 197, 2))]
                         data_point = self.dataTable.row
-                        data_point['crc'] = data[0]
-                        data_point['data'] = [(data[i+1]<<8 | data[i]) if i < 193 else (data[i+1]<<8 | data[i]) for i in list(range(1,195,2))]
+                        data_point['out'] = [data[0] if i == -1 else ((data[i + 1] << 8 | data[i]) & 0x7FFF if i < 193 else (data[i + 1] << 8 | data[i])) for i in list(range(-1, 195, 2))]
+                        # data_point['crc'] = data[0]
+                        # data_point['data'] = [(data[i + 1] << 8 | data[i]) for i in list(range(1, 193, 2))]
+                        # data_point['ramp'] = (data[194] << 8 | data[193])
                         data_point['time'] = time.time() - t_0
                         data_point.append()
                         self.dataTable.flush()
@@ -139,6 +144,7 @@ class streamAdcThread(QThread):
                         #     flush_count = 0
 
                         # self.csvfile.writerow(out[45:-1])
+                        # self.csvfile.writerow([out[97]])
                         # self.csvfile.writerow(out)
 
                 elif data[0] == 0xFF and data[len(data) - 1] == 0x55:
@@ -149,10 +155,12 @@ class streamAdcThread(QThread):
                         # neural data (i<192) is unsigned 15-bit (16th bit is stim info)
                         # accelerometer data is 2's complement
                         # out.append([(((data[i+1] << 8 | data[i]) & 0xFFFF) + 2**15) % 2**16 - 2**15 if i > 192 else (data[i+1] << 8 | data[i]) & 0x7FFF for i in list(range(1,199,2))])
-                        #out = [data[0] if i == -1 else ((data[i + 1] << 8 | data[i]) & 0x7FFF if i < 193 else (time.time() - t_0 if i > 193 else (data[i + 1] << 8 | data[i]))) for i in list(range(-1, 197, 2))]
+                        # out = [data[0] if i == -1 else ((data[i + 1] << 8 | data[i]) & 0x7FFF if i < 193 else (time.time() - t_0 if i > 193 else (data[i + 1] << 8 | data[i]))) for i in list(range(-1, 197, 2))]
                         data_point = self.dataTable.row
-                        data_point['crc'] = data[0]
-                        data_point['data'] = [(data[i + 1] << 8 | data[i]) if i < 193 else (data[i + 1] << 8 | data[i]) for i in list(range(1, 195, 2))]
+                        data_point['out'] = [data[0] if i == -1 else ((data[i + 1] << 8 | data[i]) & 0x7FFF if i < 193 else (data[i + 1] << 8 | data[i])) for i in list(range(-1, 195, 2))]
+                        # data_point['crc'] = data[0]
+                        # data_point['data'] = [(data[i + 1] << 8 | data[i]) for i in list(range(1, 193, 2))]
+                        # data_point['ramp'] = (data[194]<<8 | data[193])
                         data_point['time'] = time.time() - t_0
                         data_point.append()
                         self.dataTable.flush()
@@ -161,6 +169,7 @@ class streamAdcThread(QThread):
                         #     flush_count = 0
 
                         # self.csvfile.writerow([out[45:-1]])
+                        # self.csvfile.writerow([out[97]])
                         # self.csvfile.writerow(out)
 
                 else:
