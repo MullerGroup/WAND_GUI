@@ -23,6 +23,8 @@ classdef streamhdf < handle
     
     properties (SetAccess = private)
         file;               % hdf file containing raw data
+        start_sample;       % which sample to start analysis from
+        count;              % how many samples to analyze
         channels_raw;       % raw values indicating which channels are recorded
         numchannels;        % number of channels enabled
         channels;           % list of which actual channels are recorded
@@ -67,7 +69,13 @@ classdef streamhdf < handle
 
     methods
         
-        function this = streamhdf(hdffile)
+        function this = streamhdf(hdffile, start, count)
+            
+            if nargin < 3
+                start = 1;
+                temp_info = h5info(hdffile);
+                count = temp_info.Groups(1).Datasets(1).Dataspace.Size;
+            end
             
             this.error_unique = [];
             this.error_tot = [];
@@ -101,7 +109,9 @@ classdef streamhdf < handle
             
  
             % get the raw data table
-            hdf = h5read(hdffile,'/dataGroup/dataTable');
+            this.start_sample = start;
+            this.count = count;
+            hdf = h5read(hdffile,'/dataGroup/dataTable',start, count);
             this.data = (hdf.out(2:this.numchannels+1, :))';
             this.crc = hdf.out(1,:);
             this.ramp = hdf.out(this.numchannels+2,:);
