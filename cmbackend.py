@@ -17,6 +17,8 @@ from enum import Enum
 import numpy as np
 from queue import Queue
 
+datalen = 100
+
 # CM register addresses
 class Reg(Enum):
     ctrl = 0x00
@@ -32,7 +34,7 @@ class stream_data(IsDescription):
     # data = UInt16Col(shape=(96))
     # ramp = UInt16Col()
     # time = FloatCol()
-    out = UInt16Col(98)
+    out = UInt16Col(int(datalen/2 - 2))
     time = FloatCol()
 
 class stream_info(IsDescription):
@@ -79,8 +81,8 @@ class readFTDIFifoThread(QThread):
                 data = []
             self.misalignment_flag = 0
             count1 = 0
-            while (len(data) != 200):
-                temp = CMWorker.ser.read(200 - len(data), timeout=0)
+            while (len(data) != datalen):
+                temp = CMWorker.ser.read(datalen - len(data), timeout=0)
                 data.extend(temp)
                 count1 += 1
                 if count1 == 200:
@@ -90,7 +92,7 @@ class readFTDIFifoThread(QThread):
                     break
             # self.binaryFile.write(bytearray(data))
 
-            if len(data)==200 and data[0]==0xAA and data[len(data)-1]==0x55:
+            if len(data)==datalen and data[0]==0xAA and data[len(data)-1]==0x55:
                 # pass
                 dataQueue.put(data)
                 timeQueue.put(time.time() - t_0)
@@ -214,7 +216,7 @@ class streamAdcThread(QThread):
             data_time = timeQueue.get()
             # data = []
             # data_time = 0
-            if len(data) == 200:
+            if len(data) == datalen:
                 if data[0]==0xAA and data[len(data)-1]==0x55:
                     success += 1
                     #out.append([(((data[i+1] << 8 | data[i]) & 0xFFFF) + 2**15) % 2**16 - 2**15 if i > 192 else (-((data[i+1] << 8 | data[i]) & 0x7FFF) if (data[i+1] & 2**7) else (data[i+1] << 8 | data[i]) & 0x7FFF )for i in list(range(1,199,2))])
@@ -223,7 +225,7 @@ class streamAdcThread(QThread):
                     #out.append([(((data[i+1] << 8 | data[i]) & 0xFFFF) + 2**15) % 2**16 - 2**15 if i > 192 else (data[i+1] << 8 | data[i]) & 0x7FFF for i in list(range(1,199,2))])
                     # out = [data[0] if i == -1 else ((data[i + 1] << 8 | data[i]) & 0x7FFF if i < 193 else (time.time() - t_0 if i > 193 else (data[i + 1] << 8 | data[i]))) for i in list(range(-1, 197, 2))]
                     data_point = self.dataTable.row
-                    data_point['out'] = [data[0] if i == -1 else ((data[i + 1] << 8 | data[i]) & 0x7FFF if i < 193 else (data[i + 1] << 8 | data[i])) for i in list(range(-1, 195, 2))]
+                    data_point['out'] = [data[0] if i == -1 else ((data[i + 1] << 8 | data[i]) & 0x7FFF if i < datalen - 7 else (data[i + 1] << 8 | data[i])) for i in list(range(-1, datalen - 5, 2))]
                     # data_point['crc'] = data[0]
                     # data_point['data'] = [(data[i + 1] << 8 | data[i]) for i in list(range(1, 193, 2))]
                     # data_point['ramp'] = (data[194] << 8 | data[193])
@@ -245,7 +247,7 @@ class streamAdcThread(QThread):
                     # out.append([(((data[i+1] << 8 | data[i]) & 0xFFFF) + 2**15) % 2**16 - 2**15 if i > 192 else (data[i+1] << 8 | data[i]) & 0x7FFF for i in list(range(1,199,2))])
                     # out = [data[0] if i == -1 else ((data[i + 1] << 8 | data[i]) & 0x7FFF if i < 193 else (time.time() - t_0 if i > 193 else (data[i + 1] << 8 | data[i]))) for i in list(range(-1, 197, 2))]
                     data_point = self.dataTable.row
-                    data_point['out'] = [data[0] if i == -1 else ((data[i + 1] << 8 | data[i]) & 0x7FFF if i < 193 else (data[i + 1] << 8 | data[i])) for i in list(range(-1, 195, 2))]
+                    data_point['out'] = [data[0] if i == -1 else ((data[i + 1] << 8 | data[i]) & 0x7FFF if i < datalen - 7 else (data[i + 1] << 8 | data[i])) for i in list(range(-1, datalen - 5, 2))]
                     # data_point['crc'] = data[0]
                     # data_point['data'] = [(data[i + 1] << 8 | data[i]) for i in list(range(1, 193, 2))]
                     # data_point['ramp'] = (data[194]<<8 | data[193])
@@ -375,21 +377,21 @@ class CMWorker(QThread):
         for loop in range(0,N):
             data = []
             count1 = 0
-            while (len(data) != 200):
-                temp = self.ser.read(200-len(data), timeout=0)
+            while (len(data) != datalen):
+                temp = self.ser.read(datalen-len(data), timeout=0)
                 data.extend(temp)
                 count1 += 1
                 if count1 == 20:
                     #print("break while reading 200 bytes of data")
                     break
 
-            if len(data) == 200:
+            if len(data) == datalen:
                 if data[0] == 0xAA and data[len(data) - 1] == 0x55:
                     samples += 1
                     # neural data (i<192) is unsigned 15-bit (16th bit is stim info)
                     # accelerometer data is 2's complement
                     #out.append([(((data[i + 1] << 8 | data[i]) & 0xFFFF) + 2 ** 15) % 2 ** 16 - 2 ** 15 if i > 192 else (data[i + 1] << 8 | data[i]) & 0x7FFF for i in list(range(1, 199, 2))])
-                    out.append([((data[i + 1] << 8 | data[i]) & 0xFFFF) if i > 192 else (data[i + 1] << 8 | data[i]) & 0x7FFF for i in list(range(1, 199, 2))])
+                    out.append([((data[i + 1] << 8 | data[i]) & 0xFFFF) if i > datalen - 8 else (data[i + 1] << 8 | data[i]) & 0x7FFF for i in list(range(1, datalen - 1, 2))])
 
                 elif data[0] == 0xFF and data[len(data) - 1] == 0x55:
                     samples += 1
@@ -397,7 +399,7 @@ class CMWorker(QThread):
                     # neural data (i<192) is unsigned 15-bit (16th bit is stim info)
                     # accelerometer data is 2's complement
                     #out.append([(((data[i + 1] << 8 | data[i]) & 0xFFFF) + 2 ** 15) % 2 ** 16 - 2 ** 15 if i > 192 else (data[i + 1] << 8 | data[i]) & 0x7FFF for i in list(range(1, 199, 2))])
-                    out.append([((data[i + 1] << 8 | data[i]) & 0xFFFF) if i > 192 else (data[i + 1] << 8 | data[i]) & 0x7FFF for i in list(range(1, 199, 2))])
+                    out.append([((data[i + 1] << 8 | data[i]) & 0xFFFF) if i > datalen - 8 else (data[i + 1] << 8 | data[i]) & 0x7FFF for i in list(range(1, datalen - 1, 2))])
                 else:
                     misalignments.append(loop)
                     count2 = 0
