@@ -63,7 +63,7 @@ class DataVisualizer(QDockWidget):
 
         self.numPlotsDisplayed = int(self.ui.numPlotsDisplayed.currentText())
         self.plots = [] # stores pyqtgraph objects
-        self.topPlot = 95 # which channel to begin display w/ (used for scrolling through plots)
+        self.topPlot = 0 # which channel to begin display w/ (used for scrolling through plots)
         self.fftPlots = []
         self.plotEn = [] # each plot can be enabled/disabled by pressing spacebar on top of it
         self.plotColors = []

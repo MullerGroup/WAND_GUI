@@ -17,7 +17,7 @@ from enum import Enum
 import numpy as np
 from queue import Queue
 
-datalen = 100
+datalen = 200
 
 # CM register addresses
 class Reg(Enum):
