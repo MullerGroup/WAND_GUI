@@ -50,6 +50,9 @@ timeQueue = Queue()
 class readFTDIFifoThread(QThread):
 
     fail = 0
+    misalignment_flag = 0
+    temp1 = 0
+    temp2 = 0
     # binaryFile = open('streams/' + datetime.datetime.now().strftime("%Y%m%d-%H%M%S") + '.txt', mode='wb')
 
     def __init__(self):
@@ -74,7 +77,9 @@ class readFTDIFifoThread(QThread):
 
         t_0 = time.time()
         while self._running:
-            data = []
+            if self.misalignment_flag == 0:
+                data = []
+            self.misalignment_flag = 0
             count1 = 0
             while (len(data) != datalen):
                 temp = CMWorker.ser.read(datalen - len(data), timeout=0)
@@ -94,10 +99,29 @@ class readFTDIFifoThread(QThread):
             else:
                 # keep reading from serial until we reach end-of-packet byte (flush until next packet)
                 # print("missed at least one sample")
+                # self.fail += 1
+                # temp = 0
+                # tries = 0
+                # while (temp != b'U'): # b'U' is 0x55 (end of packet byte)
+                #     temp = CMWorker.ser.read(1, timeout=0)
+                #     tries += 1
+                # print("Misalignment! length of data = {}, header = {}, footer = {}".format(len(data),data[0], data[len(data)-1]))
+                # print("Number of bytes flushed to fix misalignment: {}".format(tries))
+
                 self.fail += 1
-                temp = 0
-                while (temp != b'U'): # b'U' is 0x55 (end of packet byte)
-                    temp = CMWorker.ser.read(1, timeout=0)
+                tries = 0
+                self.temp1 = CMWorker.ser.read(1, timeout=0)
+                self.temp2 = CMWorker.ser.read(1, timeout=0)
+                while self.temp1 != b'U' and self.temp2!= b'\xAA':
+                    self.temp1 = self.temp2
+                    self.temp2 = CMWorker.ser.read(1, timeout=0)
+                    tries += 1
+                self.misalignment_flag = 1
+                data = []
+                data.extend(self.temp2)
+                print("Misalignment! length of data = {}, header = {}, footer = {}".format(len(data),data[0], data[len(data)-1]))
+                print("Number of bytes flushed to fix misalignment: {}".format(tries))
+
 
 class streamAdcThread(QThread):
 
@@ -254,8 +278,10 @@ class streamAdcThread(QThread):
         # only get here if we've called stop(), so turn off streaming mode
         print("success: {}. fail: {}. %: {}".format(success, ftdiFIFO.fail, 100*success/(success+ftdiFIFO.fail)))
         # print("success: {}. fail: {}. %: {}".format(success, fail, 100*success/(success+fail)))
-        print("Misalignments:")
-        print(str(misalignments).strip('[]'))
+        # print("Misalignments:")
+        # print(str(misalignments).strip('[]'))
+        # print("Number of bytes read to sync up after each failure: ")
+        # print(str(misalignments).strip('[]'))
         print("CRCs: {}".format(crcs))
         time.sleep(0.5)
 
