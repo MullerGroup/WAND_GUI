@@ -18,6 +18,7 @@ import numpy as np
 from queue import Queue
 
 datalen = 200
+ecglen = 6
 
 # CM register addresses
 class Reg(Enum):
@@ -34,7 +35,7 @@ class stream_data(IsDescription):
     # data = UInt16Col(shape=(96))
     # ramp = UInt16Col()
     # time = FloatCol()
-    out = UInt16Col(int(datalen/2 - 2))
+    out = UInt16Col(int((ecglen-2)/2))
     time = FloatCol()
 
 class stream_info(IsDescription):
@@ -81,8 +82,8 @@ class readFTDIFifoThread(QThread):
                 data = []
             self.misalignment_flag = 0
             count1 = 0
-            while (len(data) != datalen):
-                temp = CMWorker.ser.read(datalen - len(data), timeout=0)
+            while (len(data) != ecglen):
+                temp = CMWorker.ser.read(ecglen - len(data), timeout=0)
                 data.extend(temp)
                 count1 += 1
                 if count1 == 200:
@@ -92,7 +93,7 @@ class readFTDIFifoThread(QThread):
                     break
             # self.binaryFile.write(bytearray(data))
 
-            if len(data)==datalen and data[0]==0xAA and data[len(data)-1]==0x55:
+            if len(data)==ecglen and ((data[0]==0xAA) or (data[0]==0xFF)) and data[len(data)-1]==0x55:
                 # pass
                 dataQueue.put(data)
                 timeQueue.put(time.time() - t_0)
@@ -216,62 +217,63 @@ class streamAdcThread(QThread):
             data_time = timeQueue.get()
             # data = []
             # data_time = 0
-            if len(data) == datalen:
-                if data[0]==0xAA and data[len(data)-1]==0x55:
-                    success += 1
-                    #out.append([(((data[i+1] << 8 | data[i]) & 0xFFFF) + 2**15) % 2**16 - 2**15 if i > 192 else (-((data[i+1] << 8 | data[i]) & 0x7FFF) if (data[i+1] & 2**7) else (data[i+1] << 8 | data[i]) & 0x7FFF )for i in list(range(1,199,2))])
-                    # neural data (i<192) is unsigned 15-bit (16th bit is stim info)
-                    # accelerometer data is 2's complement
-                    #out.append([(((data[i+1] << 8 | data[i]) & 0xFFFF) + 2**15) % 2**16 - 2**15 if i > 192 else (data[i+1] << 8 | data[i]) & 0x7FFF for i in list(range(1,199,2))])
-                    # out = [data[0] if i == -1 else ((data[i + 1] << 8 | data[i]) & 0x7FFF if i < 193 else (time.time() - t_0 if i > 193 else (data[i + 1] << 8 | data[i]))) for i in list(range(-1, 197, 2))]
-                    data_point = self.dataTable.row
-                    data_point['out'] = [data[0] if i == -1 else ((data[i + 1] << 8 | data[i]) & 0x7FFF if i < datalen - 7 else (data[i + 1] << 8 | data[i])) for i in list(range(-1, datalen - 5, 2))]
-                    # data_point['crc'] = data[0]
-                    # data_point['data'] = [(data[i + 1] << 8 | data[i]) for i in list(range(1, 193, 2))]
-                    # data_point['ramp'] = (data[194] << 8 | data[193])
-                    # data_point['time'] = time.time() - t_0
-                    data_point['time'] = data_time
-                    data_point.append()
-                    # self.dataTable.flush()
+            if data[0]==0xAA:
+                success += 1
+                #out.append([(((data[i+1] << 8 | data[i]) & 0xFFFF) + 2**15) % 2**16 - 2**15 if i > 192 else (-((data[i+1] << 8 | data[i]) & 0x7FFF) if (data[i+1] & 2**7) else (data[i+1] << 8 | data[i]) & 0x7FFF )for i in list(range(1,199,2))])
+                # neural data (i<192) is unsigned 15-bit (16th bit is stim info)
+                # accelerometer data is 2's complement
+                #out.append([(((data[i+1] << 8 | data[i]) & 0xFFFF) + 2**15) % 2**16 - 2**15 if i > 192 else (data[i+1] << 8 | data[i]) & 0x7FFF for i in list(range(1,199,2))])
+                # out = [data[0] if i == -1 else ((data[i + 1] << 8 | data[i]) & 0x7FFF if i < 193 else (time.time() - t_0 if i > 193 else (data[i + 1] << 8 | data[i]))) for i in list(range(-1, 197, 2))]
+                data_point = self.dataTable.row
+                data_point['out'] = [(data[i + 1] << 8 | data[i]) & 0x7FFF for i in list(range(1,5,2))]
+                # data_point['out'] = [data[0] if i == -1 else ((data[i + 1] << 8 | data[i]) & 0x7FFF if i < datalen - 7 else (data[i + 1] << 8 | data[i])) for i in list(range(-1, datalen - 5, 2))]
+                # data_point['crc'] = data[0]
+                # data_point['data'] = [(data[i + 1] << 8 | data[i]) for i in list(range(1, 193, 2))]
+                # data_point['ramp'] = (data[194] << 8 | data[193])
+                # data_point['time'] = time.time() - t_0
+                data_point['time'] = data_time
+                data_point.append()
+                # self.dataTable.flush()
 
-                    # self.csvfile.writerow(out[45:-1])
-                    # self.csvfile.writerow([out[97]])
-                    # self.csvfile.writerow(out)
+                # self.csvfile.writerow(out[45:-1])
+                # self.csvfile.writerow([out[97]])
+                # self.csvfile.writerow(out)
 
-                elif data[0] == 0xFF and data[len(data) - 1] == 0x55:
-                    crcs += 1
-                    success += 1
-                    # out.append([(((data[i+1] << 8 | data[i]) & 0xFFFF) + 2**15) % 2**16 - 2**15 if i > 192 else (-((data[i+1] << 8 | data[i]) & 0x7FFF) if (data[i+1] & 2**7) else (data[i+1] << 8 | data[i]) & 0x7FFF )for i in list(range(1,199,2))])
-                    # neural data (i<192) is unsigned 15-bit (16th bit is stim info)
-                    # accelerometer data is 2's complement
-                    # out.append([(((data[i+1] << 8 | data[i]) & 0xFFFF) + 2**15) % 2**16 - 2**15 if i > 192 else (data[i+1] << 8 | data[i]) & 0x7FFF for i in list(range(1,199,2))])
-                    # out = [data[0] if i == -1 else ((data[i + 1] << 8 | data[i]) & 0x7FFF if i < 193 else (time.time() - t_0 if i > 193 else (data[i + 1] << 8 | data[i]))) for i in list(range(-1, 197, 2))]
-                    data_point = self.dataTable.row
-                    data_point['out'] = [data[0] if i == -1 else ((data[i + 1] << 8 | data[i]) & 0x7FFF if i < datalen - 7 else (data[i + 1] << 8 | data[i])) for i in list(range(-1, datalen - 5, 2))]
-                    # data_point['crc'] = data[0]
-                    # data_point['data'] = [(data[i + 1] << 8 | data[i]) for i in list(range(1, 193, 2))]
-                    # data_point['ramp'] = (data[194]<<8 | data[193])
-                    data_point['time'] = data_time
-                    data_point.append()
-                    # self.dataTable.flush()
+            else:
+                crcs += 1
+                success += 1
+                # out.append([(((data[i+1] << 8 | data[i]) & 0xFFFF) + 2**15) % 2**16 - 2**15 if i > 192 else (-((data[i+1] << 8 | data[i]) & 0x7FFF) if (data[i+1] & 2**7) else (data[i+1] << 8 | data[i]) & 0x7FFF )for i in list(range(1,199,2))])
+                # neural data (i<192) is unsigned 15-bit (16th bit is stim info)
+                # accelerometer data is 2's complement
+                # out.append([(((data[i+1] << 8 | data[i]) & 0xFFFF) + 2**15) % 2**16 - 2**15 if i > 192 else (data[i+1] << 8 | data[i]) & 0x7FFF for i in list(range(1,199,2))])
+                # out = [data[0] if i == -1 else ((data[i + 1] << 8 | data[i]) & 0x7FFF if i < 193 else (time.time() - t_0 if i > 193 else (data[i + 1] << 8 | data[i]))) for i in list(range(-1, 197, 2))]
+                data_point = self.dataTable.row
+                data_point['out'] = [(data[i + 1] << 8 | data[i]) & 0x7FFF for i in list(range(1, 5, 2))]
+                # data_point['out'] = [data[0] if i == -1 else ((data[i + 1] << 8 | data[i]) & 0x7FFF if i < datalen - 7 else (data[i + 1] << 8 | data[i])) for i in list(range(-1, datalen - 5, 2))]
+                # data_point['crc'] = data[0]
+                # data_point['data'] = [(data[i + 1] << 8 | data[i]) for i in list(range(1, 193, 2))]
+                # data_point['ramp'] = (data[194]<<8 | data[193])
+                data_point['time'] = data_time
+                data_point.append()
+                # self.dataTable.flush()
 
-                    # self.csvfile.writerow([out[45:-1]])
-                    # self.csvfile.writerow([out[97]])
-                    # self.csvfile.writerow(out)
+                # self.csvfile.writerow([out[45:-1]])
+                # self.csvfile.writerow([out[97]])
+                # self.csvfile.writerow(out)
 
-                else:
-                    fail += 1
-                    # misalignments.append(samples)
-                    # print("misalignment!")
-                    # keep reading from serial until we reach end-of-packet byte (flush until next packet)
-                    temp = 0
-                    # TODO: should actually check that we have 0x55 followed by 0xAA in order to be sure we're at the end of one packet and start of another
-                    while (temp != b'U'): # b'U' is 0x55 (end of packet byte)
-                        temp = CMWorker.ser.read(1, timeout=0)
+            # else:
+            #     fail += 1
+            #     # misalignments.append(samples)
+            #     # print("misalignment!")
+            #     # keep reading from serial until we reach end-of-packet byte (flush until next packet)
+            #     temp = 0
+            #     # TODO: should actually check that we have 0x55 followed by 0xAA in order to be sure we're at the end of one packet and start of another
+            #     while (temp != b'U'): # b'U' is 0x55 (end of packet byte)
+            #         temp = CMWorker.ser.read(1, timeout=0)
 
-                # flush the tables every 1000 samples (any speed up?)
-                if samples%1000 == 0:
-                    self.dataTable.flush()
+            # flush the tables every 1000 samples (any speed up?)
+            if samples%1000 == 0:
+                self.dataTable.flush()
 
 
         ftdiFIFO.stop() # turn off FTDI fifo reading thread
