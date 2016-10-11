@@ -126,7 +126,8 @@ class readFTDIFifoThread(QThread):
 
 class streamAdcThread(QThread):
 
-    # streamAdcData = pyqtSignal(list)
+
+    streamAdcData = pyqtSignal(list)
     streamChunkSize = 1
     plotChunkSize = 100
     read_count = 0
@@ -194,6 +195,7 @@ class streamAdcThread(QThread):
         samples = 0
         misalignments = []
         t_0 = time.time()
+        count = 0
 
         # initialize ftdiFIFO thread and start it
         ftdiFIFO = readFTDIFifoThread()
@@ -202,6 +204,7 @@ class streamAdcThread(QThread):
         while self._running:
             # changed the number of bytes to read to 200: this includes 96 channels + 6 bytes of accelerometer data
             samples += 1
+            count += 1
             # data = []
             # count1 = 0
             # while (len(data) != 200):
@@ -215,6 +218,12 @@ class streamAdcThread(QThread):
             #         break
             data = dataQueue.get()
             data_time = timeQueue.get()
+
+            out.append([(data[i + 1] << 8 | data[i]) & 0x7FFF for i in list(range(1, 5, 2))])
+            if count == 50:
+                count = 0
+                self.streamAdcData.emit(out)
+                out = []
             # data = []
             # data_time = 0
             if data[0]==0xAA:

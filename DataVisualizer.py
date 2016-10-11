@@ -72,6 +72,7 @@ class DataVisualizer(QDockWidget):
         # initialize streaming mode thread
         self.streamAdcThread = cmbackend.streamAdcThread()
         self.connect(self.streamAdcThread, SIGNAL("finished()"), self.streamingDone)
+        self.streamAdcThread.streamAdcData.connect(self.streamAdcData)
         # self.connect(self.streamAdcThread, SIGNAL('streamDataOut(PyQt_PyObject)'), self.streamAdcData)
 
         # hdf5 data storage
@@ -79,9 +80,6 @@ class DataVisualizer(QDockWidget):
         # self.saveFile = tables.open_file("test.hdf", mode="w", title="Test")
         # self.dataGroup = self.saveFile.create_group("/", name='dataGroup', title='Recorded Data Group')
         # self.dataTable = self.saveFile.create_table(self.dataGroup, name='dataTable', title='Recorded Data Table', description=omni_data)
-
-        self.file = open('gui_data.csv','w')
-        self.csvfile = csv.writer(self.file)
 
         self.setWindowTitle("Data Visualizer")
 
@@ -197,6 +195,11 @@ class DataVisualizer(QDockWidget):
             self.saveData()
         #if self.ui.plotEn.isChecked():
         self.updatePlot()
+
+    @pyqtSlot(list)
+    def streamAdcData(self, data):
+        self.data = data
+        self.updatePlotStream()
 
     # @pyqtSlot(list)
     # def streamAdcData(self, data):
@@ -416,5 +419,62 @@ class DataVisualizer(QDockWidget):
                     # self.fftPlots[ch].plot(y=calculateFFT(dp), pen=(102,204,255))
                     # if self.ui.autorange.isChecked():
                         # self.fftPlots[ch].getViewBox().autoRange()
+
+# TODO: add FFT plotting + a way to enable/disable channels
+
+    @pyqtSlot()
+    def updatePlotStream(self):
+        if self.data:
+            # loop through samples
+            for t in range(0, len(self.data)):
+                if self.plotPointer == self.xRange:
+                    self.plotPointer = 0
+                # grab specific sample
+                temp = self.data[t]
+                # temp = self.data.pop(0) # pop data for sample = 0, 1, 2, ...
+                for ch in range(0, 2):
+                    self.dataPlot[ch][self.plotPointer] = temp[ch]
+                    # self.dataPlot[ch][self.plotPointer] = temp.pop(0) # pop data for channel = 0, 1, 2, ...
+                self.dataPlot[2][self.plotPointer] = temp[1]-temp[0]
+                self.plotPointer += 1
+            self.data = []
+
+# TODO: scale all y axes together? turn off auto-scale?
+
+        for ch in range(0,3): # only plot currently displayed plots
+            dp = self.dataPlot[ch][0:self.xRange]
+            # add back in to test new autorange
+            avg = np.mean(dp)
+            sd = np.std(dp)
+            if sd < 10:
+                sd = 10
+
+            # # formatting the data for neural/accelerometer channels
+            # if ch > 95:
+            #     # accelerometer data, 2's complement
+            #     dp = (dp + 2**15) % 2**16 - 2**15
+            # else:
+            #     # neural data, sign + magnitude
+            #     if dp & 2**15:
+            #         # negative
+            #         dp = -(dp & 0x7FFF)
+
+            self.plots[ch].clear()
+            # self.fftPlots[ch].clear()
+            if self.plotEn[ch]:
+                self.plots[ch].plot(y=dp, pen=self.plotColors[ch]) # different color for each plot
+                # add back in to test new autorange
+                self.plots[ch].getViewBox().setMouseEnabled(x=True,y=True)
+                self.plots[ch].getViewBox().setMouseMode(self.plots[ch].getViewBox().RectMode)
+                if ch < 99 and ch > 95:
+                    self.plots[ch].getViewBox().setLimits(xMin=0,xMax=self.xRange,yMin=-100,yMax=65636)
+                else:
+                    self.plots[ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=-100, yMax=32868)
+                self.plots[ch].getViewBox().setRange(yRange=(avg-(2.5*sd),avg+(2.5*sd)),update=True)
+                if self.ui.autorange.isChecked():
+                    self.plots[ch].getViewBox().autoRange()
+                # self.fftPlots[ch].plot(y=calculateFFT(dp), pen=(102,204,255))
+                # if self.ui.autorange.isChecked():
+                    # self.fftPlots[ch].getViewBox().autoRange()
 
 # TODO: add FFT plotting + a way to enable/disable channels
