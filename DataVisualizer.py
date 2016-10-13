@@ -468,6 +468,8 @@ class DataVisualizer(QDockWidget):
                 self.plots[ch].getViewBox().setMouseMode(self.plots[ch].getViewBox().RectMode)
                 if ch < 99 and ch > 95:
                     self.plots[ch].getViewBox().setLimits(xMin=0,xMax=self.xRange,yMin=-100,yMax=65636)
+                elif ch == 2:
+                    self.plots[ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=-500, yMax=500)
                 else:
                     self.plots[ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=-100, yMax=32868)
                 self.plots[ch].getViewBox().setRange(yRange=(avg-(2.5*sd),avg+(2.5*sd)),update=True)
