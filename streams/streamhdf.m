@@ -92,6 +92,7 @@ classdef streamhdf < handle
             this.channels = [];
             hdf = h5read(hdffile,'/infoGroup/infoTable');
             this.channels_raw = hdf.channels;
+%             this.channels_raw = [65535, 65535, 65532, 0, 0, 0, 0, 0];
             
             for i = 1:length(this.channels_raw)
                 temp = dec2bin(this.channels_raw(i),16);

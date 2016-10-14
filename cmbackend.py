@@ -17,7 +17,7 @@ from enum import Enum
 import numpy as np
 from queue import Queue
 
-datalen = 100
+datalen = 200
 
 # CM register addresses
 class Reg(Enum):
@@ -40,19 +40,12 @@ class stream_data(IsDescription):
 class stream_info(IsDescription):
     channels = UInt16Col(shape=(8))
 
-# data queue used to read out FTDI fifo data and store it locally by readFTDIFifoThread class
 dataQueue = Queue()
-
-# another queue used to store the "time stamps" for the data pulled from FTDI fifo
-# this ensures we record the time the sample arrived at the PC instead of the time it was written to file
 timeQueue = Queue()
 
 class readFTDIFifoThread(QThread):
 
     fail = 0
-    misalignment_flag = 0
-    temp1 = 0
-    temp2 = 0
     # binaryFile = open('streams/' + datetime.datetime.now().strftime("%Y%m%d-%H%M%S") + '.txt', mode='wb')
 
     def __init__(self):
@@ -76,10 +69,11 @@ class readFTDIFifoThread(QThread):
             self._running = True
 
         t_0 = time.time()
+        misalignment_flag = 0
         while self._running:
-            if self.misalignment_flag == 0:
+            if misalignment_flag == 0:
                 data = []
-            self.misalignment_flag = 0
+            misalignment_flag = 0
             count1 = 0
             while (len(data) != datalen):
                 temp = CMWorker.ser.read(datalen - len(data), timeout=0)
@@ -92,7 +86,7 @@ class readFTDIFifoThread(QThread):
                     break
             # self.binaryFile.write(bytearray(data))
 
-            if len(data)==datalen and data[0]==0xAA and data[len(data)-1]==0x55:
+            if len(data)==datalen and (data[0]==0xAA or data[0]==0xFF) and data[len(data)-1]==0x55:
                 # pass
                 dataQueue.put(data)
                 timeQueue.put(time.time() - t_0)
@@ -108,19 +102,20 @@ class readFTDIFifoThread(QThread):
                 # print("Misalignment! length of data = {}, header = {}, footer = {}".format(len(data),data[0], data[len(data)-1]))
                 # print("Number of bytes flushed to fix misalignment: {}".format(tries))
 
+                CMWorker.ser.flush()
                 self.fail += 1
-                tries = 0
-                self.temp1 = CMWorker.ser.read(1, timeout=0)
-                self.temp2 = CMWorker.ser.read(1, timeout=0)
-                while self.temp1 != b'U' and self.temp2!= b'\xAA':
-                    self.temp1 = self.temp2
-                    self.temp2 = CMWorker.ser.read(1, timeout=0)
-                    tries += 1
-                self.misalignment_flag = 1
+                # tries = 0
+                temp1 = 0
+                temp2 = 0
+                while not (temp1 == b'U' and (temp2 == b'\xAA' or temp2 == b'\xFF')):
+                    temp1 = temp2
+                    temp2 = CMWorker.ser.read(1, timeout=0)
+                    # tries += 1
+                misalignment_flag = 1
+                # print("Misalignment! length of data = {}, header = {}, footer = {}".format(len(data),data[0], data[len(data)-1]))
+                # print("Number of bytes flushed to fix misalignment: {}".format(tries))
                 data = []
-                data.extend(self.temp2)
-                print("Misalignment! length of data = {}, header = {}, footer = {}".format(len(data),data[0], data[len(data)-1]))
-                print("Number of bytes flushed to fix misalignment: {}".format(tries))
+                data.extend(temp2)
 
 
 class streamAdcThread(QThread):
@@ -264,10 +259,12 @@ class streamAdcThread(QThread):
                     # misalignments.append(samples)
                     # print("misalignment!")
                     # keep reading from serial until we reach end-of-packet byte (flush until next packet)
-                    temp = 0
-                    # TODO: should actually check that we have 0x55 followed by 0xAA in order to be sure we're at the end of one packet and start of another
-                    while (temp != b'U'): # b'U' is 0x55 (end of packet byte)
-                        temp = CMWorker.ser.read(1, timeout=0)
+                    # temp1 = CMWorker.ser.read(1, timeout=0)
+                    # temp2 = CMWorker.ser.read(1, timeout=0)
+                    # while temp1 != b'U' and temp2!= b'\xAA':
+                    #     temp1 = temp2
+                    #     temp2 = CMWorker.ser.read(1, timeout=0)
+                    # flushed = True
 
                 # flush the tables every 1000 samples (any speed up?)
                 if samples%1000 == 0:
@@ -275,6 +272,7 @@ class streamAdcThread(QThread):
 
 
         ftdiFIFO.stop() # turn off FTDI fifo reading thread
+        print("Stream ended at: {}".format(datetime.datetime.now()))
         # only get here if we've called stop(), so turn off streaming mode
         print("success: {}. fail: {}. %: {}".format(success, ftdiFIFO.fail, 100*success/(success+ftdiFIFO.fail)))
         # print("success: {}. fail: {}. %: {}".format(success, fail, 100*success/(success+fail)))
@@ -372,10 +370,13 @@ class CMWorker(QThread):
         emptylengths = 0
         crcs = 0
         samples = 0
+        misalignment_flag = 0
         # time.sleep(1)
         # return out
         for loop in range(0,N):
-            data = []
+            if misalignment_flag == 0:
+                data = []
+            misalignment_flag = 0
             count1 = 0
             while (len(data) != datalen):
                 temp = self.ser.read(datalen-len(data), timeout=0)
@@ -401,15 +402,20 @@ class CMWorker(QThread):
                     #out.append([(((data[i + 1] << 8 | data[i]) & 0xFFFF) + 2 ** 15) % 2 ** 16 - 2 ** 15 if i > 192 else (data[i + 1] << 8 | data[i]) & 0x7FFF for i in list(range(1, 199, 2))])
                     out.append([((data[i + 1] << 8 | data[i]) & 0xFFFF) if i > datalen - 8 else (data[i + 1] << 8 | data[i]) & 0x7FFF for i in list(range(1, datalen - 1, 2))])
                 else:
-                    misalignments.append(loop)
+                    CMWorker.ser.flush()
                     count2 = 0
-                    temp = 0
-                    # keep reading from serial until we reach end-of-packet byte (flush until next packet)
-                    while (temp != b'U'):
-                        temp = self.ser.read(1, timeout=0)
+                    misalignments.append(loop)
+                    temp1 = 0
+                    temp2 = 0
+                    while not (temp1 == b'U' and (temp2 == b'\xAA' or temp2 == b'\xFF')):
+                        temp1 = temp2
+                        temp2 = CMWorker.ser.read(1, timeout=0)
                         count2 += 1
                         if count2 == 500:
                             break
+                    misalignment_flag = 1
+                    data = []
+                    data.extend(temp2)
 
             else:
                 if len(data) == 0:
