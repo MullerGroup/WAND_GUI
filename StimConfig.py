@@ -184,7 +184,7 @@ class StimConfig(QDockWidget):
     writeReg = pyqtSignal(int, int, int)
 
     def __init__(self, parent=None, nm=0):
-        print("Init Stim Config")
+        # print("Init Stim Config")
         super().__init__(parent)
         self.nm = nm
         self.ui = Ui_StimConfig()

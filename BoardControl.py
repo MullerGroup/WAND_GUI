@@ -5,7 +5,7 @@ from ui.ui_boardcontrol import Ui_BoardControl
 class BoardControl(QDockWidget):
     refreshBoards = pyqtSignal()
     connectToBoard = pyqtSignal(str)
-    disconnectBoard = pyqtSignal()
+    disconnectBoard = pyqtSignal(str)
     resetSerial = pyqtSignal()
     flushCommandFifo = pyqtSignal()
     flushDataFifo = pyqtSignal()
@@ -14,7 +14,7 @@ class BoardControl(QDockWidget):
         super().__init__(parent)
         self.ui = Ui_BoardControl()
         self.ui.setupUi(self)
-        self.ui.disconnBtn.clicked.connect(self.disconnectBoard)
+        # self.ui.disconnBtn.clicked.connect(self.disconnectBoard)
         self.ui.refreshBtn.clicked.connect(self.refreshBoards)
 
     def setWorker(self, worker):
@@ -22,7 +22,7 @@ class BoardControl(QDockWidget):
         self.connectToBoard.connect(worker.connectToBoard)
         self.disconnectBoard.connect(worker.disconnectBoard)
         self.resetSerial.connect(worker.resetSerial)
-        self.flushCommandFifo.connect(worker.flushCommandFifo)
+        self.connect = self.flushCommandFifo.connect(worker.flushCommandFifo)
         self.flushDataFifo.connect(worker.flushDataFifo)
         worker.boardsChanged.connect(self.boardsChanged)
         worker.connStateChanged.connect(self.connStateChanged)
@@ -46,6 +46,12 @@ class BoardControl(QDockWidget):
         currBoard = self.ui.selectBox.currentText()
         if currBoard:
             self.connectToBoard.emit(currBoard)
+
+    @pyqtSlot()
+    def on_disconnBtn_clicked(self):
+        currBoard = self.ui.selectBox.currentText()
+        if currBoard:
+            self.disconnectBoard.emit(currBoard)
 
     @pyqtSlot()
     def on_flushCommandBtn_clicked(self):

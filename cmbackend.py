@@ -16,6 +16,10 @@ from tables import *
 from enum import Enum
 import numpy as np
 from queue import Queue
+import libusb1
+from ctypes import byref, create_string_buffer, c_int, sizeof, POINTER, \
+    cast, c_uint8, c_uint16, c_ubyte, string_at, c_void_p, cdll, addressof, \
+    c_char
 
 datalen = 200
 
@@ -43,9 +47,136 @@ class stream_info(IsDescription):
 dataQueue = Queue()
 timeQueue = Queue()
 
+# CP2130 functions for reading, writing, and setting various SPI parameters
+
+# change device to read priority
+def cp2130_libusb_set_usb_config(handle):
+	buf = c_ubyte * 10
+	control_buf_out = buf(0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80)
+	usbTimeout = 500
+
+	error_code = libusb1.libusb_control_transfer(handle, 0x40, 0x61, 0xA5F1, 0x000A, control_buf_out, sizeof(control_buf_out), usbTimeout)
+	if error_code != sizeof(control_buf_out):
+		print('Error in bulk transfer')
+		return False
+	# print('Successfully set value of spi_word on chip:')
+	# for i in control_buf_out:
+	# 	print(i)
+	return True
+
+# this function always writes 5 bytes. if you want to write more than that, have to parametrize it
+def cp2130_libusb_write(handle, value): # value should be a list of 5 bytes to write
+    buf = c_ubyte * 13
+    write_command_buf = buf(
+    	0x00, 0x00,
+    	0x01,
+    	0x00,
+    	0x01, 0x00, 0x00, 0x00)
+    # populate command buffer with value to write
+    write_command_buf[8:13] = value
+    bytesWritten = c_int()
+    usbTimeout = 500
+
+    error_code = libusb1.libusb_bulk_transfer(handle, 0x02, write_command_buf, sizeof(write_command_buf), byref(bytesWritten), usbTimeout)
+    if error_code:
+        print('Error in bulk transfer (write command)! Error # {}'.format(error_code))
+        return False
+    return True
+
+def cp2130_libusb_readRTR(handle):
+    buf = c_ubyte * 8
+    read_command_buf = buf(
+        0x00, 0x00,
+        0x04,
+        0x00,
+        datalen, 0x00, 0x00, 0x00)
+    bytesWritten = c_int()
+    buf = c_ubyte * datalen
+    read_input_buf = buf()
+    bytesRead = c_int()
+    usbTimeout = 500
+
+    error_code = libusb1.libusb_bulk_transfer(handle, 0x02, read_command_buf, sizeof(read_command_buf), byref(bytesWritten), usbTimeout)
+    if error_code:
+        print('Error in bulk transfer (read command). Error # {}'.format(error_code))
+        return False
+    if bytesWritten.value != sizeof(read_command_buf):
+        print('Error in bulk transfer write size')
+        print(bytesWritten.value)
+        return False
+    # time.sleep(0.05)
+    # while(1):
+    #     pass
+    error_code = libusb1.libusb_bulk_transfer(handle, 0x81, read_input_buf, sizeof(read_input_buf), byref(bytesRead), usbTimeout)
+    if error_code:
+        print('Error in bulk transfer (read buffer). Error # {}'.format(error_code))
+        return False
+    # for i in read_input_buf:
+    #     print('{} '.format(i), end="")
+    return read_input_buf
+
+def cp2130_libusb_read(handle):
+    buf = c_ubyte * 8
+    read_command_buf = buf(
+        0x00, 0x00,
+        0x00,
+        0x00,
+        datalen, 0x00, 0x00, 0x00)
+    bytesWritten = c_int()
+    buf = c_ubyte * datalen
+    read_input_buf = buf()
+    bytesRead = c_int()
+    usbTimeout = 500
+
+    error_code = libusb1.libusb_bulk_transfer(handle, 0x02, read_command_buf, sizeof(read_command_buf), byref(bytesWritten), usbTimeout)
+    if error_code:
+        print('Error in bulk transfer (read command). Error # {}'.format(error_code))
+        return False
+    if bytesWritten.value != sizeof(read_command_buf):
+        print('Error in bulk transfer write size')
+        print(bytesWritten.value)
+        return False
+    # time.sleep(0.05)
+    # while(1):
+    #     pass
+    error_code = libusb1.libusb_bulk_transfer(handle, 0x81, read_input_buf, sizeof(read_input_buf), byref(bytesRead), usbTimeout)
+    if error_code:
+        print('Error in bulk transfer (read buffer). Error # {}'.format(error_code))
+        return False
+    # for i in read_input_buf:
+    #     print('{} '.format(i), end="")
+    return read_input_buf
+
+def cp2130_libusb_set_spi_word(handle):
+	buf = c_ubyte * 2
+	control_buf_out = buf(0x00, 0x09)
+	usbTimeout = 500
+
+	error_code = libusb1.libusb_control_transfer(handle, 0x40, 0x31, 0x0000, 0x0000, control_buf_out, sizeof(control_buf_out), usbTimeout)
+	if error_code != sizeof(control_buf_out):
+		print('Error in bulk transfer')
+		return False
+	# for i in control_buf_out:
+	# 	print(i)
+	return True
+
+def cp2130_libusb_get_rtr_state(handle):
+	buf = c_ubyte * 1
+	control_buf_in = buf()
+	usbTimeout = 500
+
+	error_code = libusb1.libusb_control_transfer(handle, 0xC0, 0x36, 0x0000, 0x0000, control_buf_in, sizeof(control_buf_in), usbTimeout)
+	if error_code != sizeof(control_buf_in):
+		print('Error in bulk transfer')
+		return False
+	# print('RTR_state: ')
+	# for i in control_buf_in:
+	# 	print(i)
+	return True
+
+
 class readFTDIFifoThread(QThread):
 
-    fail = 0
     # binaryFile = open('streams/' + datetime.datetime.now().strftime("%Y%m%d-%H%M%S") + '.txt', mode='wb')
 
     def __init__(self):
@@ -60,110 +191,42 @@ class readFTDIFifoThread(QThread):
 
     def run(self):
         # make sure serial device is open
-        if not CMWorker.ser._opened:
+        if not CMWorker.cp2130Handle:
             return
 
         # reset
         if not self._running:
-            CMWorker.ser.flush()
+            # CMWorker.ser.flush()
             self._running = True
 
         t_0 = time.time()
-        misalignment_flag = 0
         while self._running:
-            if misalignment_flag == 0:
-                data = []
-            misalignment_flag = 0
-            count1 = 0
-            while (len(data) != datalen):
-                temp = CMWorker.ser.read(datalen - len(data), timeout=0)
-                data.extend(temp)
-                count1 += 1
-                if count1 == 200:
-                    print('Stream dead')
-                    self._running = False
-                    CMWorker()._regWr(Reg.req, 0x0000)
-                    break
-            # self.binaryFile.write(bytearray(data))
-
-            if len(data)==datalen and (data[0]==0xAA or data[0]==0xFF) and data[len(data)-1]==0x55:
-                # pass
+            data = cp2130_libusb_read(CMWorker.cp2130Handle)
+            if data:
                 dataQueue.put(data)
                 timeQueue.put(time.time() - t_0)
-            else:
-                # keep reading from serial until we reach end-of-packet byte (flush until next packet)
-                # print("missed at least one sample")
-                # self.fail += 1
-                # temp = 0
-                # tries = 0
-                # while (temp != b'U'): # b'U' is 0x55 (end of packet byte)
-                #     temp = CMWorker.ser.read(1, timeout=0)
-                #     tries += 1
-                # print("Misalignment! length of data = {}, header = {}, footer = {}".format(len(data),data[0], data[len(data)-1]))
-                # print("Number of bytes flushed to fix misalignment: {}".format(tries))
-
-                CMWorker.ser.flush()
-                self.fail += 1
-                # tries = 0
-                temp1 = 0
-                temp2 = 0
-                while not (temp1 == b'U' and (temp2 == b'\xAA' or temp2 == b'\xFF')):
-                    temp1 = temp2
-                    temp2 = CMWorker.ser.read(1, timeout=0)
-                    # tries += 1
-                misalignment_flag = 1
-                # print("Misalignment! length of data = {}, header = {}, footer = {}".format(len(data),data[0], data[len(data)-1]))
-                # print("Number of bytes flushed to fix misalignment: {}".format(tries))
-                data = []
-                data.extend(temp2)
-
 
 class streamAdcThread(QThread):
 
-    # streamAdcData = pyqtSignal(list)
-    streamChunkSize = 1
-    plotChunkSize = 100
-    read_count = 0
-
     def __init__(self):
         QThread.__init__(self)
-        # print("turned ON streaming mode")
         self._running = True
 
     def __del__(self):
-        # if CMWorker.ser._opened:
-            # CMWorker()._regWr(Reg.req, 0x0000) # turn off streaming mode
-        # print("turned OFF streaming mode")
         self.wait()
 
     def stop(self):
-        # self.terminate()
         self._running = False
         CMWorker()._regWr(Reg.req, 0x0000)
 
-
     def run(self):
         # make sure serial device is open
-        if not CMWorker.ser._opened:
+        if not CMWorker.cp2130Handle:
             return
 
         # reset
         if not self._running:
-            CMWorker.ser.flush()
             self._running = True
-
-
-        # # # get file for saving using datetime
-        # self.file = 'streams/' + datetime.datetime.now().strftime("%Y%m%d-%H%M%S") + '.csv'
-        #
-        # self.fn = open(self.file, 'w')
-        # self.csvfile = csv.writer(self.fn)
-        #
-        # self.csvfile.writerow(CMWorker.enabledChannels)
-        #
-        # start = datetime.datetime.now()
-        # print("Stream started at: {}".format(start))
-        # self.csvfile.writerow([start])
 
         self.saveFile = tables.open_file('streams/' + datetime.datetime.now().strftime("%Y%m%d-%H%M%S") + '.hdf', mode="w", title="Stream")
         self.dataGroup = self.saveFile.create_group("/", name='dataGroup', title='Recorded Data Group')
@@ -178,15 +241,13 @@ class streamAdcThread(QThread):
         data_point.append()
         self.infoTable.flush()
 
-        CMWorker()._regWr(Reg.req, 0x0030 | self.streamChunkSize<<16) # put CM into streaming mode for both NMs
+        CMWorker()._regWr(Reg.req, 0x0030) # put CM into streaming mode for both NMs
 
         out = []
-        self.read_count = 0
         success = 0
         crcs = 0
         fail = 0
         samples = 0
-        misalignments = []
         t_0 = time.time()
 
         # initialize ftdiFIFO thread and start it
@@ -194,87 +255,36 @@ class streamAdcThread(QThread):
         ftdiFIFO.start()
 
         while self._running:
-            # changed the number of bytes to read to 200: this includes 96 channels + 6 bytes of accelerometer data
             samples += 1
-            # data = []
-            # count1 = 0
-            # while (len(data) != 200):
-            #     temp = CMWorker.ser.read(200 - len(data), timeout=0)
-            #     data.extend(temp)
-            #     count1 += 1
-            #     if count1 == 200:
-            #         print('Stream dead')
-            #         self._running = False
-            #         CMWorker()._regWr(Reg.req, 0x0000)
-            #         break
             data = dataQueue.get()
             data_time = timeQueue.get()
-            # data = []
-            # data_time = 0
-            if len(data) == datalen:
-                if data[0]==0xAA and data[len(data)-1]==0x55:
+            if len(data) == datalen and data[1] == datalen:
+                if data[0]==0x00: # no CRC
                     success += 1
-                    #out.append([(((data[i+1] << 8 | data[i]) & 0xFFFF) + 2**15) % 2**16 - 2**15 if i > 192 else (-((data[i+1] << 8 | data[i]) & 0x7FFF) if (data[i+1] & 2**7) else (data[i+1] << 8 | data[i]) & 0x7FFF )for i in list(range(1,199,2))])
-                    # neural data (i<192) is unsigned 15-bit (16th bit is stim info)
-                    # accelerometer data is 2's complement
-                    #out.append([(((data[i+1] << 8 | data[i]) & 0xFFFF) + 2**15) % 2**16 - 2**15 if i > 192 else (data[i+1] << 8 | data[i]) & 0x7FFF for i in list(range(1,199,2))])
-                    # out = [data[0] if i == -1 else ((data[i + 1] << 8 | data[i]) & 0x7FFF if i < 193 else (time.time() - t_0 if i > 193 else (data[i + 1] << 8 | data[i]))) for i in list(range(-1, 197, 2))]
                     data_point = self.dataTable.row
-                    data_point['out'] = [data[0] if i == -1 else ((data[i + 1] << 8 | data[i]) & 0x7FFF if i < datalen - 7 else (data[i + 1] << 8 | data[i])) for i in list(range(-1, datalen - 5, 2))]
-                    # data_point['crc'] = data[0]
-                    # data_point['data'] = [(data[i + 1] << 8 | data[i]) for i in list(range(1, 193, 2))]
-                    # data_point['ramp'] = (data[194] << 8 | data[193])
-                    # data_point['time'] = time.time() - t_0
+                    data_point['out'] = [data[0] if i == 0 else ((data[i + 1] << 8 | data[i]) & 0x7FFF if i < datalen - 7 else (data[i + 1] << 8 | data[i])) for i in list(range(0, datalen, 2))]
                     data_point['time'] = data_time
                     data_point.append()
-                    # self.dataTable.flush()
 
-                    # self.csvfile.writerow(out[45:-1])
-                    # self.csvfile.writerow([out[97]])
-                    # self.csvfile.writerow(out)
-
-                elif data[0] == 0xFF and data[len(data) - 1] == 0x55:
+                elif data[0] == 0xFF: # CRC
                     crcs += 1
                     success += 1
-                    # out.append([(((data[i+1] << 8 | data[i]) & 0xFFFF) + 2**15) % 2**16 - 2**15 if i > 192 else (-((data[i+1] << 8 | data[i]) & 0x7FFF) if (data[i+1] & 2**7) else (data[i+1] << 8 | data[i]) & 0x7FFF )for i in list(range(1,199,2))])
-                    # neural data (i<192) is unsigned 15-bit (16th bit is stim info)
-                    # accelerometer data is 2's complement
-                    # out.append([(((data[i+1] << 8 | data[i]) & 0xFFFF) + 2**15) % 2**16 - 2**15 if i > 192 else (data[i+1] << 8 | data[i]) & 0x7FFF for i in list(range(1,199,2))])
-                    # out = [data[0] if i == -1 else ((data[i + 1] << 8 | data[i]) & 0x7FFF if i < 193 else (time.time() - t_0 if i > 193 else (data[i + 1] << 8 | data[i]))) for i in list(range(-1, 197, 2))]
                     data_point = self.dataTable.row
-                    data_point['out'] = [data[0] if i == -1 else ((data[i + 1] << 8 | data[i]) & 0x7FFF if i < datalen - 7 else (data[i + 1] << 8 | data[i])) for i in list(range(-1, datalen - 5, 2))]
-                    # data_point['crc'] = data[0]
-                    # data_point['data'] = [(data[i + 1] << 8 | data[i]) for i in list(range(1, 193, 2))]
-                    # data_point['ramp'] = (data[194]<<8 | data[193])
+                    data_point['out'] = [data[0] if i == 0 else ((data[i + 1] << 8 | data[i]) & 0x7FFF if i < datalen - 7 else (data[i + 1] << 8 | data[i])) for i in list(range(0, datalen, 2))]
                     data_point['time'] = data_time
                     data_point.append()
-                    # self.dataTable.flush()
 
-                    # self.csvfile.writerow([out[45:-1]])
-                    # self.csvfile.writerow([out[97]])
-                    # self.csvfile.writerow(out)
-
-                else:
+                else: # should never get here?
                     fail += 1
-                    # misalignments.append(samples)
-                    # print("misalignment!")
-                    # keep reading from serial until we reach end-of-packet byte (flush until next packet)
-                    # temp1 = CMWorker.ser.read(1, timeout=0)
-                    # temp2 = CMWorker.ser.read(1, timeout=0)
-                    # while temp1 != b'U' and temp2!= b'\xAA':
-                    #     temp1 = temp2
-                    #     temp2 = CMWorker.ser.read(1, timeout=0)
-                    # flushed = True
 
                 # flush the tables every 1000 samples (any speed up?)
                 if samples%1000 == 0:
                     self.dataTable.flush()
 
-
         ftdiFIFO.stop() # turn off FTDI fifo reading thread
         print("Stream ended at: {}".format(datetime.datetime.now()))
         # only get here if we've called stop(), so turn off streaming mode
-        print("success: {}. fail: {}. %: {}".format(success, ftdiFIFO.fail, 100*success/(success+ftdiFIFO.fail)))
+        # print("success: {}. fail: {}. %: {}".format(success, ftdiFIFO.fail, 100*success/(success+ftdiFIFO.fail)))
         # print("success: {}. fail: {}. %: {}".format(success, fail, 100*success/(success+fail)))
         # print("Misalignments:")
         # print(str(misalignments).strip('[]'))
@@ -285,7 +295,7 @@ class streamAdcThread(QThread):
 
         CMWorker()._regWr(Reg.req, 0x0000) # turn off streaming mode
         print("End of Stream")
-        CMWorker.ser.flush()
+        # CMWorker.ser.flush()
         print("Fifos Flushed")
 
         self.saveFile.close()
@@ -299,7 +309,18 @@ class CMWorker(QThread):
 
     enabledChannels = [65535,65535,65535,65535,65535,65535,0,0]
 
-    ser = Device(lazy_open=True)
+    # ser = Device(lazy_open=True)
+
+    # initializing libusb and device things
+    context = libusb1.libusb_context_p()
+    deviceList = libusb1.libusb_device_p_p()
+    deviceCount = 0
+    deviceDescriptor = libusb1.libusb_device_descriptor()
+    device = libusb1.libusb_device_p()
+    cp2130Handle = libusb1.libusb_device_handle_p()
+    kernelAttached = 0
+    if libusb1.libusb_init(byref(context)) != 0:
+        print('Could not initialize libusb!')
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -309,10 +330,7 @@ class CMWorker(QThread):
         self.wait()
 
     def _regWr(self, reg, value):
-        s = struct.pack(">cI", bytes([reg.value]), value)
-        # print("reg wr: {}".format(s))
-        # print("reg wr: {:04x} {:04x}".format(reg.value, value))
-        self.ser.write(s)
+        cp2130_libusb_write(CMWorker.cp2130Handle, [reg.value, *struct.pack('>I', value)])
 
     def _resetIF(self):
         # reset AM
@@ -336,14 +354,14 @@ class CMWorker(QThread):
             self._regWr(Reg.n0d2, addr << 16 | data)
             self._regWr(Reg.ctrl, 0x1000)
             if not write:
-                # self.ser.setTimeout(3)
                 self._regWr(Reg.req, 0x0100)
-                d = self.ser.read(4, timeout=1)
-                # self.ser.setTimeout(1)
-                if len(d) != 4:
-                    raise Exception("Reg read failed: {}/4 bytes, {}".format(len(d), d))
+                # d = self.ser.read(4, timeout=1)
+                d = cp2130_libusb_readRTR(CMWorker.cp2130Handle)
+                # print(d)
+                # if len(d) != 4:
+                #     raise Exception("Reg read failed: {}/4 bytes, {}".format(len(d), d))
                 if (d[1] << 8 | d[0]) != addr:
-                    raise Exception("Reg read failed - wrong register value: {}".format(d))
+                    raise Exception("Reg read failed - wrong register value")
                 return d[3] << 8 | d[2]
 
         if nm==1:
@@ -351,14 +369,14 @@ class CMWorker(QThread):
             self._regWr(Reg.n1d2, addr << 16 | data)
             self._regWr(Reg.ctrl, 0x2000)
             if not write:
-                # self.ser.setTimeout(3)
                 self._regWr(Reg.req, 0x0200)
-                d = self.ser.read(4, timeout=1)
-                # self.ser.setTimeout(1)
-                if len(d) != 4:
-                    raise Exception("Reg read failed: {}/4 bytes, {}".format(len(d), d))
+                # d = self.ser.read(4, timeout=1)
+                d = cp2130_libusb_readRTR(CMWorker.cp2130Handle)
+                # print(d)
+                # if len(d) != 4:
+                #     raise Exception("Reg read failed: {}/4 bytes, {}".format(len(d), d))
                 if (d[1] << 8 | d[0]) != addr:
-                    raise Exception("Reg read failed - wrong register value: {}".format(d))
+                    raise Exception("Reg read failed - wrong register value")
                 return d[3] << 8 | d[2]
 
     def _getAdc(self, N):
@@ -371,51 +389,58 @@ class CMWorker(QThread):
         crcs = 0
         samples = 0
         misalignment_flag = 0
-        # time.sleep(1)
+        # time.sleep(0.01)
+        cp2130_libusb_get_rtr_state(self.cp2130Handle)
+        # data = cp2130_libusb_readRTR(CMWorker.cp2130Handle)
         # return out
         for loop in range(0,N):
             if misalignment_flag == 0:
                 data = []
             misalignment_flag = 0
             count1 = 0
-            while (len(data) != datalen):
-                temp = self.ser.read(datalen-len(data), timeout=0)
-                data.extend(temp)
-                count1 += 1
-                if count1 == 20:
-                    #print("break while reading 200 bytes of data")
-                    break
+            # while (len(data) != datalen):
+            #     temp = self.ser.read(datalen-len(data), timeout=0)
+            #     data.extend(temp)
+            #     count1 += 1
+            #     if count1 == 20:
+            #         #print("break while reading 200 bytes of data")
+            #         break
+            data = cp2130_libusb_readRTR(CMWorker.cp2130Handle)
+            # data = []
 
             if len(data) == datalen:
-                if data[0] == 0xAA and data[len(data) - 1] == 0x55:
-                    samples += 1
-                    # neural data (i<192) is unsigned 15-bit (16th bit is stim info)
-                    # accelerometer data is 2's complement
-                    #out.append([(((data[i + 1] << 8 | data[i]) & 0xFFFF) + 2 ** 15) % 2 ** 16 - 2 ** 15 if i > 192 else (data[i + 1] << 8 | data[i]) & 0x7FFF for i in list(range(1, 199, 2))])
-                    out.append([((data[i + 1] << 8 | data[i]) & 0xFFFF) if i > datalen - 8 else (data[i + 1] << 8 | data[i]) & 0x7FFF for i in list(range(1, datalen - 1, 2))])
+                # if data[0] == 0xAA and data[len(data) - 1] == 0x55:
+                samples += 1
+                # neural data (i<192) is unsigned 15-bit (16th bit is stim info)
+                # accelerometer data is 2's complement
+                #out.append([(((data[i + 1] << 8 | data[i]) & 0xFFFF) + 2 ** 15) % 2 ** 16 - 2 ** 15 if i > 192 else (data[i + 1] << 8 | data[i]) & 0x7FFF for i in list(range(1, 199, 2))])
+                # out.append([((data[i + 1] << 8 | data[i]) & 0xFFFF) if i > datalen - 8 else (data[i + 1] << 8 | data[i]) & 0x7FFF for i in list(range(1, datalen - 1, 2))])
+                out.append([((data[i + 1] << 8 | data[i]) & 0xFFFF) if i > datalen - 8 else (data[i + 1] << 8 | data[i]) & 0x7FFF for i in list(range(2, datalen - 1, 2))])
 
-                elif data[0] == 0xFF and data[len(data) - 1] == 0x55:
-                    samples += 1
-                    crcs += 1
-                    # neural data (i<192) is unsigned 15-bit (16th bit is stim info)
-                    # accelerometer data is 2's complement
-                    #out.append([(((data[i + 1] << 8 | data[i]) & 0xFFFF) + 2 ** 15) % 2 ** 16 - 2 ** 15 if i > 192 else (data[i + 1] << 8 | data[i]) & 0x7FFF for i in list(range(1, 199, 2))])
-                    out.append([((data[i + 1] << 8 | data[i]) & 0xFFFF) if i > datalen - 8 else (data[i + 1] << 8 | data[i]) & 0x7FFF for i in list(range(1, datalen - 1, 2))])
-                else:
-                    CMWorker.ser.flush()
-                    count2 = 0
-                    misalignments.append(loop)
-                    temp1 = 0
-                    temp2 = 0
-                    while not (temp1 == b'U' and (temp2 == b'\xAA' or temp2 == b'\xFF')):
-                        temp1 = temp2
-                        temp2 = CMWorker.ser.read(1, timeout=0)
-                        count2 += 1
-                        if count2 == 500:
-                            break
-                    misalignment_flag = 1
-                    data = []
-                    data.extend(temp2)
+                # elif data[0] == 0xFF and data[len(data) - 1] == 0x55:
+                #     samples += 1
+                #     crcs += 1
+                #     # neural data (i<192) is unsigned 15-bit (16th bit is stim info)
+                #     # accelerometer data is 2's complement
+                #     #out.append([(((data[i + 1] << 8 | data[i]) & 0xFFFF) + 2 ** 15) % 2 ** 16 - 2 ** 15 if i > 192 else (data[i + 1] << 8 | data[i]) & 0x7FFF for i in list(range(1, 199, 2))])
+                #     out.append([((data[i + 1] << 8 | data[i]) & 0xFFFF) if i > datalen - 8 else (data[i + 1] << 8 | data[i]) & 0x7FFF for i in list(range(1, datalen - 1, 2))])
+                # else:
+                #     # CMWorker.ser.flush()
+                #     print('misalignment during update')
+                #     break
+                #     count2 = 0
+                #     misalignments.append(loop)
+                #     temp1 = 0
+                #     temp2 = 0
+                #     while not (temp1 == b'U' and (temp2 == b'\xAA' or temp2 == b'\xFF')):
+                #         temp1 = temp2
+                #         temp2 = CMWorker.ser.read(1, timeout=0)
+                #         count2 += 1
+                #         if count2 == 500:
+                #             break
+                #     misalignment_flag = 1
+                #     data = []
+                #     data.extend(temp2)
 
             else:
                 if len(data) == 0:
@@ -425,96 +450,115 @@ class CMWorker(QThread):
 
             if emptylengths > 2:
                 break
+            # time.sleep(0.0001)
         print("Samples: {}".format(samples))
         print("Read {} bad lengths".format(badlengths))
         print("Misalignments:")
         print(str(misalignments).strip('[]'))
         print("CRCs: {}".format(crcs))
-        time.sleep(0.1)
-        self.ser.flush()
+        # time.sleep(0.1)
+        # self.ser.flush()
+        # print(out)
+        cp2130_libusb_get_rtr_state(self.cp2130Handle)
         return out
 
     @pyqtSlot(int)
     def readAdc(self, ns):
-        if not self.ser._opened:
+        if not self.cp2130Handle:
             return
         self.adcData.emit(self._getAdc(ns))
+
+
+    def exit_cp2130(self):
+        if self.cp2130Handle:
+            libusb1.libusb_release_interface(self.cp2130Handle, 0)
+        if self.kernelAttached:
+            libusb1.libusb_attach_kernel_driver(self.cp2130Handle,0)
+            if self.cp2130Handle:
+                libusb1.libusb_close(self.cp2130Handle)
+            if self.deviceList:
+                libusb1.libusb_free_device_list(self.deviceList, 1)
+            if self.context:
+                libusb1.libusb_exit(self.context)
 
     @pyqtSlot()
     def refreshBoards(self):
         dev_list = []
-        for device in Driver().list_devices():
-            vendor, product, serial = map(lambda x: x.decode('latin1'), device)
-            dev_list.append(serial)
-        self.boardsChanged.emit(dev_list)
+        deviceCount = libusb1.libusb_get_device_list(self.context, byref(self.deviceList))
+        if deviceCount <= 0:
+            print('No devices found!')
+        for i in range(0, deviceCount):
+            if libusb1.libusb_get_device_descriptor(self.deviceList[i], byref(self.deviceDescriptor)) == 0:
+                if (self.deviceDescriptor.idVendor == 0x10C4) and (self.deviceDescriptor.idProduct == 0x87A0):
+                    dev_list.append(self.deviceList[i])
+                    self.device = self.deviceList[i]
+        # TODO: how to get device desciptor from libusb1?
+        if dev_list:
+            self.boardsChanged.emit(["cp2130"])
+        else:
+            self.boardsChanged.emit([])
 
 
     @pyqtSlot(str)
     def connectToBoard(self, board):
-        self.ser.open()
-        self.ser.flush()
-        print("Connected to FTDI and flushed FIFOs")
-        self.connStateChanged.emit(self.ser._opened)
+        # open device
+        if libusb1.libusb_open(self.device, byref(self.cp2130Handle)) != 0:
+            print('Could not open device!')
+            return
+        # See if a kernel driver is active already, if so detach it and store a flag so we can reattach when we are done
+        if libusb1.libusb_kernel_driver_active(self.cp2130Handle, 0) != 0:
+            libusb1.libusb_detach_kernel_driver(self.cp2130Handle, 0)
+            self.kernelAttached = 1
+        # claim the device
+        if libusb1.libusb_claim_interface(self.cp2130Handle, 0) != 0:
+            print('Could not claim interface!')
+            return
+        print("Connected to {}".format(board))
+        cp2130_libusb_set_spi_word(self.cp2130Handle)
+        cp2130_libusb_set_usb_config(self.cp2130Handle)
+        self.connStateChanged.emit(True)
+
+    @pyqtSlot(str)
+    def disconnectBoard(self, board):
+        self.exit_cp2130()
+        print("Disconnected from {}".format(board))
+        self.connStateChanged.emit(False)
+        self.refreshBoards()
 
     @pyqtSlot()
     def flushCommandFifo(self):
-        if not self.ser._opened:
+        return
+        if not self.cp2130Handle:
             return
         self.ser.flush_input()
         print("Flushed FTDI input (command) FIFO")
 
     @pyqtSlot()
     def flushDataFifo(self):
-        if not self.ser._opened:
+        return
+        if not self.cp2130Handle:
             return
         self.ser.flush_output()
         print("Flushed FTDI output (data) FIFO")
 
     @pyqtSlot()
     def resetSerial(self):
-        if not self.ser._opened:
+        return
+        if not self.cp2130Handle:
             return
         self._resetIF()
 
-    @pyqtSlot()
-    def disconnectBoard(self):
-        self.ser.close()
-        self.connStateChanged.emit(self.ser._opened)
-
-    @pyqtSlot(bool, bool)
-    def setPwrEn(self, en1v, en3v):
-        pass
-
     @pyqtSlot(int, int)
     def nmicCommand(self, nm, cmd):
-        if not self.ser._opened:
+        if not self.cp2130Handle:
             return
-        #if cmd == 0x04 or cmd == 0x09: # imp_start or stim start command
-        #    # if recording is disabled, don't abort on timeout
-        #    prev = None
-        #    try:
-        #        prev = self._getAdc(400)
-        #    except Exception:
-        #        pass
         self._sendCmd(nm, cmd)
         if (cmd == 0x04 or cmd == 0x09):
             self.adcData.emit(self._getAdc(1000))
 
-    @pyqtSlot(float)
-    def setPwr3V(self, voltage):
-        pass
-
-    @pyqtSlot(float)
-    def setPwr1V(self, voltage):
-        pass
-
-    @pyqtSlot(float)
-    def setPwrHV(self, voltage):
-        pass
-
     @pyqtSlot(int, int, int)
     def writeReg(self, nm, addr, value):
-        if not self.ser._opened:
+        if not self.cp2130Handle:
             return
         self._regOp(nm, addr, value, True)
         #print("Write register: {:04x} {:04x}".format(addr, value))
@@ -543,7 +587,7 @@ class CMWorker(QThread):
 
     @pyqtSlot(int, int)
     def readReg(self, nm, addr):
-        if not self.ser._opened:
+        if not self.cp2130Handle:
             return
         ret = self._regOp(nm, addr, 0, False)
         print("Read register from NM {}: {:04x} {:04x}".format(nm, addr, ret))
@@ -570,7 +614,7 @@ class CMWorker(QThread):
         self.updateChannels.emit(self.enabledChannels)
         self.regReadData.emit(nm, addr, ret)
         # time.sleep(0.1)
-        self.ser.flush()
+        # self.ser.flush()
 
     @pyqtSlot()
     def testCommOn(self):
