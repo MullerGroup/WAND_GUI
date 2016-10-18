@@ -143,6 +143,9 @@ def cp2130_libusb_read(handle):
     if error_code:
         print('Error in bulk transfer (read buffer). Error # {}'.format(error_code))
         return False
+    if bytesRead.value != sizeof(read_input_buf):
+        print('Error in bulk transfer - returned {} out of {} bytes'.format(bytesRead.value, sizeof(read_input_buf)))
+        return False
     # for i in read_input_buf:
     #     print('{} '.format(i), end="")
     return read_input_buf
@@ -200,24 +203,30 @@ class readFTDIFifoThread(QThread):
             self._running = True
 
         t_0 = time.time()
+        # count = 0
         while self._running:
+            time.sleep(0.0001)
             data = cp2130_libusb_read(CMWorker.cp2130Handle)
-            if data:
+            if data == False:
+                pass
+            elif data[1] == 198:
                 dataQueue.put(data)
                 timeQueue.put(time.time() - t_0)
+                # count += 1
+                # print(count)
 
 class streamAdcThread(QThread):
 
     def __init__(self):
         QThread.__init__(self)
         self._running = True
+        self.ftdiFIFO = readFTDIFifoThread()
 
     def __del__(self):
         self.wait()
 
     def stop(self):
         self._running = False
-        CMWorker()._regWr(Reg.req, 0x0000)
 
     def run(self):
         # make sure serial device is open
@@ -242,6 +251,7 @@ class streamAdcThread(QThread):
         self.infoTable.flush()
 
         CMWorker()._regWr(Reg.req, 0x0030) # put CM into streaming mode for both NMs
+        time.sleep(0.07)
 
         out = []
         success = 0
@@ -251,37 +261,35 @@ class streamAdcThread(QThread):
         t_0 = time.time()
 
         # initialize ftdiFIFO thread and start it
-        ftdiFIFO = readFTDIFifoThread()
-        ftdiFIFO.start()
+        self.ftdiFIFO.start()
 
         while self._running:
             samples += 1
-            data = dataQueue.get()
-            data_time = timeQueue.get()
-            if len(data) == datalen and data[1] == datalen:
-                if data[0]==0x00: # no CRC
-                    success += 1
-                    data_point = self.dataTable.row
-                    data_point['out'] = [data[0] if i == 0 else ((data[i + 1] << 8 | data[i]) & 0x7FFF if i < datalen - 7 else (data[i + 1] << 8 | data[i])) for i in list(range(0, datalen, 2))]
-                    data_point['time'] = data_time
-                    data_point.append()
+            data = dataQueue.get(timeout=10)
+            data_time = timeQueue.get(timeout=10)
+            if data[0]==0x00: # no CRC
+                success += 1
+                data_point = self.dataTable.row
+                data_point['out'] = [data[0] if i == 0 else ((data[i + 1] << 8 | data[i]) & 0x7FFF if i < datalen - 7 else (data[i + 1] << 8 | data[i])) for i in list(range(0, datalen - 5, 2))]
+                data_point['time'] = data_time
+                data_point.append()
 
-                elif data[0] == 0xFF: # CRC
-                    crcs += 1
-                    success += 1
-                    data_point = self.dataTable.row
-                    data_point['out'] = [data[0] if i == 0 else ((data[i + 1] << 8 | data[i]) & 0x7FFF if i < datalen - 7 else (data[i + 1] << 8 | data[i])) for i in list(range(0, datalen, 2))]
-                    data_point['time'] = data_time
-                    data_point.append()
+            elif data[0] == 0xFF: # CRC
+                crcs += 1
+                success += 1
+                data_point = self.dataTable.row
+                data_point['out'] = [data[0] if i == 0 else ((data[i + 1] << 8 | data[i]) & 0x7FFF if i < datalen - 7 else (data[i + 1] << 8 | data[i])) for i in list(range(0, datalen - 5, 2))]
+                data_point['time'] = data_time
+                data_point.append()
 
-                else: # should never get here?
-                    fail += 1
+            else: # should never get here?
+                fail += 1
 
-                # flush the tables every 1000 samples (any speed up?)
-                if samples%1000 == 0:
-                    self.dataTable.flush()
+            # flush the tables every 1000 samples (any speed up?)
+            if samples%1000 == 0:
+                self.dataTable.flush()
 
-        ftdiFIFO.stop() # turn off FTDI fifo reading thread
+        self.ftdiFIFO.stop() # turn off FTDI fifo reading thread
         print("Stream ended at: {}".format(datetime.datetime.now()))
         # only get here if we've called stop(), so turn off streaming mode
         # print("success: {}. fail: {}. %: {}".format(success, ftdiFIFO.fail, 100*success/(success+ftdiFIFO.fail)))
@@ -291,11 +299,11 @@ class streamAdcThread(QThread):
         # print("Number of bytes read to sync up after each failure: ")
         # print(str(misalignments).strip('[]'))
         print("CRCs: {}".format(crcs))
+        print("fails: {}".format(fail))
         time.sleep(0.5)
 
         CMWorker()._regWr(Reg.req, 0x0000) # turn off streaming mode
         print("End of Stream")
-        # CMWorker.ser.flush()
         print("Fifos Flushed")
 
         self.saveFile.close()
