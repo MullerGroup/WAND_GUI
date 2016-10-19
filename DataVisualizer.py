@@ -4,6 +4,8 @@ from PyQt4.QtGui import *
 from ui.ui_DataVisualizer import Ui_DataVisualizer
 import numpy as np
 import scipy.io
+import scipy
+
 from enum import Enum
 import pyqtgraph as pg
 import tables
@@ -424,6 +426,7 @@ class DataVisualizer(QDockWidget):
 
     @pyqtSlot()
     def updatePlotStream(self):
+        notch = [58, 59, 60, 61, 62, 118, 119, 120, 121, 122, 178, 179, 180, 181, 182, 238, 239, 240, 241, 242, 298, 299, 300, 301, 302]
         if self.data:
             # loop through samples
             for t in range(0, len(self.data)):
@@ -445,6 +448,15 @@ class DataVisualizer(QDockWidget):
             if ch < 3:
                 dp = self.dataPlot[ch][0:self.xRange]
                 # add back in to test new autorange
+
+                fft = scipy.fft(dp)
+                bp = fft[:]
+                for i in range(len(bp)):
+                    if i in notch or i > 240 or i < 1:
+                        bp[i] = 0
+                dp = np.real(scipy.ifft(bp))
+
+
                 avg = np.mean(dp)
                 sd = np.std(dp)
                 if sd < 10:
