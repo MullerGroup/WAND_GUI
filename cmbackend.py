@@ -337,6 +337,9 @@ class CMWorker(QThread):
         # wait for the thread to finish before destroying object
         self.wait()
 
+    def _flushRadio(self):
+        cp2130_libusb_write(CMWorker.cp2130Handle, [0xAA, *struct.pack('>I',0x00)])
+
     def _regWr(self, reg, value):
         cp2130_libusb_write(CMWorker.cp2130Handle, [reg.value, *struct.pack('>I', value)])
 
@@ -357,35 +360,52 @@ class CMWorker(QThread):
             self._regWr(Reg.ctrl, 0x2020)
 
     def _regOp(self, nm, addr, data, write):
+        buf = c_ubyte*200
+        d = buf()
+        count = 0
         if nm==0:
             self._regWr(Reg.n0d1, 1 if write else 0)
             self._regWr(Reg.n0d2, addr << 16 | data)
             self._regWr(Reg.ctrl, 0x1000)
             if not write:
+                self._flushRadio()
                 self._regWr(Reg.req, 0x0100)
                 # d = self.ser.read(4, timeout=1)
-                d = cp2130_libusb_readRTR(CMWorker.cp2130Handle)
+                while d[1] != 4 and count < 150:
+                    d = cp2130_libusb_read(CMWorker.cp2130Handle)
+                    count = count + 1
+                success = (d[1] == 4)
+                add = d[2] + 256*d[3]
+                val = d[4] + 256*d[5]
+                return [success, add, val]
                 # print(d)
                 # if len(d) != 4:
                 #     raise Exception("Reg read failed: {}/4 bytes, {}".format(len(d), d))
-                if (d[1] << 8 | d[0]) != addr:
-                    raise Exception("Reg read failed - wrong register value")
-                return d[3] << 8 | d[2]
+                # if (d[1] << 8 | d[0]) != addr:
+                #     raise Exception("Reg read failed - wrong register value")
+                # return d[3] << 8 | d[2]
 
         if nm==1:
             self._regWr(Reg.n1d1, 1 if write else 0)
             self._regWr(Reg.n1d2, addr << 16 | data)
             self._regWr(Reg.ctrl, 0x2000)
             if not write:
+                self._flushRadio()
                 self._regWr(Reg.req, 0x0200)
                 # d = self.ser.read(4, timeout=1)
-                d = cp2130_libusb_readRTR(CMWorker.cp2130Handle)
+                while d[1] != 4 and count < 150:
+                    d = cp2130_libusb_read(CMWorker.cp2130Handle)
+                    count = count + 1
+                success = (d[1] == 4)
+                add = d[2] + 256 * d[3]
+                val = d[4] + 256 * d[5]
+                return [success, add, val]
                 # print(d)
                 # if len(d) != 4:
                 #     raise Exception("Reg read failed: {}/4 bytes, {}".format(len(d), d))
-                if (d[1] << 8 | d[0]) != addr:
-                    raise Exception("Reg read failed - wrong register value")
-                return d[3] << 8 | d[2]
+                # if (d[1] << 8 | d[0]) != addr:
+                #     raise Exception("Reg read failed - wrong register value")
+                # return d[3] << 8 | d[2]
 
     def _getAdc(self, N):
 
@@ -597,30 +617,37 @@ class CMWorker(QThread):
     def readReg(self, nm, addr):
         if not self.cp2130Handle:
             return
-        ret = self._regOp(nm, addr, 0, False)
-        print("Read register from NM {}: {:04x} {:04x}".format(nm, addr, ret))
-        if addr == 0x04:
-            if nm == 0:
-                self.enabledChannels[0] = ret
-            else:
-                self.enabledChannels[4] = ret
-        elif addr == 0x05:
-            if nm == 0:
-                self.enabledChannels[1] = ret
-            else:
-                self.enabledChannels[5] = ret
-        elif addr == 0x06:
-            if nm == 0:
-                self.enabledChannels[2] = ret
-            else:
-                self.enabledChannels[6] = ret
-        elif addr == 0x07:
-            if nm == 0:
-                self.enabledChannels[3] = ret
-            else:
-                self.enabledChannels[7] = ret
-        self.updateChannels.emit(self.enabledChannels)
-        self.regReadData.emit(nm, addr, ret)
+        ret = [False, 0, 0]
+        tries = 0
+        while not ret[0] and tries < 3:
+            ret = self._regOp(nm, addr, 0, False)
+            tries = tries + 1
+        if ret[0] and addr == ret[1]:
+            print("Read register from NM {}: {:04x} {:04x}".format(nm, addr, ret[2]))
+            if addr == 0x04:
+                if nm == 0:
+                    self.enabledChannels[0] = ret[2]
+                else:
+                    self.enabledChannels[4] = ret[2]
+            elif addr == 0x05:
+                if nm == 0:
+                    self.enabledChannels[1] = ret[2]
+                else:
+                    self.enabledChannels[5] = ret[2]
+            elif addr == 0x06:
+                if nm == 0:
+                    self.enabledChannels[2] = ret[2]
+                else:
+                    self.enabledChannels[6] = ret[2]
+            elif addr == 0x07:
+                if nm == 0:
+                    self.enabledChannels[3] = ret[2]
+                else:
+                    self.enabledChannels[7] = ret[2]
+            self.updateChannels.emit(self.enabledChannels)
+            self.regReadData.emit(nm, addr, ret[2])
+        else:
+            print("Failed to read register{:04x}".format(addr))
         # time.sleep(0.1)
         # self.ser.flush()
 
