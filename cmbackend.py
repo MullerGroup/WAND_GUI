@@ -262,32 +262,43 @@ class streamAdcThread(QThread):
 
         # initialize ftdiFIFO thread and start it
         self.ftdiFIFO.start()
-
+        timeout = False
         while self._running:
-            samples += 1
-            data = dataQueue.get(timeout=10)
-            data_time = timeQueue.get(timeout=10)
-            if data[0]==0x00: # no CRC
-                success += 1
-                data_point = self.dataTable.row
-                data_point['out'] = [data[0] if i == 0 else ((data[i + 1] << 8 | data[i]) & 0x7FFF if i < datalen - 7 else (data[i + 1] << 8 | data[i])) for i in list(range(0, datalen - 5, 2))]
-                data_point['time'] = data_time
-                data_point.append()
+            try:
+                data = dataQueue.get(timeout=5)
+            except:
+                timeout = True
+                print('timeout reading from data queue at sample {}'.format(samples))
+            if not timeout:
+                try:
+                    data_time = timeQueue.get(timeout=5)
+                except:
+                    timeout = True
+                    print('timeout reading from time queue at sample {}'.format(samples))
+            if not timeout:
+                samples = samples + 1
+                if data[0]==0x00: # no CRC
+                    success += 1
+                    data_point = self.dataTable.row
+                    data_point['out'] = [data[0] if i == 0 else ((data[i + 1] << 8 | data[i]) & 0x7FFF if i < datalen - 7 else (data[i + 1] << 8 | data[i])) for i in list(range(0, datalen - 5, 2))]
+                    data_point['time'] = data_time
+                    data_point.append()
 
-            elif data[0] == 0xFF: # CRC
-                crcs += 1
-                success += 1
-                data_point = self.dataTable.row
-                data_point['out'] = [data[0] if i == 0 else ((data[i + 1] << 8 | data[i]) & 0x7FFF if i < datalen - 7 else (data[i + 1] << 8 | data[i])) for i in list(range(0, datalen - 5, 2))]
-                data_point['time'] = data_time
-                data_point.append()
+                elif data[0] == 0xFF: # CRC
+                    crcs += 1
+                    success += 1
+                    data_point = self.dataTable.row
+                    data_point['out'] = [data[0] if i == 0 else ((data[i + 1] << 8 | data[i]) & 0x7FFF if i < datalen - 7 else (data[i + 1] << 8 | data[i])) for i in list(range(0, datalen - 5, 2))]
+                    data_point['time'] = data_time
+                    data_point.append()
 
-            else: # should never get here?
-                fail += 1
+                else: # should never get here?
+                    fail += 1
 
-            # flush the tables every 1000 samples (any speed up?)
-            if samples%1000 == 0:
-                self.dataTable.flush()
+                # flush the tables every 1000 samples (any speed up?)
+                if samples%1000 == 0:
+                    self.dataTable.flush()
+            timeout = False
 
         self.ftdiFIFO.stop() # turn off FTDI fifo reading thread
         print("Stream ended at: {}".format(datetime.datetime.now()))
