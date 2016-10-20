@@ -408,24 +408,20 @@ class CMWorker(QThread):
                 # return d[3] << 8 | d[2]
 
     def _getAdc(self, N):
-
+        print('Requesting data...')
         out = []
-        self._regWr(Reg.req, 0x0003 | (N-1)<<16) # request N samples from both NMs
-        badlengths = 0
-        misalignments = []
-        emptylengths = 0
+        self._flushRadio()
+        self._regWr(Reg.req, 0x0030) # put CM into streaming mode
         crcs = 0
         samples = 0
-        misalignment_flag = 0
+        running = True
+        timeout = 0
         # time.sleep(0.01)
-        cp2130_libusb_get_rtr_state(self.cp2130Handle)
+        # cp2130_libusb_get_rtr_state(self.cp2130Handle)
         # data = cp2130_libusb_readRTR(CMWorker.cp2130Handle)
         # return out
-        for loop in range(0,N):
-            if misalignment_flag == 0:
-                data = []
-            misalignment_flag = 0
-            count1 = 0
+        while samples < N and running:
+            time.sleep(0.0001)
             # while (len(data) != datalen):
             #     temp = self.ser.read(datalen-len(data), timeout=0)
             #     data.extend(temp)
@@ -433,61 +429,74 @@ class CMWorker(QThread):
             #     if count1 == 20:
             #         #print("break while reading 200 bytes of data")
             #         break
-            data = cp2130_libusb_readRTR(CMWorker.cp2130Handle)
+            data = cp2130_libusb_read(CMWorker.cp2130Handle)
             # data = []
 
-            if len(data) == datalen:
-                # if data[0] == 0xAA and data[len(data) - 1] == 0x55:
-                samples += 1
-                # neural data (i<192) is unsigned 15-bit (16th bit is stim info)
-                # accelerometer data is 2's complement
-                #out.append([(((data[i + 1] << 8 | data[i]) & 0xFFFF) + 2 ** 15) % 2 ** 16 - 2 ** 15 if i > 192 else (data[i + 1] << 8 | data[i]) & 0x7FFF for i in list(range(1, 199, 2))])
-                # out.append([((data[i + 1] << 8 | data[i]) & 0xFFFF) if i > datalen - 8 else (data[i + 1] << 8 | data[i]) & 0x7FFF for i in list(range(1, datalen - 1, 2))])
-                out.append([((data[i + 1] << 8 | data[i]) & 0xFFFF) if i > datalen - 8 else (data[i + 1] << 8 | data[i]) & 0x7FFF for i in list(range(2, datalen - 1, 2))])
-
-                # elif data[0] == 0xFF and data[len(data) - 1] == 0x55:
-                #     samples += 1
-                #     crcs += 1
-                #     # neural data (i<192) is unsigned 15-bit (16th bit is stim info)
-                #     # accelerometer data is 2's complement
-                #     #out.append([(((data[i + 1] << 8 | data[i]) & 0xFFFF) + 2 ** 15) % 2 ** 16 - 2 ** 15 if i > 192 else (data[i + 1] << 8 | data[i]) & 0x7FFF for i in list(range(1, 199, 2))])
-                #     out.append([((data[i + 1] << 8 | data[i]) & 0xFFFF) if i > datalen - 8 else (data[i + 1] << 8 | data[i]) & 0x7FFF for i in list(range(1, datalen - 1, 2))])
-                # else:
-                #     # CMWorker.ser.flush()
-                #     print('misalignment during update')
-                #     break
-                #     count2 = 0
-                #     misalignments.append(loop)
-                #     temp1 = 0
-                #     temp2 = 0
-                #     while not (temp1 == b'U' and (temp2 == b'\xAA' or temp2 == b'\xFF')):
-                #         temp1 = temp2
-                #         temp2 = CMWorker.ser.read(1, timeout=0)
-                #         count2 += 1
-                #         if count2 == 500:
-                #             break
-                #     misalignment_flag = 1
-                #     data = []
-                #     data.extend(temp2)
-
-            else:
-                if len(data) == 0:
-                    emptylengths += 1
+            if data:
+                if data[1] == 198:
+                    timeout = 0
+                    out.append([data[i+1] << 8 | data[i] if i > datalen - 8 else (data[i+1] << 8 | data[i]) & 0x7FFF for i in list(range(2, datalen-1, 2))])
+                    samples = samples + 1
+                    if data[0] == 0xFF:
+                        crcs = crcs + 1
                 else:
-                    badlengths += 1
+                    timeout = timeout + 1
+                    if timeout > 1000:
+                        running = False
+                        print('Request failed')
 
-            if emptylengths > 2:
-                break
-            # time.sleep(0.0001)
+
+            # if len(data) == datalen:
+            #     # if data[0] == 0xAA and data[len(data) - 1] == 0x55:
+            #     samples += 1
+            #     # neural data (i<192) is unsigned 15-bit (16th bit is stim info)
+            #     # accelerometer data is 2's complement
+            #     #out.append([(((data[i + 1] << 8 | data[i]) & 0xFFFF) + 2 ** 15) % 2 ** 16 - 2 ** 15 if i > 192 else (data[i + 1] << 8 | data[i]) & 0x7FFF for i in list(range(1, 199, 2))])
+            #     # out.append([((data[i + 1] << 8 | data[i]) & 0xFFFF) if i > datalen - 8 else (data[i + 1] << 8 | data[i]) & 0x7FFF for i in list(range(1, datalen - 1, 2))])
+            #     out.append([((data[i + 1] << 8 | data[i]) & 0xFFFF) if i > datalen - 8 else (data[i + 1] << 8 | data[i]) & 0x7FFF for i in list(range(2, datalen - 1, 2))])
+            #
+            #     # elif data[0] == 0xFF and data[len(data) - 1] == 0x55:
+            #     #     samples += 1
+            #     #     crcs += 1
+            #     #     # neural data (i<192) is unsigned 15-bit (16th bit is stim info)
+            #     #     # accelerometer data is 2's complement
+            #     #     #out.append([(((data[i + 1] << 8 | data[i]) & 0xFFFF) + 2 ** 15) % 2 ** 16 - 2 ** 15 if i > 192 else (data[i + 1] << 8 | data[i]) & 0x7FFF for i in list(range(1, 199, 2))])
+            #     #     out.append([((data[i + 1] << 8 | data[i]) & 0xFFFF) if i > datalen - 8 else (data[i + 1] << 8 | data[i]) & 0x7FFF for i in list(range(1, datalen - 1, 2))])
+            #     # else:
+            #     #     # CMWorker.ser.flush()
+            #     #     print('misalignment during update')
+            #     #     break
+            #     #     count2 = 0
+            #     #     misalignments.append(loop)
+            #     #     temp1 = 0
+            #     #     temp2 = 0
+            #     #     while not (temp1 == b'U' and (temp2 == b'\xAA' or temp2 == b'\xFF')):
+            #     #         temp1 = temp2
+            #     #         temp2 = CMWorker.ser.read(1, timeout=0)
+            #     #         count2 += 1
+            #     #         if count2 == 500:
+            #     #             break
+            #     #     misalignment_flag = 1
+            #     #     data = []
+            #     #     data.extend(temp2)
+            #
+            # else:
+            #     if len(data) == 0:
+            #         emptylengths += 1
+            #     else:
+            #         badlengths += 1
+            #
+            # if emptylengths > 2:
+            #     break
+            # # time.sleep(0.0001)
         print("Samples: {}".format(samples))
-        print("Read {} bad lengths".format(badlengths))
-        print("Misalignments:")
-        print(str(misalignments).strip('[]'))
         print("CRCs: {}".format(crcs))
         # time.sleep(0.1)
         # self.ser.flush()
         # print(out)
-        cp2130_libusb_get_rtr_state(self.cp2130Handle)
+        # cp2130_libusb_get_rtr_state(self.cp2130Handle)
+        self._regWr(Reg.req, 0x0000) # stop streamining
+        self._flushRadio()
         return out
 
     @pyqtSlot(int)
