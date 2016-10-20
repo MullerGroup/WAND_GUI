@@ -5,6 +5,7 @@ from ui.ui_DataVisualizer import Ui_DataVisualizer
 import numpy as np
 import scipy.io
 import scipy
+from scipy import signal
 
 from enum import Enum
 import pyqtgraph as pg
@@ -106,6 +107,10 @@ class DataVisualizer(QDockWidget):
         self.ui.autorange.setChecked(True)
         # self.ui.plotEn.setChecked(True)
         # self.updateBands()
+        bp_stop_Hz = np.array([54, 61])/(1000/2)
+        self.b, self.a = signal.butter(4, bp_stop_Hz, 'bandstop')
+        self.c, self.d = signal.butter(5,40/(1000/2),'lowpass')
+        self.e, self.f = signal.butter(2,0.5/(1000/2),'highpass')
 
     @pyqtSlot()
     def streamingDone(self):
@@ -439,24 +444,28 @@ class DataVisualizer(QDockWidget):
                     self.dataPlot[ch][self.plotPointer] = temp[ch]
                     # self.dataPlot[ch][self.plotPointer] = temp.pop(0) # pop data for channel = 0, 1, 2, ...
                 self.dataPlot[2][self.plotPointer] = temp[1]-temp[0]
+                self.dataPlot[3][self.plotPointer] = temp[1]
                 self.plotPointer += 1
             self.data = []
 
 # TODO: scale all y axes together? turn off auto-scale?
 
         for ch in range(self.topPlot, self.topPlot + self.numPlotsDisplayed): # only plot currently displayed plots
-            if ch < 3:
+            if ch < 4:
                 dp = self.dataPlot[ch][0:self.xRange]
                 # add back in to test new autorange
 
-                fft = scipy.fft(dp)
-                bp = fft[:]
-                for i in range(len(bp)):
-                    if i in notch or i > 240 or i < 1:
-                        bp[i] = 0
-                dp = np.real(scipy.ifft(bp))
+                # fft = scipy.fft(dp)
+                # bp = fft[:]
+                # for i in range(len(bp)):
+                #     if i in notch or i > 240 or i < 1:
+                #         bp[i] = 0
+                # dp = np.real(scipy.ifft(bp))
 
-
+                if ch == 3:
+                    dp = signal.filtfilt(self.b,self.a,dp)
+                    dp = signal.filtfilt(self.c,self.d,dp)
+                    dp = signal.filtfilt(self.e, self.f, dp)
                 avg = np.mean(dp)
                 sd = np.std(dp)
                 if sd < 10:
@@ -481,7 +490,7 @@ class DataVisualizer(QDockWidget):
                     self.plots[ch].getViewBox().setMouseMode(self.plots[ch].getViewBox().RectMode)
                     if ch < 99 and ch > 95:
                         self.plots[ch].getViewBox().setLimits(xMin=0,xMax=self.xRange,yMin=-100,yMax=65636)
-                    elif ch == 2:
+                    elif ch == 2 or ch == 3:
                         self.plots[ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=-10000, yMax=10000)
                     else:
                         self.plots[ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=-100, yMax=32868)
