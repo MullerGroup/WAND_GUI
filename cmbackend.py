@@ -310,7 +310,7 @@ class streamAdcThread(QThread):
         # print("Number of bytes read to sync up after each failure: ")
         # print(str(misalignments).strip('[]'))
         print("CRCs: {}".format(crcs))
-        print("fails: {}".format(fail))
+        print("Received Samples: {}".format(samples))
         time.sleep(0.5)
 
         CMWorker()._regWr(Reg.req, 0x0000) # turn off streaming mode
@@ -639,7 +639,7 @@ class CMWorker(QThread):
             return
         ret = [False, 0, 0]
         tries = 0
-        while not ret[0] and tries < 3:
+        while not ret[0] and tries < 5:
             ret = self._regOp(nm, addr, 0, False)
             tries = tries + 1
         if ret[0] and addr == ret[1]:
