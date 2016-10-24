@@ -465,7 +465,7 @@ class DataVisualizer(QDockWidget):
                 if ch == 3:
                     dp = signal.filtfilt(self.b,self.a,dp)
                     dp = signal.filtfilt(self.c,self.d,dp)
-                    dp = signal.filtfilt(self.e, self.f, dp)
+                    # dp = signal.filtfilt(self.e, self.f, dp)
                 avg = np.mean(dp)
                 sd = np.std(dp)
                 if sd < 10:
@@ -491,7 +491,7 @@ class DataVisualizer(QDockWidget):
                     if ch < 99 and ch > 95:
                         self.plots[ch].getViewBox().setLimits(xMin=0,xMax=self.xRange,yMin=-100,yMax=65636)
                     elif ch == 2 or ch == 3:
-                        self.plots[ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=-10000, yMax=10000)
+                        self.plots[ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=-100000, yMax=100000)
                     else:
                         self.plots[ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=-100, yMax=32868)
                     # self.plots[ch].getViewBox().setRange(yRange=(avg-(2.5*sd),avg+(2.5*sd)),update=True)
