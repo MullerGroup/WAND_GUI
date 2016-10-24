@@ -369,9 +369,11 @@ class CMWorker(QThread):
             if not write:
                 self._flushRadio()
                 self._regWr(Reg.req, 0x0100)
-                while d[1] != 4 and count < 150:
+                time.sleep(0.03)
+                while d[1] != 4 and count < 100:
                     d = cp2130_libusb_read(CMWorker.cp2130Handle)
                     count = count + 1
+                    time.sleep(0.0001)
                 success = (d[1] == 4)
                 add = d[2] + 256*d[3]
                 val = d[4] + 256*d[5]
@@ -384,9 +386,11 @@ class CMWorker(QThread):
             if not write:
                 self._flushRadio()
                 self._regWr(Reg.req, 0x0200)
+                time.sleep(0.03)
                 while d[1] != 4 and count < 150:
                     d = cp2130_libusb_read(CMWorker.cp2130Handle)
                     count = count + 1
+                    time.sleep(0.0001)
                 success = (d[1] == 4)
                 add = d[2] + 256 * d[3]
                 val = d[4] + 256 * d[5]
@@ -551,10 +555,10 @@ class CMWorker(QThread):
             return
         ret = [False, 0, 0]
         tries = 0
-        while not ret[0] and tries < 5:
+        while (tries < 5) and not(ret[0] and addr == ret[1]):
             ret = self._regOp(nm, addr, 0, False)
             tries = tries + 1
-        if ret[0] and addr == ret[1]:
+        if tries < 5:
             print("Read register from NM {}: {:04x} {:04x}".format(nm, addr, ret[2]))
             if addr == 0x04:
                 if nm == 0:
