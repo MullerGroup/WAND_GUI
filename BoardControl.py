@@ -1,6 +1,7 @@
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from ui.ui_boardcontrol import Ui_BoardControl
+import time
 
 class BoardControl(QDockWidget):
     refreshBoards = pyqtSignal()

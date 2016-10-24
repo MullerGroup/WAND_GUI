@@ -213,7 +213,7 @@ classdef streamhdf < handle
                     actual = 1;
                 elseif this.error_loc(j+1) ~= this.error_loc(j)+1
                     actual = 1;
-                else
+                elseif this.error_loc(j) ~= 1
                     if this.ramp(this.error_loc(j)) ~= this.ramp(this.error_loc(j)-1)+1
                         if (this.ramp(this.error_loc(j))~=0) || (this.ramp(this.error_loc(j)-1)~=65535)
                             actual = 1;
