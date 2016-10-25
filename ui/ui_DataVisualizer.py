@@ -101,7 +101,7 @@ class Ui_DataVisualizer(object):
         self.xRange.setMinimum(1)
         self.xRange.setMaximum(50000)
         self.xRange.setSingleStep(1000)
-        self.xRange.setProperty("value", 2000)
+        self.xRange.setProperty("value", 8192)
         self.xRange.setObjectName(_fromUtf8("xRange"))
         self.gridLayout.addWidget(self.xRange, 3, 4, 1, 1)
         self.singleBtn = QtGui.QPushButton(self.dockWidgetContents)

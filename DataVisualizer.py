@@ -110,7 +110,9 @@ class DataVisualizer(QDockWidget):
         bp_stop_Hz = np.array([54, 61])/(1000/2)
         self.b, self.a = signal.butter(4, bp_stop_Hz, 'bandstop')
         self.c, self.d = signal.butter(5,40/(1000/2),'lowpass')
-        self.e, self.f = signal.butter(2,0.5/(1000/2),'highpass')
+        self.e, self.f = signal.butter(4,1/(1000/2),'highpass')
+        self.countDown = 4
+        self.lastPulse = 0
 
     @pyqtSlot()
     def streamingDone(self):
@@ -431,6 +433,8 @@ class DataVisualizer(QDockWidget):
 
     @pyqtSlot()
     def updatePlotStream(self):
+        if self.countDown > 0:
+            self.countDown = self.countDown - 1
         notch = [58, 59, 60, 61, 62, 118, 119, 120, 121, 122, 178, 179, 180, 181, 182, 238, 239, 240, 241, 242, 298, 299, 300, 301, 302]
         if self.data:
             # loop through samples
@@ -440,19 +444,23 @@ class DataVisualizer(QDockWidget):
                 # grab specific sample
                 temp = self.data[t]
                 # temp = self.data.pop(0) # pop data for sample = 0, 1, 2, ...
-                for ch in range(0, 2):
-                    self.dataPlot[ch][self.plotPointer] = temp[ch]
+                # for ch in range(0, 2):
+                #     self.dataPlot[ch][self.plotPointer] = temp[ch]
                     # self.dataPlot[ch][self.plotPointer] = temp.pop(0) # pop data for channel = 0, 1, 2, ...
-                self.dataPlot[2][self.plotPointer] = temp[1]-temp[0]
-                self.dataPlot[3][self.plotPointer] = temp[1]
+                self.dataPlot[0][self.plotPointer] = temp[1]
+                self.dataPlot[1][self.plotPointer] = temp[1]
+                # self.dataPlot[2][self.plotPointer] = temp[1]
                 self.plotPointer += 1
             self.data = []
 
 # TODO: scale all y axes together? turn off auto-scale?
 
         for ch in range(self.topPlot, self.topPlot + self.numPlotsDisplayed): # only plot currently displayed plots
-            if ch < 4:
-                dp = self.dataPlot[ch][0:self.xRange]
+            if ch < 3:
+                if ch == 2:
+                    dp = self.dataPlot[1][0:self.xRange]
+                else:
+                    dp = self.dataPlot[ch][0:self.xRange]
                 # add back in to test new autorange
 
                 # fft = scipy.fft(dp)
@@ -462,10 +470,24 @@ class DataVisualizer(QDockWidget):
                 #         bp[i] = 0
                 # dp = np.real(scipy.ifft(bp))
 
-                if ch == 3:
+                if ch == 1:
                     dp = signal.filtfilt(self.b,self.a,dp)
                     dp = signal.filtfilt(self.c,self.d,dp)
-                    # dp = signal.filtfilt(self.e, self.f, dp)
+                    dp = signal.filtfilt(self.e, self.f, dp)
+                elif ch == 2:
+                    dp = signal.filtfilt(self.b, self.a, dp)
+                    dp = signal.filtfilt(self.c, self.d, dp)
+                    dp = signal.filtfilt(self.e, self.f, dp)
+                    dp = np.diff(dp)
+
+                    if self.countDown == 0 and self.ui.noise.isChecked() and self.plotPointer > 59 and min(dp[self.plotPointer - 60:self.plotPointer-40]) < -10:
+                        if self.plotPointer - 40 < self.lastPulse:
+                            print('BPM = {}'.format(round(60 * 1000 / ((self.xRange + self.plotPointer - 40) - self.lastPulse))))
+                        else:
+                            print('BPM = {}'.format(round(60 * 1000 / (self.plotPointer - 40 - self.lastPulse))))
+                        self.lastPulse = self.plotPointer - 40
+                        self.countDown = 4
+
                 avg = np.mean(dp)
                 sd = np.std(dp)
                 if sd < 10:
@@ -490,7 +512,7 @@ class DataVisualizer(QDockWidget):
                     self.plots[ch].getViewBox().setMouseMode(self.plots[ch].getViewBox().RectMode)
                     if ch < 99 and ch > 95:
                         self.plots[ch].getViewBox().setLimits(xMin=0,xMax=self.xRange,yMin=-100,yMax=65636)
-                    elif ch == 2 or ch == 3:
+                    elif ch == 1 or ch == 2:
                         self.plots[ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=-100000, yMax=100000)
                     else:
                         self.plots[ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=-100, yMax=32868)

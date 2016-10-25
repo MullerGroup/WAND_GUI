@@ -219,56 +219,58 @@ class streamAdcThread(QThread):
             data = dataQueue.get()
             data_time = timeQueue.get()
 
-            out.append([(data[i + 1] << 8 | data[i]) & 0x7FFF for i in list(range(1, 5, 2))])
-            if count == 50:
-                count = 0
-                self.streamAdcData.emit(out)
-                out = []
+
             # data = []
             # data_time = 0
             if data[0]==0xAA:
-                success += 1
-                #out.append([(((data[i+1] << 8 | data[i]) & 0xFFFF) + 2**15) % 2**16 - 2**15 if i > 192 else (-((data[i+1] << 8 | data[i]) & 0x7FFF) if (data[i+1] & 2**7) else (data[i+1] << 8 | data[i]) & 0x7FFF )for i in list(range(1,199,2))])
-                # neural data (i<192) is unsigned 15-bit (16th bit is stim info)
-                # accelerometer data is 2's complement
-                #out.append([(((data[i+1] << 8 | data[i]) & 0xFFFF) + 2**15) % 2**16 - 2**15 if i > 192 else (data[i+1] << 8 | data[i]) & 0x7FFF for i in list(range(1,199,2))])
-                # out = [data[0] if i == -1 else ((data[i + 1] << 8 | data[i]) & 0x7FFF if i < 193 else (time.time() - t_0 if i > 193 else (data[i + 1] << 8 | data[i]))) for i in list(range(-1, 197, 2))]
-                data_point = self.dataTable.row
-                data_point['out'] = [(data[i + 1] << 8 | data[i]) & 0x7FFF for i in list(range(1,5,2))]
-                # data_point['out'] = [data[0] if i == -1 else ((data[i + 1] << 8 | data[i]) & 0x7FFF if i < datalen - 7 else (data[i + 1] << 8 | data[i])) for i in list(range(-1, datalen - 5, 2))]
-                # data_point['crc'] = data[0]
-                # data_point['data'] = [(data[i + 1] << 8 | data[i]) for i in list(range(1, 193, 2))]
-                # data_point['ramp'] = (data[194] << 8 | data[193])
-                # data_point['time'] = time.time() - t_0
-                data_point['time'] = data_time
-                data_point.append()
-                # self.dataTable.flush()
+                out.append([(data[i + 1] << 8 | data[i]) & 0x7FFF for i in list(range(1, 5, 2))])
+                if count == 20:
+                    count = 0
+                    self.streamAdcData.emit(out)
+                    out = []
 
-                # self.csvfile.writerow(out[45:-1])
-                # self.csvfile.writerow([out[97]])
-                # self.csvfile.writerow(out)
+                # success += 1
+                # #out.append([(((data[i+1] << 8 | data[i]) & 0xFFFF) + 2**15) % 2**16 - 2**15 if i > 192 else (-((data[i+1] << 8 | data[i]) & 0x7FFF) if (data[i+1] & 2**7) else (data[i+1] << 8 | data[i]) & 0x7FFF )for i in list(range(1,199,2))])
+                # # neural data (i<192) is unsigned 15-bit (16th bit is stim info)
+                # # accelerometer data is 2's complement
+                # #out.append([(((data[i+1] << 8 | data[i]) & 0xFFFF) + 2**15) % 2**16 - 2**15 if i > 192 else (data[i+1] << 8 | data[i]) & 0x7FFF for i in list(range(1,199,2))])
+                # # out = [data[0] if i == -1 else ((data[i + 1] << 8 | data[i]) & 0x7FFF if i < 193 else (time.time() - t_0 if i > 193 else (data[i + 1] << 8 | data[i]))) for i in list(range(-1, 197, 2))]
+                # data_point = self.dataTable.row
+                # data_point['out'] = [(data[i + 1] << 8 | data[i]) & 0x7FFF for i in list(range(1,5,2))]
+                # # data_point['out'] = [data[0] if i == -1 else ((data[i + 1] << 8 | data[i]) & 0x7FFF if i < datalen - 7 else (data[i + 1] << 8 | data[i])) for i in list(range(-1, datalen - 5, 2))]
+                # # data_point['crc'] = data[0]
+                # # data_point['data'] = [(data[i + 1] << 8 | data[i]) for i in list(range(1, 193, 2))]
+                # # data_point['ramp'] = (data[194] << 8 | data[193])
+                # # data_point['time'] = time.time() - t_0
+                # data_point['time'] = data_time
+                # data_point.append()
+                # # self.dataTable.flush()
+                #
+                # # self.csvfile.writerow(out[45:-1])
+                # # self.csvfile.writerow([out[97]])
+                # # self.csvfile.writerow(out)
 
-            else:
-                crcs += 1
-                success += 1
-                # out.append([(((data[i+1] << 8 | data[i]) & 0xFFFF) + 2**15) % 2**16 - 2**15 if i > 192 else (-((data[i+1] << 8 | data[i]) & 0x7FFF) if (data[i+1] & 2**7) else (data[i+1] << 8 | data[i]) & 0x7FFF )for i in list(range(1,199,2))])
-                # neural data (i<192) is unsigned 15-bit (16th bit is stim info)
-                # accelerometer data is 2's complement
-                # out.append([(((data[i+1] << 8 | data[i]) & 0xFFFF) + 2**15) % 2**16 - 2**15 if i > 192 else (data[i+1] << 8 | data[i]) & 0x7FFF for i in list(range(1,199,2))])
-                # out = [data[0] if i == -1 else ((data[i + 1] << 8 | data[i]) & 0x7FFF if i < 193 else (time.time() - t_0 if i > 193 else (data[i + 1] << 8 | data[i]))) for i in list(range(-1, 197, 2))]
-                data_point = self.dataTable.row
-                data_point['out'] = [(data[i + 1] << 8 | data[i]) & 0x7FFF for i in list(range(1, 5, 2))]
-                # data_point['out'] = [data[0] if i == -1 else ((data[i + 1] << 8 | data[i]) & 0x7FFF if i < datalen - 7 else (data[i + 1] << 8 | data[i])) for i in list(range(-1, datalen - 5, 2))]
-                # data_point['crc'] = data[0]
-                # data_point['data'] = [(data[i + 1] << 8 | data[i]) for i in list(range(1, 193, 2))]
-                # data_point['ramp'] = (data[194]<<8 | data[193])
-                data_point['time'] = data_time
-                data_point.append()
-                # self.dataTable.flush()
-
-                # self.csvfile.writerow([out[45:-1]])
-                # self.csvfile.writerow([out[97]])
-                # self.csvfile.writerow(out)
+            # else:
+            #     crcs += 1
+            #     success += 1
+            #     # out.append([(((data[i+1] << 8 | data[i]) & 0xFFFF) + 2**15) % 2**16 - 2**15 if i > 192 else (-((data[i+1] << 8 | data[i]) & 0x7FFF) if (data[i+1] & 2**7) else (data[i+1] << 8 | data[i]) & 0x7FFF )for i in list(range(1,199,2))])
+            #     # neural data (i<192) is unsigned 15-bit (16th bit is stim info)
+            #     # accelerometer data is 2's complement
+            #     # out.append([(((data[i+1] << 8 | data[i]) & 0xFFFF) + 2**15) % 2**16 - 2**15 if i > 192 else (data[i+1] << 8 | data[i]) & 0x7FFF for i in list(range(1,199,2))])
+            #     # out = [data[0] if i == -1 else ((data[i + 1] << 8 | data[i]) & 0x7FFF if i < 193 else (time.time() - t_0 if i > 193 else (data[i + 1] << 8 | data[i]))) for i in list(range(-1, 197, 2))]
+            #     data_point = self.dataTable.row
+            #     data_point['out'] = [(data[i + 1] << 8 | data[i]) & 0x7FFF for i in list(range(1, 5, 2))]
+            #     # data_point['out'] = [data[0] if i == -1 else ((data[i + 1] << 8 | data[i]) & 0x7FFF if i < datalen - 7 else (data[i + 1] << 8 | data[i])) for i in list(range(-1, datalen - 5, 2))]
+            #     # data_point['crc'] = data[0]
+            #     # data_point['data'] = [(data[i + 1] << 8 | data[i]) for i in list(range(1, 193, 2))]
+            #     # data_point['ramp'] = (data[194]<<8 | data[193])
+            #     data_point['time'] = data_time
+            #     data_point.append()
+            #     # self.dataTable.flush()
+            #
+            #     # self.csvfile.writerow([out[45:-1]])
+            #     # self.csvfile.writerow([out[97]])
+            #     # self.csvfile.writerow(out)
 
             # else:
             #     fail += 1
@@ -281,8 +283,8 @@ class streamAdcThread(QThread):
             #         temp = CMWorker.ser.read(1, timeout=0)
 
             # flush the tables every 1000 samples (any speed up?)
-            if samples%1000 == 0:
-                self.dataTable.flush()
+            # if samples%1000 == 0:
+            #     self.dataTable.flush()
 
 
         ftdiFIFO.stop() # turn off FTDI fifo reading thread
@@ -351,13 +353,16 @@ class CMWorker(QThread):
             if not write:
                 # self.ser.setTimeout(3)
                 self._regWr(Reg.req, 0x0100)
-                d = self.ser.read(4, timeout=1)
+                try:
+                    d = self.ser.read(4, timeout=0.3)
+                except:
+                    return [False, 0]
                 # self.ser.setTimeout(1)
                 if len(d) != 4:
                     raise Exception("Reg read failed: {}/4 bytes, {}".format(len(d), d))
                 if (d[1] << 8 | d[0]) != addr:
                     raise Exception("Reg read failed - wrong register value: {}".format(d))
-                return d[3] << 8 | d[2]
+                return [True, d[3] << 8 | d[2]]
 
         if nm==1:
             self._regWr(Reg.n1d1, 1 if write else 0)
@@ -366,13 +371,16 @@ class CMWorker(QThread):
             if not write:
                 # self.ser.setTimeout(3)
                 self._regWr(Reg.req, 0x0200)
-                d = self.ser.read(4, timeout=1)
+                try:
+                    d = self.ser.read(4, timeout=0.3)
+                except:
+                    return [False, 0]
                 # self.ser.setTimeout(1)
                 if len(d) != 4:
                     raise Exception("Reg read failed: {}/4 bytes, {}".format(len(d), d))
                 if (d[1] << 8 | d[0]) != addr:
                     raise Exception("Reg read failed - wrong register value: {}".format(d))
-                return d[3] << 8 | d[2]
+                return [True, d[3] << 8 | d[2]]
 
     def _getAdc(self, N):
 
@@ -551,29 +559,34 @@ class CMWorker(QThread):
         if not self.ser._opened:
             return
         ret = self._regOp(nm, addr, 0, False)
-        print("Read register from NM {}: {:04x} {:04x}".format(nm, addr, ret))
-        if addr == 0x04:
-            if nm == 0:
-                self.enabledChannels[0] = ret
-            else:
-                self.enabledChannels[4] = ret
-        elif addr == 0x05:
-            if nm == 0:
-                self.enabledChannels[1] = ret
-            else:
-                self.enabledChannels[5] = ret
-        elif addr == 0x06:
-            if nm == 0:
-                self.enabledChannels[2] = ret
-            else:
-                self.enabledChannels[6] = ret
-        elif addr == 0x07:
-            if nm == 0:
-                self.enabledChannels[3] = ret
-            else:
-                self.enabledChannels[7] = ret
-        self.updateChannels.emit(self.enabledChannels)
-        self.regReadData.emit(nm, addr, ret)
+        if not ret[0]:
+            ret = self._regOp(nm, addr, 0, False)
+        if not ret[0]:
+            print('Timeout reading register {}'.format(addr))
+        else:
+            print("Read register from NM {}: {:04x} {:04x}".format(nm, addr, ret[1]))
+            if addr == 0x04:
+                if nm == 0:
+                    self.enabledChannels[0] = ret[1]
+                else:
+                    self.enabledChannels[4] = ret[1]
+            elif addr == 0x05:
+                if nm == 0:
+                    self.enabledChannels[1] = ret[1]
+                else:
+                    self.enabledChannels[5] = ret[1]
+            elif addr == 0x06:
+                if nm == 0:
+                    self.enabledChannels[2] = ret[1]
+                else:
+                    self.enabledChannels[6] = ret[1]
+            elif addr == 0x07:
+                if nm == 0:
+                    self.enabledChannels[3] = ret[1]
+                else:
+                    self.enabledChannels[7] = ret[1]
+            self.updateChannels.emit(self.enabledChannels)
+            self.regReadData.emit(nm, addr, ret[1])
         # time.sleep(0.1)
         self.ser.flush()
 
