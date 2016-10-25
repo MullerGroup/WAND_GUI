@@ -515,13 +515,18 @@ class DataVisualizer(QDockWidget):
                     self.plots[ch].getViewBox().setMouseMode(self.plots[ch].getViewBox().RectMode)
                     if ch < 99 and ch > 95:
                         self.plots[ch].getViewBox().setLimits(xMin=0,xMax=self.xRange,yMin=-100,yMax=65636)
-                    elif ch == 1 or ch == 2:
-                        self.plots[ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=-100000, yMax=100000)
+                    elif ch == 1:
+                        self.plots[ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=-500, yMax=500)
+                        self.plots[ch].getViewBox().setRange(yRange=(-350, 350), update=True)
+                    elif ch == 2:
+                        self.plots[ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=-100, yMax=100)
+                        self.plots[ch].getViewBox().setRange(yRange=(-50, 50), update=True)
                     else:
                         self.plots[ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=-100, yMax=32868)
                     # self.plots[ch].getViewBox().setRange(yRange=(avg-(2.5*sd),avg+(2.5*sd)),update=True)
                     if self.ui.autorange.isChecked():
-                        self.plots[ch].getViewBox().autoRange()
+                        if ch > 0:
+                            self.plots[ch].getViewBox().autoRange()
                     # self.fftPlots[ch].plot(y=calculateFFT(dp), pen=(102,204,255))
                     # if self.ui.autorange.isChecked():
                         # self.fftPlots[ch].getViewBox().autoRange()
