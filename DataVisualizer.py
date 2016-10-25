@@ -47,6 +47,7 @@ class DataVisualizer(QDockWidget):
     streamAdc = pyqtSignal()
     testCommOn = pyqtSignal()
     testCommOff = pyqtSignal()
+    pulseStim = pyqtSignal()
 
     def __init__(self, parent=None):
         def populate(listbox, start, stop, step):
@@ -76,6 +77,7 @@ class DataVisualizer(QDockWidget):
         self.streamAdcThread = cmbackend.streamAdcThread()
         self.connect(self.streamAdcThread, SIGNAL("finished()"), self.streamingDone)
         self.streamAdcThread.streamAdcData.connect(self.streamAdcData)
+        self.pulseStim.connect(self.streamAdcThread.pulseStim)
         # self.connect(self.streamAdcThread, SIGNAL('streamDataOut(PyQt_PyObject)'), self.streamAdcData)
 
         # hdf5 data storage
@@ -487,6 +489,7 @@ class DataVisualizer(QDockWidget):
                             print('BPM = {}'.format(round(60 * 1000 / (self.plotPointer - 40 - self.lastPulse))))
                         self.lastPulse = self.plotPointer - 40
                         self.countDown = 4
+                        self.pulseStim.emit()
 
                 avg = np.mean(dp)
                 sd = np.std(dp)

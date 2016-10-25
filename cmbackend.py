@@ -59,12 +59,17 @@ class readFTDIFifoThread(QThread):
     def __init__(self):
         QThread.__init__(self)
         self._running = True
+        self.stimFlag = False
 
     def __del__(self):
         self.wait()
 
     def stop(self):
         self._running = False
+
+    def stim(self):
+        # print('FIFO Thread Pulse Stim')
+        self.stimFlag = True
 
     def run(self):
         # make sure serial device is open
@@ -120,22 +125,29 @@ class readFTDIFifoThread(QThread):
                 self.misalignment_flag = 1
                 data = []
                 data.extend(self.temp2)
-                print("Misalignment! length of data = {}, header = {}, footer = {}".format(len(data),data[0], data[len(data)-1]))
-                print("Number of bytes flushed to fix misalignment: {}".format(tries))
+                # print("Misalignment! length of data = {}, header = {}, footer = {}".format(len(data),data[0], data[len(data)-1]))
+                # print("Number of bytes flushed to fix misalignment: {}".format(tries))
+            if self.stimFlag:
+                print('Pulse Stim')
+                self.stimFlag = False
 
 
 class streamAdcThread(QThread):
 
+    stim = pyqtSignal()
 
     streamAdcData = pyqtSignal(list)
     streamChunkSize = 1
     plotChunkSize = 100
     read_count = 0
 
+
+
     def __init__(self):
         QThread.__init__(self)
         # print("turned ON streaming mode")
         self._running = True
+        self.stim = False
 
     def __del__(self):
         # if CMWorker.ser._opened:
@@ -147,6 +159,12 @@ class streamAdcThread(QThread):
         # self.terminate()
         self._running = False
         CMWorker()._regWr(Reg.req, 0x0000)
+
+    @pyqtSlot()
+    def pulseStim(self):
+        if self._running:
+            # print('Stream Thread Pulse Stim')
+            self.stim = True
 
 
     def run(self):
@@ -172,18 +190,18 @@ class streamAdcThread(QThread):
         # print("Stream started at: {}".format(start))
         # self.csvfile.writerow([start])
 
-        self.saveFile = tables.open_file('streams/' + datetime.datetime.now().strftime("%Y%m%d-%H%M%S") + '.hdf', mode="w", title="Stream")
-        self.dataGroup = self.saveFile.create_group("/", name='dataGroup', title='Recorded Data Group')
-        self.dataTable = self.saveFile.create_table(self.dataGroup, name='dataTable', title='Recorded Data Table', description=stream_data, expectedrows=60000*5*1)
-        self.infoGroup = self.saveFile.create_group("/", name='infoGroup', title='Recording Information Group')
-        self.infoTable = self.saveFile.create_table(self.infoGroup, name='infoTable', title='Recording Information Table', description=stream_info)
+        # self.saveFile = tables.open_file('streams/' + datetime.datetime.now().strftime("%Y%m%d-%H%M%S") + '.hdf', mode="w", title="Stream")
+        # self.dataGroup = self.saveFile.create_group("/", name='dataGroup', title='Recorded Data Group')
+        # self.dataTable = self.saveFile.create_table(self.dataGroup, name='dataTable', title='Recorded Data Table', description=stream_data, expectedrows=60000*5*1)
+        # self.infoGroup = self.saveFile.create_group("/", name='infoGroup', title='Recording Information Group')
+        # self.infoTable = self.saveFile.create_table(self.infoGroup, name='infoTable', title='Recording Information Table', description=stream_info)
 
         start = datetime.datetime.now()
         print("Stream started at: {}".format(start))
-        data_point = self.infoTable.row
-        data_point['channels'] = CMWorker.enabledChannels
-        data_point.append()
-        self.infoTable.flush()
+        # data_point = self.infoTable.row
+        # data_point['channels'] = CMWorker.enabledChannels
+        # data_point.append()
+        # self.infoTable.flush()
 
         CMWorker()._regWr(Reg.req, 0x0030 | self.streamChunkSize<<16) # put CM into streaming mode for both NMs
 
@@ -191,7 +209,7 @@ class streamAdcThread(QThread):
         self.read_count = 0
         success = 0
         crcs = 0
-        fail = 0
+        # fail = 0
         samples = 0
         misalignments = []
         t_0 = time.time()
@@ -201,7 +219,11 @@ class streamAdcThread(QThread):
         ftdiFIFO = readFTDIFifoThread()
         ftdiFIFO.start()
 
+
         while self._running:
+            if self.stim:
+                ftdiFIFO.stim()
+                self.stim = False
             # changed the number of bytes to read to 200: this includes 96 channels + 6 bytes of accelerometer data
             samples += 1
             count += 1
@@ -286,16 +308,15 @@ class streamAdcThread(QThread):
             # if samples%1000 == 0:
             #     self.dataTable.flush()
 
-
-        ftdiFIFO.stop() # turn off FTDI fifo reading thread
+        ftdiFIFO.stop()  # turn off FTDI fifo reading thread
         # only get here if we've called stop(), so turn off streaming mode
-        print("success: {}. fail: {}. %: {}".format(success, ftdiFIFO.fail, 100*success/(success+ftdiFIFO.fail)))
+        # print("success: {}. fail: {}. %: {}".format(success, ftdiFIFO.fail, 100*success/(success+ftdiFIFO.fail)))
         # print("success: {}. fail: {}. %: {}".format(success, fail, 100*success/(success+fail)))
         # print("Misalignments:")
         # print(str(misalignments).strip('[]'))
         # print("Number of bytes read to sync up after each failure: ")
         # print(str(misalignments).strip('[]'))
-        print("CRCs: {}".format(crcs))
+        # print("CRCs: {}".format(crcs))
         time.sleep(0.5)
 
         CMWorker()._regWr(Reg.req, 0x0000) # turn off streaming mode
@@ -303,7 +324,7 @@ class streamAdcThread(QThread):
         CMWorker.ser.flush()
         print("Fifos Flushed")
 
-        self.saveFile.close()
+        # self.saveFile.close()
 
 class CMWorker(QThread):
     connStateChanged = pyqtSignal(bool)
