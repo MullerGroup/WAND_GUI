@@ -129,6 +129,7 @@ class readFTDIFifoThread(QThread):
                 # print("Number of bytes flushed to fix misalignment: {}".format(tries))
             if self.stimFlag:
                 print('Pulse Stim')
+                # CMWorker()._regWr(Reg.req, 0x0030 | 1 << 16)
                 self.stimFlag = False
 
 
