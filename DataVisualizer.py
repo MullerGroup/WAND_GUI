@@ -509,20 +509,23 @@ class DataVisualizer(QDockWidget):
                 self.plots[ch].clear()
                 # self.fftPlots[ch].clear()
                 if self.plotEn[ch]:
-                    self.plots[ch].plot(y=dp, pen=self.plotColors[ch]) # different color for each plot
+                    if ch == 0:
+                        self.plots[ch].plot(y=(dp * (0.00305))-50, pen=self.plotColors[ch])  # different color for each plot
+                    else:
+                        self.plots[ch].plot(y=dp*(0.00305), pen=self.plotColors[ch]) # different color for each plot
                     # add back in to test new autorange
                     self.plots[ch].getViewBox().setMouseEnabled(x=True,y=True)
                     self.plots[ch].getViewBox().setMouseMode(self.plots[ch].getViewBox().RectMode)
                     if ch < 99 and ch > 95:
                         self.plots[ch].getViewBox().setLimits(xMin=0,xMax=self.xRange,yMin=-100,yMax=65636)
                     elif ch == 1:
-                        self.plots[ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=-500, yMax=500)
-                        self.plots[ch].getViewBox().setRange(yRange=(-350, 350), update=True)
+                        self.plots[ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=-1, yMax=1)
+                        self.plots[ch].getViewBox().setRange(yRange=(-1, 1), update=True)
                     elif ch == 2:
-                        self.plots[ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=-100, yMax=100)
-                        self.plots[ch].getViewBox().setRange(yRange=(-50, 50), update=True)
+                        self.plots[ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=-1, yMax=1)
+                        self.plots[ch].getViewBox().setRange(yRange=(-1, 1), update=True)
                     else:
-                        self.plots[ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=-100, yMax=32868)
+                        self.plots[ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=-55, yMax=55)
                     # self.plots[ch].getViewBox().setRange(yRange=(avg-(2.5*sd),avg+(2.5*sd)),update=True)
                     if self.ui.autorange.isChecked():
                         if ch > 0:
