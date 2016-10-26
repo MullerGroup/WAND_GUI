@@ -482,14 +482,15 @@ class DataVisualizer(QDockWidget):
                     dp = signal.filtfilt(self.e, self.f, dp)
                     dp = np.diff(dp)
 
-                    if self.countDown == 0 and self.ui.noise.isChecked() and self.plotPointer > 59 and min(dp[self.plotPointer - 60:self.plotPointer-40]) < -10:
+                    if self.countDown == 0 and (self.ui.noise.isChecked() or self.ui.thd.isChecked()) and self.plotPointer > 59 and min(dp[self.plotPointer - 60:self.plotPointer-40]) < -10:
                         if self.plotPointer - 40 < self.lastPulse:
                             print('BPM = {}'.format(round(60 * 1000 / ((self.xRange + self.plotPointer - 40) - self.lastPulse))))
                         else:
                             print('BPM = {}'.format(round(60 * 1000 / (self.plotPointer - 40 - self.lastPulse))))
                         self.lastPulse = self.plotPointer - 40
                         self.countDown = 4
-                        self.pulseStim.emit()
+                        if self.ui.thd.isChecked():
+                            self.pulseStim.emit()
 
                 avg = np.mean(dp)
                 sd = np.std(dp)
