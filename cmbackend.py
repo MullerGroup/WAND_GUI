@@ -38,7 +38,7 @@ class stream_data(IsDescription):
     # data = UInt16Col(shape=(96))
     # ramp = UInt16Col()
     # time = FloatCol()
-    out = UInt16Col(int(datalen/2 - 2))
+    out = UInt16Col(int(datalen/2 - 1))
     time = FloatCol()
 
 class stream_info(IsDescription):
@@ -275,7 +275,7 @@ class streamAdcThread(QThread):
                 if data[0]==0x00: # no CRC
                     success += 1
                     data_point = self.dataTable.row
-                    data_point['out'] = [data[0] if i == 0 else ((data[i + 1] << 8 | data[i]) & 0x7FFF if i < datalen - 7 else (data[i + 1] << 8 | data[i])) for i in list(range(0, datalen - 5, 2))]
+                    data_point['out'] = [data[0] if i == 0 else ((data[i + 1] << 8 | data[i]) & 0x7FFF if i < datalen - 7 else (data[i + 1] << 8 | data[i])) for i in list(range(0, datalen - 3, 2))]
                     data_point['time'] = data_time
                     data_point.append()
 
@@ -283,7 +283,7 @@ class streamAdcThread(QThread):
                     crcs += 1
                     success += 1
                     data_point = self.dataTable.row
-                    data_point['out'] = [data[0] if i == 0 else ((data[i + 1] << 8 | data[i]) & 0x7FFF if i < datalen - 7 else (data[i + 1] << 8 | data[i])) for i in list(range(0, datalen - 5, 2))]
+                    data_point['out'] = [data[0] if i == 0 else ((data[i + 1] << 8 | data[i]) & 0x7FFF if i < datalen - 7 else (data[i + 1] << 8 | data[i])) for i in list(range(0, datalen - 3, 2))]
                     data_point['time'] = data_time
                     data_point.append()
 
