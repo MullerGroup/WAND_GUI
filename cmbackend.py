@@ -34,7 +34,7 @@ class stream_data(IsDescription):
     # data = UInt16Col(shape=(96))
     # ramp = UInt16Col()
     # time = FloatCol()
-    out = UInt16Col(int(datalen/2 - 2))
+    out = UInt16Col(int(datalen/2 - 1))
     time = FloatCol()
 
 class stream_info(IsDescription):
@@ -220,7 +220,7 @@ class streamAdcThread(QThread):
                     #out.append([(((data[i+1] << 8 | data[i]) & 0xFFFF) + 2**15) % 2**16 - 2**15 if i > 192 else (data[i+1] << 8 | data[i]) & 0x7FFF for i in list(range(1,199,2))])
                     # out = [data[0] if i == -1 else ((data[i + 1] << 8 | data[i]) & 0x7FFF if i < 193 else (time.time() - t_0 if i > 193 else (data[i + 1] << 8 | data[i]))) for i in list(range(-1, 197, 2))]
                     data_point = self.dataTable.row
-                    data_point['out'] = [data[0] if i == -1 else ((data[i + 1] << 8 | data[i]) & 0x7FFF if i < datalen - 7 else (data[i + 1] << 8 | data[i])) for i in list(range(-1, datalen - 5, 2))]
+                    data_point['out'] = [data[0] if i == -1 else ((data[i + 1] << 8 | data[i]) & 0x7FFF if i < datalen - 7 else (data[i + 1] << 8 | data[i])) for i in list(range(-1, datalen - 3, 2))]
                     # data_point['crc'] = data[0]
                     # data_point['data'] = [(data[i + 1] << 8 | data[i]) for i in list(range(1, 193, 2))]
                     # data_point['ramp'] = (data[194] << 8 | data[193])
@@ -242,7 +242,7 @@ class streamAdcThread(QThread):
                     # out.append([(((data[i+1] << 8 | data[i]) & 0xFFFF) + 2**15) % 2**16 - 2**15 if i > 192 else (data[i+1] << 8 | data[i]) & 0x7FFF for i in list(range(1,199,2))])
                     # out = [data[0] if i == -1 else ((data[i + 1] << 8 | data[i]) & 0x7FFF if i < 193 else (time.time() - t_0 if i > 193 else (data[i + 1] << 8 | data[i]))) for i in list(range(-1, 197, 2))]
                     data_point = self.dataTable.row
-                    data_point['out'] = [data[0] if i == -1 else ((data[i + 1] << 8 | data[i]) & 0x7FFF if i < datalen - 7 else (data[i + 1] << 8 | data[i])) for i in list(range(-1, datalen - 5, 2))]
+                    data_point['out'] = [data[0] if i == -1 else ((data[i + 1] << 8 | data[i]) & 0x7FFF if i < datalen - 5 else (data[i + 1] << 8 | data[i])) for i in list(range(-1, datalen - 3, 2))]
                     # data_point['crc'] = data[0]
                     # data_point['data'] = [(data[i + 1] << 8 | data[i]) for i in list(range(1, 193, 2))]
                     # data_point['ramp'] = (data[194]<<8 | data[193])

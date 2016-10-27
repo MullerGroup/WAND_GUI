@@ -43,6 +43,7 @@ classdef streamhdf < handle
         fftdata;            % ffts for each channel
         crc;
         ramp;
+        rssi;
         crc_errors;
         
         % for plotting the raw data
@@ -116,6 +117,7 @@ classdef streamhdf < handle
             this.data = (hdf.out(2:this.numchannels+1, :))';
             this.crc = hdf.out(1,:);
             this.ramp = hdf.out(this.numchannels+2,:);
+            this.rssi = hdf.out(this.numchannels+3,:);
             this.time = hdf.time;
 %             this.data = (hdf.data)';
 %             this.time = hdf.time;
