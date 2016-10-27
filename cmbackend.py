@@ -98,7 +98,7 @@ class readFTDIFifoThread(QThread):
                     break
             # self.binaryFile.write(bytearray(data))
 
-            if len(data)==ecglen and ((data[0]==0xAA) or (data[0]==0xFF)) and data[len(data)-1]==0x55:
+            if len(data)==ecglen and ((data[0]==0xAA)) and data[len(data)-1]==0x55:
                 # pass
                 dataQueue.put(data)
                 timeQueue.put(time.time() - t_0)
