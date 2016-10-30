@@ -457,7 +457,8 @@ class DataVisualizer(QDockWidget):
 
 # TODO: scale all y axes together? turn off auto-scale?
 
-        for ch in range(self.topPlot, self.topPlot + self.numPlotsDisplayed): # only plot currently displayed plots
+        # for ch in range(self.topPlot, self.topPlot + self.numPlotsDisplayed): # only plot currently displayed plots
+        for ch in range(0, 3):
             if ch < 3:
                 if ch == 2:
                     dp = self.dataPlot[1][0:self.xRange]
@@ -482,15 +483,17 @@ class DataVisualizer(QDockWidget):
                     dp = signal.filtfilt(self.e, self.f, dp)
                     dp = np.diff(dp)
 
-                    if self.countDown == 0 and (self.ui.noise.isChecked() or self.ui.thd.isChecked()) and self.plotPointer > 59 and min(dp[self.plotPointer - 60:self.plotPointer-40]) < -10:
+                    if self.countDown == 0 and (self.ui.noise.isChecked() or self.ui.thd.isChecked()) and self.plotPointer > 59 and min(dp[self.plotPointer - 60:self.plotPointer-40]) < -15:
                         if self.plotPointer - 40 < self.lastPulse:
-                            print('BPM = {}'.format(round(60 * 1000 / ((self.xRange + self.plotPointer - 40) - self.lastPulse))))
+                            bpm = round(60 * 1000 / ((self.xRange + self.plotPointer - 40) - self.lastPulse))
                         else:
-                            print('BPM = {}'.format(round(60 * 1000 / (self.plotPointer - 40 - self.lastPulse))))
-                        self.lastPulse = self.plotPointer - 40
-                        self.countDown = 4
-                        if self.ui.thd.isChecked():
-                            self.pulseStim.emit()
+                            bpm = round(60 * 1000 / (self.plotPointer - 40 - self.lastPulse))
+                        if bpm < 120 and bpm > 40:
+                            print('BPM = {}'.format(bpm))
+                            self.lastPulse = self.plotPointer - 40
+                            self.countDown = 4
+                            if self.ui.thd.isChecked():
+                                self.pulseStim.emit()
 
                 avg = np.mean(dp)
                 sd = np.std(dp)
@@ -509,7 +512,7 @@ class DataVisualizer(QDockWidget):
 
                 self.plots[ch].clear()
                 # self.fftPlots[ch].clear()
-                if self.plotEn[ch]:
+                if self.plotEn[ch] and ch < 2:
                     if ch == 0:
                         self.plots[ch].plot(y=(dp * (0.00305))-50, pen=self.plotColors[ch])  # different color for each plot
                     else:
@@ -529,8 +532,9 @@ class DataVisualizer(QDockWidget):
                         self.plots[ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=-55, yMax=55)
                     # self.plots[ch].getViewBox().setRange(yRange=(avg-(2.5*sd),avg+(2.5*sd)),update=True)
                     if self.ui.autorange.isChecked():
-                        if ch > 0:
-                            self.plots[ch].getViewBox().autoRange()
+                        # if ch > 0:
+                        #     self.plots[ch].getViewBox().autoRange()
+                        self.plots[ch].getViewBox().autoRange()
                     # self.fftPlots[ch].plot(y=calculateFFT(dp), pen=(102,204,255))
                     # if self.ui.autorange.isChecked():
                         # self.fftPlots[ch].getViewBox().autoRange()

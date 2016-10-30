@@ -128,9 +128,8 @@ class readFTDIFifoThread(QThread):
                 # print("Misalignment! length of data = {}, header = {}, footer = {}".format(len(data),data[0], data[len(data)-1]))
                 # print("Number of bytes flushed to fix misalignment: {}".format(tries))
             if self.stimFlag:
-                print('Pulse Stim')
-                # CMWorker()._regWr(Reg.req, 0x0030 | 1 << 16)
                 self.stimFlag = False
+                CMWorker()._sendCmd(0, 0x09)
 
 
 class streamAdcThread(QThread):
@@ -359,7 +358,6 @@ class CMWorker(QThread):
         self._regWr(Reg.ctrl, 0x102)
 
     def _sendCmd(self, nm, cmd):
-        print('Send Command')
         if nm==0:
             self._regWr(Reg.n0d2, 1<<10 | (cmd & 0x3FF))
             self._regWr(Reg.ctrl, 0x1010)
@@ -532,8 +530,8 @@ class CMWorker(QThread):
         #    except Exception:
         #        pass
         self._sendCmd(nm, cmd)
-        if (cmd == 0x04 or cmd == 0x09):
-            self.adcData.emit(self._getAdc(1000))
+        # if (cmd == 0x04 or cmd == 0x09):
+        #     self.adcData.emit(self._getAdc(1000))
 
     @pyqtSlot(float)
     def setPwr3V(self, voltage):
