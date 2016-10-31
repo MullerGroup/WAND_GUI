@@ -157,7 +157,6 @@ class RegisterEditor_v2(QDockWidget):
             #     self.readReg.emit(self.nm, r.addr)
             self.readReg.emit(self.nm, r.addr)
             # time.sleep(0.1)
-            #TODO: break from reading registers when we miss one (so we don't have to sit and wait for all 32 to timeout)
         # self.readReg.emit(self.nm, self.regs[0].addr)
 
     @pyqtSlot()

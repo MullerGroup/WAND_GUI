@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>455</width>
-    <height>300</height>
+    <height>127</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -15,6 +15,16 @@
   </property>
   <widget class="QWidget" name="dockWidgetContents">
    <layout class="QGridLayout" name="gridLayout">
+    <item row="3" column="2">
+     <widget class="QPushButton" name="disconnBtn">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
+      <property name="text">
+       <string>Disconnect</string>
+      </property>
+     </widget>
+    </item>
     <item row="0" column="0">
      <widget class="QLabel" name="label_2">
       <property name="text">
@@ -25,73 +35,29 @@
       </property>
      </widget>
     </item>
-    <item row="1" column="0">
-     <spacer name="verticalSpacer">
-      <property name="orientation">
-       <enum>Qt::Vertical</enum>
-      </property>
-      <property name="sizeHint" stdset="0">
-       <size>
-        <width>20</width>
-        <height>40</height>
-       </size>
-      </property>
-     </spacer>
-    </item>
-    <item row="2" column="0" colspan="2">
-     <widget class="QLabel" name="label">
-      <property name="text">
-       <string>Connected control modules:</string>
-      </property>
-     </widget>
-    </item>
-    <item row="3" column="0" colspan="2">
-     <widget class="QComboBox" name="selectBox"/>
-    </item>
-    <item row="3" column="2">
-     <widget class="QPushButton" name="connectBtn">
-      <property name="text">
-       <string>Connect</string>
-      </property>
-     </widget>
-    </item>
-    <item row="4" column="0">
+    <item row="3" column="0">
      <widget class="QPushButton" name="refreshBtn">
       <property name="text">
        <string>Refresh</string>
       </property>
      </widget>
     </item>
-    <item row="4" column="1">
-     <widget class="QPushButton" name="flushCommandBtn">
+    <item row="3" column="1">
+     <widget class="QPushButton" name="connectBtn">
       <property name="text">
-       <string>Flush command FIFO</string>
+       <string>Connect</string>
       </property>
      </widget>
     </item>
-    <item row="4" column="2">
-     <widget class="QPushButton" name="disconnBtn">
-      <property name="enabled">
-       <bool>false</bool>
-      </property>
+    <item row="1" column="0">
+     <widget class="QLabel" name="label">
       <property name="text">
-       <string>Disconnect</string>
+       <string>Connected control modules:</string>
       </property>
      </widget>
     </item>
-    <item row="5" column="1">
-     <widget class="QPushButton" name="flushDataBtn">
-      <property name="text">
-       <string>Flush data FIFO</string>
-      </property>
-     </widget>
-    </item>
-    <item row="5" column="2">
-     <widget class="QPushButton" name="resetBtn">
-      <property name="text">
-       <string>Reset interface</string>
-      </property>
-     </widget>
+    <item row="1" column="1" colspan="2">
+     <widget class="QComboBox" name="selectBox"/>
     </item>
    </layout>
   </widget>

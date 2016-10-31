@@ -14,18 +14,6 @@ import time
 import cmbackend
 import csv
 
-class Bands(Enum):
-    DeltaLow=0
-    DeltaHigh=4
-    ThetaLow=4
-    ThetaHigh=7
-    AlphaLow=8
-    AlphaHigh=15
-    BetaLow=16
-    BetaHigh=31
-    GammaLow=32
-    GammaHigh=100
-
 class omni_data(IsDescription):
     # data = UInt16Col(shape=(1,64))
     # data = UInt16Col(shape=(1,96))
@@ -33,8 +21,6 @@ class omni_data(IsDescription):
     data = UInt16Col(shape=(1,99))
     time = StringCol(26)
 
-
-# TODO: FFT output doesn't look correct
 def calculateFFT(d):
     fft = np.abs(np.fft.rfft(d, n=100)) # 100 point FFT - change to be based on xRange?
     return fft
@@ -44,6 +30,7 @@ class DataVisualizer(QDockWidget):
     streamAdc = pyqtSignal()
     testCommOn = pyqtSignal()
     testCommOff = pyqtSignal()
+    setupRecording = pyqtSignal()
 
     def __init__(self, parent=None):
         def populate(listbox, start, stop, step):
@@ -74,12 +61,6 @@ class DataVisualizer(QDockWidget):
         self.connect(self.streamAdcThread, SIGNAL("finished()"), self.streamingDone)
         # self.connect(self.streamAdcThread, SIGNAL('streamDataOut(PyQt_PyObject)'), self.streamAdcData)
 
-        # hdf5 data storage
-        # TODO: add save file text box
-        # self.saveFile = tables.open_file("test.hdf", mode="w", title="Test")
-        # self.dataGroup = self.saveFile.create_group("/", name='dataGroup', title='Recorded Data Group')
-        # self.dataTable = self.saveFile.create_table(self.dataGroup, name='dataTable', title='Recorded Data Table', description=omni_data)
-
         self.file = open('gui_data.csv','w')
         self.csvfile = csv.writer(self.file)
 
@@ -93,19 +74,13 @@ class DataVisualizer(QDockWidget):
 
         self.updatePlotDisplay()
 
-        # every time the # of bands changes, update the band selection boxes
-        # self.ui.numBands.currentIndexChanged.connect(self.updateBands)
-
         self.ui.autorange.clicked.connect(self.updatePlot)
         self.ui.numPlotsDisplayed.currentIndexChanged.connect(self.updatePlotDisplay)
         self.ui.xRange.valueChanged.connect(self.updatePlotDisplay)
         self.ui.clearBtn.clicked.connect(self.clearPlots)
 
         # set some defaults
-        # self.ui.numBands.setCurrentIndex(0)
         self.ui.autorange.setChecked(True)
-        # self.ui.plotEn.setChecked(True)
-        # self.updateBands()
 
     @pyqtSlot()
     def streamingDone(self):
@@ -114,21 +89,10 @@ class DataVisualizer(QDockWidget):
     def setWorker(self, w):
         self.testCommOn.connect(w.testCommOn)
         self.testCommOff.connect(w.testCommOff)
+        self.setupRecording.connect(w.setupRecording)
         self.readAdc.connect(w.readAdc)
         w.adcData.connect(self.adcData)
         w.updateChannels.connect(self.updateChannels)
-
-    def updateBands(self):
-        self.ui.fStart5.setEnabled(self.ui.numBands.currentIndex() >= 4)
-        self.ui.fStop5.setEnabled(self.ui.numBands.currentIndex() >= 4)
-        self.ui.fStart4.setEnabled(self.ui.numBands.currentIndex() >= 3)
-        self.ui.fStop4.setEnabled(self.ui.numBands.currentIndex() >= 3)
-        self.ui.fStart3.setEnabled(self.ui.numBands.currentIndex() >= 2)
-        self.ui.fStop3.setEnabled(self.ui.numBands.currentIndex() >= 2)
-        self.ui.fStart2.setEnabled(self.ui.numBands.currentIndex() >= 1)
-        self.ui.fStop2.setEnabled(self.ui.numBands.currentIndex() >= 1)
-        self.ui.fStart1.setEnabled(self.ui.numBands.currentIndex() >= 0)
-        self.ui.fStop1.setEnabled(self.ui.numBands.currentIndex() >= 0)
 
     def wheelEvent(self, QWheelEvent):
         # scrolling through plots
@@ -193,9 +157,6 @@ class DataVisualizer(QDockWidget):
         global t_start
         t_start = datetime.now()
         self.data = data
-        if self.ui.saveEn.isChecked():
-            self.saveData()
-        #if self.ui.plotEn.isChecked():
         self.updatePlot()
 
     # @pyqtSlot(list)
@@ -237,31 +198,10 @@ class DataVisualizer(QDockWidget):
         else:
             #print("Test Comm Off")
             self.testCommOff.emit()
-    # def saveData(self):
-    #     for sample in range(0,len(self.data)):
-    #         #Creates a row in the data table for a sample
-    #         data_point = self.dataTable.row
-    #         #Sets the time of the beginning of the sample
-    #         t_elapsed = datetime.now()
-    #         #The following three lines add values into the row of the data table for this sample
-    #         #Start of the data of sample, t_start set in streamAdcdata(self, data)
-    #         data_point['start of data'] = t_start
-    #         #time since the start of the data is the difference between t_elapsed and t_start
-    #         data_point['time since start of data'] = str(int(t_elapsed.day) - int(data_point['start of sample'].day)) + ' days ' + str(int(t_elapsed.hour) - int(data_point['start of sample'].hour)) + ' hours ' + str(int(t_elapsed.minute) - int(data_point['start of sample'].minute)) + ' minutes ' + str(int(t_elapsed.second) - int(data_point['start of sample'].second)) + ' seconds'
-    #         #Adds the data into the row of the data table for this sample
-    #         data_point['data'] = self.data[sample]
-    #         data_point.append()
-    #     self.dataTable.flush
 
-    def saveData(self):
-        filt = 'CSV files (*.csv);;All files (*.*)'
-        self.file = QtGui.QFileDialog.getSaveFileName(parent=self,
-                                                      caption="Select File",
-                                                      filter=filt)
-        self.fn = open(self.file, 'w')
-        self.csvfile = csv.writer(self.fn)
-        for sample in range(0, len(self.data)):
-            self.csvfile.writerow(self.data[sample])
+    @pyqtSlot()
+    def on_setupRecordingBtn_clicked(self):
+        self.setupRecording.emit()
 
     @pyqtSlot()
     def clearPlots(self):
@@ -301,15 +241,11 @@ class DataVisualizer(QDockWidget):
                 self.plots[i].setLabel('left', text="Ch {}".format(plotChannel))
             # self.plots[i].setTitle(title='Ch {}'.format(i), size='10px')
 
-#TODO: implement fft plotting. Can place plots in col=1
-
         # need to also replot the data
         self.updatePlot()
 
     @pyqtSlot()
     def updatePlot(self):
-
-# TODO: plotted data is lost when updatePlot is called and there is no new data. Need to remove the return statement and always replot stored data array(s)
 
 #TODO: plotting crashes when decreasing x-axis range
         # if not self.data:
@@ -370,8 +306,6 @@ class DataVisualizer(QDockWidget):
             for i in range(0,len(means)):
                 self.dataPlot[99][i] = means[i]
 
-# TODO: scale all y axes together? turn off auto-scale?
-
         for ch in range(self.topPlot, self.topPlot + self.numPlotsDisplayed): # only plot currently displayed plots
             if ch == 99:
                 dp = self.dataPlot[ch][0:95]
@@ -417,4 +351,3 @@ class DataVisualizer(QDockWidget):
                     # if self.ui.autorange.isChecked():
                         # self.fftPlots[ch].getViewBox().autoRange()
 
-# TODO: add FFT plotting + a way to enable/disable channels

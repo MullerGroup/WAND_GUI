@@ -151,31 +151,31 @@ def cp2130_libusb_read(handle):
     return read_input_buf
 
 def cp2130_libusb_set_spi_word(handle):
-	buf = c_ubyte * 2
-	control_buf_out = buf(0x00, 0x09)
-	usbTimeout = 500
+    buf = c_ubyte * 2
+    control_buf_out = buf(0x00, 0x09)
+    usbTimeout = 500
 
-	error_code = libusb1.libusb_control_transfer(handle, 0x40, 0x31, 0x0000, 0x0000, control_buf_out, sizeof(control_buf_out), usbTimeout)
-	if error_code != sizeof(control_buf_out):
-		print('Error in bulk transfer')
-		return False
-	# for i in control_buf_out:
-	# 	print(i)
-	return True
+    error_code = libusb1.libusb_control_transfer(handle, 0x40, 0x31, 0x0000, 0x0000, control_buf_out, sizeof(control_buf_out), usbTimeout)
+    if error_code != sizeof(control_buf_out):
+        print('Error in bulk transfer')
+        return False
+    # for i in control_buf_out:
+    # 	print(i)
+    return True
 
 def cp2130_libusb_get_rtr_state(handle):
-	buf = c_ubyte * 1
-	control_buf_in = buf()
-	usbTimeout = 500
+    buf = c_ubyte * 1
+    control_buf_in = buf()
+    usbTimeout = 500
 
-	error_code = libusb1.libusb_control_transfer(handle, 0xC0, 0x36, 0x0000, 0x0000, control_buf_in, sizeof(control_buf_in), usbTimeout)
-	if error_code != sizeof(control_buf_in):
-		print('Error in bulk transfer')
-		return False
-	# print('RTR_state: ')
-	# for i in control_buf_in:
-	# 	print(i)
-	return True
+    error_code = libusb1.libusb_control_transfer(handle, 0xC0, 0x36, 0x0000, 0x0000, control_buf_in, sizeof(control_buf_in), usbTimeout)
+    if error_code != sizeof(control_buf_in):
+        print('Error in bulk transfer')
+        return False
+    # print('RTR_state: ')
+    # for i in control_buf_in:
+    # 	print(i)
+    return True
 
 
 class readFTDIFifoThread(QThread):
@@ -294,6 +294,7 @@ class streamAdcThread(QThread):
                 if samples%1000 == 0:
                     self.dataTable.flush()
             timeout = False
+            #TODO: add plotting during streaming (activated via checkbox) only on displayed channels
 
         self.ftdiFIFO.stop() # turn off FTDI fifo reading thread
         print("Stream ended at: {}".format(datetime.datetime.now()))
@@ -416,6 +417,7 @@ class CMWorker(QThread):
                     if data[0] == 0xFF:
                         crcs = crcs + 1
                 else:
+                    # TODO: decrease timeout
                     timeout = timeout + 1
                     if timeout > 1000:
                         running = False
@@ -432,7 +434,6 @@ class CMWorker(QThread):
         if not self.cp2130Handle:
             return
         self.adcData.emit(self._getAdc(ns))
-
 
     def exit_cp2130(self):
         if self.cp2130Handle:
@@ -488,29 +489,6 @@ class CMWorker(QThread):
         print("Disconnected from {}".format(board))
         self.connStateChanged.emit(False)
         self.refreshBoards()
-
-    @pyqtSlot()
-    def flushCommandFifo(self):
-        return
-        if not self.cp2130Handle:
-            return
-        self.ser.flush_input()
-        print("Flushed FTDI input (command) FIFO")
-
-    @pyqtSlot()
-    def flushDataFifo(self):
-        return
-        if not self.cp2130Handle:
-            return
-        self.ser.flush_output()
-        print("Flushed FTDI output (data) FIFO")
-
-    @pyqtSlot()
-    def resetSerial(self):
-        return
-        if not self.cp2130Handle:
-            return
-        self._resetIF()
 
     @pyqtSlot(int, int)
     def nmicCommand(self, nm, cmd):
@@ -584,13 +562,46 @@ class CMWorker(QThread):
             self.regReadData.emit(nm, addr, ret[2])
         else:
             print("Failed to read register{:04x}".format(addr))
+        return ret
 
     @pyqtSlot()
     def testCommOn(self):
+        if not self.cp2130Handle:
+            return
         print("Test Comm On")
         self._regWr(Reg.req, 0x00000080) # enable test
 
     @pyqtSlot()
     def testCommOff(self):
+        if not self.cp2130Handle:
+            return
         print("Test Comm Off")
         self._regWr(Reg.req, 0x00000040)  # disable test
+
+    @pyqtSlot()
+    def setupRecording(self):
+        if not self.cp2130Handle:
+            return
+        self.writeReg(0, 0x11, 0x4000)
+        time.sleep(0.01)
+        self._sendCmd(0, 0x0a)
+        self.writeReg(1, 0x11, 0x4000)
+        time.sleep(0.01)
+        self._sendCmd(1, 0x0a)
+
+        time.sleep(0.05)
+        ret0 = self.readReg(0, 0x11)
+        if not ret0[0]:
+            print("Register readback failed for NM0 - try again")
+            return
+        if ret0[2] != 0x4000:
+            print("Register write failed for NM0 - try again")
+            return
+        ret1 = self.readReg(1, 0x11)
+        if not ret1[0]:
+            print("Register write failed for NM1 - try again")
+            return
+        if ret1[2] != 0x4000:
+            print("Register write failed for NM1 - try again")
+            return
+        print("Recording setup successfully. You may begin stream.")
