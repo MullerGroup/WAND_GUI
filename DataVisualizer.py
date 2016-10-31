@@ -461,10 +461,7 @@ class DataVisualizer(QDockWidget):
         # for ch in range(self.topPlot, self.topPlot + self.numPlotsDisplayed): # only plot currently displayed plots
         for ch in range(0, 3):
             if ch < 3:
-                if ch == 2:
-                    dp = self.dataPlot[ch][0:self.xRange]
-                else:
-                    dp = self.dataPlot[ch][0:self.xRange]
+                dp = self.dataPlot[ch][0:self.xRange]
                 # add back in to test new autorange
 
                 # fft = scipy.fft(dp)
@@ -533,8 +530,6 @@ class DataVisualizer(QDockWidget):
                     # add back in to test new autorange
                     self.plots[ch].getViewBox().setMouseEnabled(x=True,y=True)
                     self.plots[ch].getViewBox().setMouseMode(self.plots[ch].getViewBox().RectMode)
-                    if ch < 99 and ch > 95:
-                        self.plots[ch].getViewBox().setLimits(xMin=0,xMax=self.xRange,yMin=-100,yMax=65636)
                     elif ch == 1:
                         self.plots[ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=-2, yMax=2)
                         self.plots[ch].getViewBox().setRange(yRange=(-2, 2), update=True)
