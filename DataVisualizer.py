@@ -342,34 +342,34 @@ class DataVisualizer(QDockWidget):
             for ch in range(0,95):
                 means.append(np.mean(noisedata[ch]))
 
-            for ch in range(0, self.numPlots-1):
-                if self.ui.noise.isChecked():
-                    d = noisedata[ch]
-                    rms = np.std(d)
-                    # ff = np.abs(np.fft.fft(d)) / len(d)
-                    # ff[0] = 0
-                    # # notch out 60 hz harmonics
-                    # rms60 = 0
-                    # for i in range(1, 5):
-                    #     rms60 += ff[60 * i] ** 2
-                    #     ff[60 * i] = 0
-                    # rms60 **= 0.5
-                    # rms = np.sum(ff[0:500] ** 2) ** 0.5
-                    if ch < 96: print("Ch {} Noise: {:0.1f} rms".format(ch,rms))
-                    #print("{}".format(dp))
-                    #print("{:0.1f} rms".format(self.measureRms(dp)))
+            # for ch in range(0, self.numPlots-1):
+            #     if self.ui.noise.isChecked():
+            #         d = noisedata[ch]
+            #         rms = np.std(d)
+            #         # ff = np.abs(np.fft.fft(d)) / len(d)
+            #         # ff[0] = 0
+            #         # # notch out 60 hz harmonics
+            #         # rms60 = 0
+            #         # for i in range(1, 5):
+            #         #     rms60 += ff[60 * i] ** 2
+            #         #     ff[60 * i] = 0
+            #         # rms60 **= 0.5
+            #         # rms = np.sum(ff[0:500] ** 2) ** 0.5
+            #         if ch < 96: print("Ch {} Noise: {:0.1f} rms".format(ch,rms))
+            #         #print("{}".format(dp))
+            #         #print("{:0.1f} rms".format(self.measureRms(dp)))
 
-                if self.ui.thd.isChecked():
-                    d = noisedata[ch]
+            #     if self.ui.thd.isChecked():
+            #         d = noisedata[ch]
 
-                    indx = 11
-                    dfft = np.abs(np.fft.fft(d))
-                    fund = dfft[indx]
-                    dist = 0
-                    for i in range(2, 32):
-                        dist += dfft[i * indx] ** 2
-                    db =  20 * np.log10(dist ** 0.5 / fund)
-                    if ch < 96: print("Ch {} THD: {:0.0f} dB".format(ch,db))
+            #         indx = 11
+            #         dfft = np.abs(np.fft.fft(d))
+            #         fund = dfft[indx]
+            #         dist = 0
+            #         for i in range(2, 32):
+            #             dist += dfft[i * indx] ** 2
+            #         db =  20 * np.log10(dist ** 0.5 / fund)
+            #         if ch < 96: print("Ch {} THD: {:0.0f} dB".format(ch,db))
 
             for t in range(0, len(self.data)):
                 if self.plotPointer == self.xRange:
@@ -458,7 +458,7 @@ class DataVisualizer(QDockWidget):
 # TODO: scale all y axes together? turn off auto-scale?
 
         # for ch in range(self.topPlot, self.topPlot + self.numPlotsDisplayed): # only plot currently displayed plots
-        for ch in range(0, 3):
+        for ch in range(0, 2):
             if ch < 3:
                 if ch == 2:
                     dp = self.dataPlot[1][0:self.xRange]
@@ -477,13 +477,8 @@ class DataVisualizer(QDockWidget):
                     dp = signal.filtfilt(self.b,self.a,dp)
                     dp = signal.filtfilt(self.c,self.d,dp)
                     dp = signal.filtfilt(self.e, self.f, dp)
-                elif ch == 2:
-                    dp = signal.filtfilt(self.b, self.a, dp)
-                    dp = signal.filtfilt(self.c, self.d, dp)
-                    dp = signal.filtfilt(self.e, self.f, dp)
-                    dp = np.diff(dp)
-
-                    if self.countDown == 0 and (self.ui.noise.isChecked() or self.ui.thd.isChecked()) and self.plotPointer > 59 and min(dp[self.plotPointer - 60:self.plotPointer-40]) < -15:
+                    diffs = np.diff(dp)
+                    if self.countDown == 0 and (self.ui.noise.isChecked() or self.ui.thd.isChecked()) and self.plotPointer > 59 and min(diffs[self.plotPointer - 60:self.plotPointer-40]) < -15:
                         if self.plotPointer - 40 < self.lastPulse:
                             bpm = round(60 * 1000 / ((self.xRange + self.plotPointer - 40) - self.lastPulse))
                         else:
@@ -494,6 +489,23 @@ class DataVisualizer(QDockWidget):
                             self.countDown = 4
                             if self.ui.thd.isChecked():
                                 self.pulseStim.emit()
+                # elif ch == 2:
+                #     dp = signal.filtfilt(self.b, self.a, dp)
+                #     dp = signal.filtfilt(self.c, self.d, dp)
+                #     dp = signal.filtfilt(self.e, self.f, dp)
+                #     dp = np.diff(dp)
+
+                #     if self.countDown == 0 and (self.ui.noise.isChecked() or self.ui.thd.isChecked()) and self.plotPointer > 59 and min(dp[self.plotPointer - 60:self.plotPointer-40]) < -15:
+                #         if self.plotPointer - 40 < self.lastPulse:
+                #             bpm = round(60 * 1000 / ((self.xRange + self.plotPointer - 40) - self.lastPulse))
+                #         else:
+                #             bpm = round(60 * 1000 / (self.plotPointer - 40 - self.lastPulse))
+                #         if bpm < 120 and bpm > 40:
+                #             print('BPM = {}'.format(bpm))
+                #             self.lastPulse = self.plotPointer - 40
+                #             self.countDown = 4
+                #             if self.ui.thd.isChecked():
+                #                 self.pulseStim.emit()
 
                 avg = np.mean(dp)
                 sd = np.std(dp)
@@ -523,8 +535,8 @@ class DataVisualizer(QDockWidget):
                     if ch < 99 and ch > 95:
                         self.plots[ch].getViewBox().setLimits(xMin=0,xMax=self.xRange,yMin=-100,yMax=65636)
                     elif ch == 1:
-                        self.plots[ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=-1, yMax=1)
-                        self.plots[ch].getViewBox().setRange(yRange=(-1, 1), update=True)
+                        self.plots[ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=-2, yMax=2)
+                        self.plots[ch].getViewBox().setRange(yRange=(-2, 2), update=True)
                     elif ch == 2:
                         self.plots[ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=-1, yMax=1)
                         self.plots[ch].getViewBox().setRange(yRange=(-1, 1), update=True)

@@ -13,7 +13,7 @@ from cmdline import CommandLineWidget
 from nmicCommand import NmicCommand
 from DataVisualizer import DataVisualizer
 
-class MainWindow(QMainWindow):   
+class MainWindow(QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.ui = Ui_MainWindow()
