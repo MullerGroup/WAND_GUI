@@ -449,8 +449,9 @@ class DataVisualizer(QDockWidget):
                 # for ch in range(0, 2):
                 #     self.dataPlot[ch][self.plotPointer] = temp[ch]
                     # self.dataPlot[ch][self.plotPointer] = temp.pop(0) # pop data for channel = 0, 1, 2, ...
-                self.dataPlot[0][self.plotPointer] = temp[1]
-                self.dataPlot[1][self.plotPointer] = temp[1]
+                self.dataPlot[0][self.plotPointer] = temp[2]
+                self.dataPlot[1][self.plotPointer] = temp[2]
+                self.dataPlot[2][self.plotPointer] = temp[0]
                 # self.dataPlot[2][self.plotPointer] = temp[1]
                 self.plotPointer += 1
             self.data = []
@@ -458,10 +459,10 @@ class DataVisualizer(QDockWidget):
 # TODO: scale all y axes together? turn off auto-scale?
 
         # for ch in range(self.topPlot, self.topPlot + self.numPlotsDisplayed): # only plot currently displayed plots
-        for ch in range(0, 2):
+        for ch in range(0, 3):
             if ch < 3:
                 if ch == 2:
-                    dp = self.dataPlot[1][0:self.xRange]
+                    dp = self.dataPlot[ch][0:self.xRange]
                 else:
                     dp = self.dataPlot[ch][0:self.xRange]
                 # add back in to test new autorange
@@ -524,8 +525,8 @@ class DataVisualizer(QDockWidget):
 
                 self.plots[ch].clear()
                 # self.fftPlots[ch].clear()
-                if self.plotEn[ch] and ch < 2:
-                    if ch == 0:
+                if self.plotEn[ch] and ch < 3:
+                    if ch == 0 or ch == 2:
                         self.plots[ch].plot(y=(dp * (0.00305))-50, pen=self.plotColors[ch])  # different color for each plot
                     else:
                         self.plots[ch].plot(y=dp*(0.00305), pen=self.plotColors[ch]) # different color for each plot
@@ -538,8 +539,8 @@ class DataVisualizer(QDockWidget):
                         self.plots[ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=-2, yMax=2)
                         self.plots[ch].getViewBox().setRange(yRange=(-2, 2), update=True)
                     elif ch == 2:
-                        self.plots[ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=-1, yMax=1)
-                        self.plots[ch].getViewBox().setRange(yRange=(-1, 1), update=True)
+                        self.plots[ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=-100, yMax=100)
+                        self.plots[ch].getViewBox().setRange(yRange=(-100, 100), update=True)
                     else:
                         self.plots[ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=-55, yMax=55)
                     # self.plots[ch].getViewBox().setRange(yRange=(avg-(2.5*sd),avg+(2.5*sd)),update=True)

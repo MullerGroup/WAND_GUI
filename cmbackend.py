@@ -18,7 +18,7 @@ import numpy as np
 from queue import Queue
 
 datalen = 200
-ecglen = 6
+ecglen = 8
 
 # CM register addresses
 class Reg(Enum):
@@ -245,7 +245,7 @@ class streamAdcThread(QThread):
             # data = []
             # data_time = 0
             if data[0]==0xAA:
-                out.append([(data[i + 1] << 8 | data[i]) & 0x7FFF for i in list(range(1, 5, 2))])
+                out.append([(data[i + 1] << 8 | data[i]) & 0x7FFF if i > 1 else (data[i + 1] << 8 | data[i]) for i in list(range(1, 7, 2))])
                 if count == 20:
                     count = 0
                     self.streamAdcData.emit(out)
