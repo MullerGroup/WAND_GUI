@@ -61,6 +61,7 @@ class DataVisualizer(QDockWidget):
         # initialize streaming mode thread
         self.streamAdcThread = cmbackend.streamAdcThread()
         self.connect(self.streamAdcThread, SIGNAL("finished()"), self.streamingDone)
+        self.streamAdcThread.streamAdcData.connect(self.streamAdcData)
         # self.connect(self.streamAdcThread, SIGNAL('streamDataOut(PyQt_PyObject)'), self.streamAdcData)
 
         self.file = open('gui_data.csv','w')
@@ -163,6 +164,11 @@ class DataVisualizer(QDockWidget):
         self.data = data
         self.updatePlot()
 
+    @pyqtSlot(list)
+    def streamAdcData(self, data):
+        self.data = data
+        self.updatePlotStream()
+
     # @pyqtSlot(list)
     # def streamAdcData(self, data):
     #     global t_start
@@ -189,6 +195,7 @@ class DataVisualizer(QDockWidget):
     @pyqtSlot()
     def on_streamBtn_clicked(self):
         if self.ui.streamBtn.isChecked():
+            self.streamAdcThread.setup(self.ui.dispStream.isChecked(), self.ui.stim.isChecked(), self.ui.chStart.value())
             self.streamAdcThread.start()
             self.ui.singleBtn.setDisabled(True)
         else:
@@ -360,3 +367,120 @@ class DataVisualizer(QDockWidget):
                     # if self.ui.autorange.isChecked():
                         # self.fftPlots[ch].getViewBox().autoRange()
 
+    @pyqtSlot()
+    def updatePlotStream(self):
+        if self.data:
+            # loop through samples
+            for t in range(0, len(self.data)):
+                if self.plotPointer == self.xRange:
+                    self.plotPointer = 0
+                # grab specific sample
+                temp = self.data[t]
+                # temp = self.data.pop(0) # pop data for sample = 0, 1, 2, ...
+                # for ch in range(0, 2):
+                #     self.dataPlot[ch][self.plotPointer] = temp[ch]
+                # self.dataPlot[ch][self.plotPointer] = temp.pop(0) # pop data for channel = 0, 1, 2, ...
+                self.dataPlot[0][self.plotPointer] = temp[0]
+                self.dataPlot[1][self.plotPointer] = temp[1]
+                self.dataPlot[2][self.plotPointer] = temp[2]
+                self.dataPlot[3][self.plotPointer] = temp[3]
+                # self.dataPlot[2][self.plotPointer] = temp[1]
+                self.plotPointer += 1
+            self.data = []
+
+            # TODO: scale all y axes together? turn off auto-scale?
+
+        # for ch in range(self.topPlot, self.topPlot + self.numPlotsDisplayed): # only plot currently displayed plots
+        for ch in range(0, 4):
+            if ch < 4:
+                dp = self.dataPlot[ch][0:self.xRange]
+                # add back in to test new autorange
+
+                # fft = scipy.fft(dp)
+                # bp = fft[:]
+                # for i in range(len(bp)):
+                #     if i in notch or i > 240 or i < 1:
+                #         bp[i] = 0
+                # dp = np.real(scipy.ifft(bp))
+
+                # if ch == 1:
+                #     dp = signal.filtfilt(self.b, self.a, dp)
+                #     dp = signal.filtfilt(self.c, self.d, dp)
+                #     dp = signal.filtfilt(self.e, self.f, dp)
+                    # diffs = np.diff(dp)
+                    # if self.countDown == 0 and (
+                    #     self.ui.noise.isChecked() or self.ui.thd.isChecked()) and self.plotPointer > 59 and min(
+                    #         diffs[self.plotPointer - 60:self.plotPointer - 40]) < -15:
+                    #     if self.plotPointer - 40 < self.lastPulse:
+                    #         bpm = round(60 * 1000 / ((self.xRange + self.plotPointer - 40) - self.lastPulse))
+                    #     else:
+                    #         bpm = round(60 * 1000 / (self.plotPointer - 40 - self.lastPulse))
+                    #     if bpm < 120 and bpm > 40:
+                    #         print('BPM = {}'.format(bpm))
+                    #         self.lastPulse = self.plotPointer - 40
+                    #         self.countDown = 4
+                    #         if self.ui.thd.isChecked():
+                    #             self.pulseStim.emit()
+                # elif ch == 2:
+                #     dp = signal.filtfilt(self.b, self.a, dp)
+                #     dp = signal.filtfilt(self.c, self.d, dp)
+                #     dp = signal.filtfilt(self.e, self.f, dp)
+                #     dp = np.diff(dp)
+
+                #     if self.countDown == 0 and (self.ui.noise.isChecked() or self.ui.thd.isChecked()) and self.plotPointer > 59 and min(dp[self.plotPointer - 60:self.plotPointer-40]) < -15:
+                #         if self.plotPointer - 40 < self.lastPulse:
+                #             bpm = round(60 * 1000 / ((self.xRange + self.plotPointer - 40) - self.lastPulse))
+                #         else:
+                #             bpm = round(60 * 1000 / (self.plotPointer - 40 - self.lastPulse))
+                #         if bpm < 120 and bpm > 40:
+                #             print('BPM = {}'.format(bpm))
+                #             self.lastPulse = self.plotPointer - 40
+                #             self.countDown = 4
+                #             if self.ui.thd.isChecked():
+                #                 self.pulseStim.emit()
+
+                avg = np.mean(dp)
+                sd = np.std(dp)
+                if sd < 10:
+                    sd = 10
+
+                # # formatting the data for neural/accelerometer channels
+                # if ch > 95:
+                #     # accelerometer data, 2's complement
+                #     dp = (dp + 2**15) % 2**16 - 2**15
+                # else:
+                #     # neural data, sign + magnitude
+                #     if dp & 2**15:
+                #         # negative
+                #         dp = -(dp & 0x7FFF)
+
+                self.plots[ch].clear()
+                # self.fftPlots[ch].clear()
+                if self.plotEn[ch] and ch < 4:
+                    if ch == 0 or ch == 2:
+                        # self.plots[ch].plot(y=(dp * (0.00305))-50, pen=self.plotColors[ch])  # different color for each plot
+                        self.plots[ch].plot(y=dp, pen=self.plotColors[ch])
+                    else:
+                        # self.plots[ch].plot(y=dp*(0.00305), pen=self.plotColors[ch]) # different color for each plot
+                        self.plots[ch].plot(y=dp, pen=self.plotColors[ch])
+                    # add back in to test new autorange
+                    self.plots[ch].getViewBox().setMouseEnabled(x=True, y=True)
+                    self.plots[ch].getViewBox().setMouseMode(self.plots[ch].getViewBox().RectMode)
+                    if ch == 1:
+                        self.plots[ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=-32768, yMax=32768)
+                        self.plots[ch].getViewBox().setRange(yRange=(-2, 2), update=True)
+                    elif ch == 2:
+                        self.plots[ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=-32768, yMax=32768)
+                        self.plots[ch].getViewBox().setRange(yRange=(-100, 100), update=True)
+                    else:
+                        self.plots[ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=-32768, yMax=32768)
+                    # self.plots[ch].getViewBox().setRange(yRange=(avg-(2.5*sd),avg+(2.5*sd)),update=True)
+                    if self.ui.autorange.isChecked():
+                        # if ch > 0:
+                        #     self.plots[ch].getViewBox().autoRange()
+                        self.plots[ch].getViewBox().autoRange()
+                        # self.fftPlots[ch].plot(y=calculateFFT(dp), pen=(102,204,255))
+                        # if self.ui.autorange.isChecked():
+                        # self.fftPlots[ch].getViewBox().autoRange()
+
+                        # TODO: add FFT plotting + a way to enable/disable channels

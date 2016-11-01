@@ -210,7 +210,12 @@ class readFTDIFifoThread(QThread):
                 dataQueue.put(data)
                 timeQueue.put(time.time() - t_0)
 
+
 class streamAdcThread(QThread):
+
+    streamAdcData = pyqtSignal(list)
+    display = True
+    chStart = 0
 
     def __init__(self):
         QThread.__init__(self)
@@ -222,6 +227,14 @@ class streamAdcThread(QThread):
 
     def stop(self):
         self._running = False
+
+    def setup(self, disp, stim, ch):
+        self.chStart = ch
+        self.display = disp
+        if stim:
+            print("Streaming with stim")
+        else:
+            print("Streaming without stim")
 
     def run(self):
         # make sure serial device is open
@@ -276,6 +289,8 @@ class streamAdcThread(QThread):
                     success += 1
                     data_point = self.dataTable.row
                     data_point['out'] = [data[0] if i == 0 else ((data[i + 1] << 8 | data[i]) & 0x7FFF if i < datalen - 7 else (data[i + 1] << 8 | data[i])) for i in list(range(0, datalen - 3, 2))]
+                    if self.display:
+                        out.append([(data[i + 1] << 8 | data[i]) & 0x7FFF for i in list(range(2*(self.chStart + 1), 2*(self.chStart + 5), 2))])
                     data_point['time'] = data_time
                     data_point.append()
 
@@ -293,6 +308,9 @@ class streamAdcThread(QThread):
                 # flush the tables every 1000 samples (any speed up?)
                 if samples%1000 == 0:
                     self.dataTable.flush()
+                if samples%100 == 0 and self.display:
+                    self.streamAdcData.emit(out)
+                    out = []
             timeout = False
             #TODO: add plotting during streaming (activated via checkbox) only on displayed channels
 

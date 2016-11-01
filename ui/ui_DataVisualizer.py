@@ -99,6 +99,9 @@ class Ui_DataVisualizer(object):
         self.autorange = QtGui.QCheckBox(self.dockWidgetContents)
         self.autorange.setObjectName(_fromUtf8("autorange"))
         self.gridLayout.addWidget(self.autorange, 4, 2, 1, 1)
+        self.dispStream = QtGui.QCheckBox(self.dockWidgetContents)
+        self.dispStream.setObjectName(_fromUtf8("dispStream"))
+        self.gridLayout.addWidget(self.dispStream, 5, 0, 1, 1)
         self.label_5 = QtGui.QLabel(self.dockWidgetContents)
         self.label_5.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
         self.label_5.setObjectName(_fromUtf8("label_5"))
@@ -110,6 +113,15 @@ class Ui_DataVisualizer(object):
         self.xRange.setProperty("value", 2000)
         self.xRange.setObjectName(_fromUtf8("xRange"))
         self.gridLayout.addWidget(self.xRange, 3, 4, 1, 1)
+
+        self.chStart = QtGui.QSpinBox(self.dockWidgetContents)
+        self.chStart.setMinimum(0)
+        self.chStart.setMaximum(95)
+        self.chStart.setSingleStep(1)
+        self.chStart.setProperty("value", 0)
+        self.chStart.setObjectName(_fromUtf8("chStart"))
+        self.gridLayout.addWidget(self.chStart, 5, 1, 1, 1)
+
         self.singleBtn = QtGui.QPushButton(self.dockWidgetContents)
         self.singleBtn.setObjectName(_fromUtf8("singleBtn"))
         self.gridLayout.addWidget(self.singleBtn, 3, 0, 1, 1)
@@ -163,5 +175,6 @@ class Ui_DataVisualizer(object):
         self.label_5.setText(_translate("DataVisualizer", "X-axis range (ms):", None))
         self.singleBtn.setText(_translate("DataVisualizer", "Update", None))
         self.label_3.setText(_translate("DataVisualizer", "Samples:", None))
+        self.dispStream.setText(_translate("DataVisualizer", "Display stream data from Ch:", None))
 
 from pyqtgraph import GraphicsLayoutWidget
