@@ -245,7 +245,7 @@ class streamAdcThread(QThread):
         data_point.append()
         self.infoTable.flush()
 
-        CMWorker()._regWr(Reg.req, 0x0030) # put CM into streaming mode for both NMs
+        CMWorker().startStream() # put CM into streaming mode for both NMs
         time.sleep(0.07)
 
         out = []
@@ -302,7 +302,7 @@ class streamAdcThread(QThread):
         print("Received Samples: {}".format(samples))
         time.sleep(0.5)
 
-        CMWorker()._regWr(Reg.req, 0x0000) # turn off streaming mode
+        CMWorker().stopStream() # turn off streaming mode
         print("End of Stream")
         print("Fifos Flushed")
 
@@ -401,7 +401,7 @@ class CMWorker(QThread):
         print('Requesting data...')
         out = []
         self._flushRadio()
-        self._regWr(Reg.req, 0x0030) # put CM into streaming mode
+        self.startStream() # put CM into streaming mode
         crcs = 0
         samples = 0
         running = True
@@ -425,7 +425,7 @@ class CMWorker(QThread):
 
         print("Samples: {}".format(samples))
         print("CRCs: {}".format(crcs))
-        self._regWr(Reg.req, 0x0000) # stop streamining
+        self.stopStream() # stop streamining
         self._flushRadio()
         return out
 
@@ -605,3 +605,28 @@ class CMWorker(QThread):
             print("Register write failed for NM1 - try again")
             return
         print("Recording setup successfully. You may begin stream.")
+
+    @pyqtSlot()
+    def enableArtifact(self):
+        if not self.cp2130Handle:
+            return
+        self._regWr(Reg.req, 0x8000)
+        print("Enabled Artifact Removal")
+
+    @pyqtSlot()
+    def disableArtifact(self):
+        if not self.cp2130Handle:
+            return
+        self._regWr(Reg.req, 0x4000)
+        print("Disabled Artifact Removal")
+
+    def startStream(self):
+        if not self.cp2130Handle:
+            return
+        self._regWr(Reg.req, 0x0020)
+
+    def stopStream(self):
+        if not self.cp2130Handle:
+            return
+        # self._regWr(Reg.req, 0x0010)
+        self._regWr(Reg.req, 0x0000)

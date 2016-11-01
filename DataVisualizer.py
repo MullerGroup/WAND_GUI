@@ -31,6 +31,8 @@ class DataVisualizer(QDockWidget):
     testCommOn = pyqtSignal()
     testCommOff = pyqtSignal()
     setupRecording = pyqtSignal()
+    enableArtifact = pyqtSignal()
+    disableArtifact = pyqtSignal()
 
     def __init__(self, parent=None):
         def populate(listbox, start, stop, step):
@@ -90,6 +92,8 @@ class DataVisualizer(QDockWidget):
         self.testCommOn.connect(w.testCommOn)
         self.testCommOff.connect(w.testCommOff)
         self.setupRecording.connect(w.setupRecording)
+        self.enableArtifact.connect(w.enableArtifact)
+        self.disableArtifact.connect(w.disableArtifact)
         self.readAdc.connect(w.readAdc)
         w.adcData.connect(self.adcData)
         w.updateChannels.connect(self.updateChannels)
@@ -204,6 +208,13 @@ class DataVisualizer(QDockWidget):
         self.setupRecording.emit()
 
     @pyqtSlot()
+    def on_artifactBtn_clicked(self):
+        if self.ui.artifactBtn.isChecked():
+            self.enableArtifact.emit()
+        else:
+            self.disableArtifact.emit()
+
+    @pyqtSlot()
     def clearPlots(self):
         self.plotPointer = 0
         self.dataPlot = np.zeros(
@@ -281,17 +292,15 @@ class DataVisualizer(QDockWidget):
                     #print("{}".format(dp))
                     #print("{:0.1f} rms".format(self.measureRms(dp)))
 
-                if self.ui.thd.isChecked():
-                    d = noisedata[ch]
-
                     indx = 11
                     dfft = np.abs(np.fft.fft(d))
                     fund = dfft[indx]
                     dist = 0
                     for i in range(2, 32):
                         dist += dfft[i * indx] ** 2
-                    db =  20 * np.log10(dist ** 0.5 / fund)
-                    if ch < 96: print("Ch {} THD: {:0.0f} dB".format(ch,db))
+                    db = 20 * np.log10(dist ** 0.5 / fund)
+                    if ch < 96: print("Ch {} THD: {:0.0f} dB".format(ch, db))
+
 
             for t in range(0, len(self.data)):
                 if self.plotPointer == self.xRange:
