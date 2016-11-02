@@ -180,6 +180,9 @@ def cp2130_libusb_get_rtr_state(handle):
 
 class readFTDIFifoThread(QThread):
 
+    stim = False
+    count = 1000
+
     def __init__(self):
         QThread.__init__(self)
         self._running = True
@@ -189,6 +192,10 @@ class readFTDIFifoThread(QThread):
 
     def stop(self):
         self._running = False
+
+    def setup(self, stim):
+        self.stim = stim
+        self.count = 1000
 
     def run(self):
         # make sure serial device is open
@@ -209,6 +216,11 @@ class readFTDIFifoThread(QThread):
             elif data[1] == 198:
                 dataQueue.put(data)
                 timeQueue.put(time.time() - t_0)
+                if self.count > 0 and self.stim:
+                    self.count = self.count - 1
+                    if self.count == 0:
+                        print("stimming")
+                        CMWorker().nmicCommand(0, 0x09)
 
 
 class streamAdcThread(QThread):
@@ -216,6 +228,7 @@ class streamAdcThread(QThread):
     streamAdcData = pyqtSignal(list)
     display = True
     chStart = 0
+    stim = True
 
     def __init__(self):
         QThread.__init__(self)
@@ -231,6 +244,7 @@ class streamAdcThread(QThread):
     def setup(self, disp, stim, ch):
         self.chStart = ch
         self.display = disp
+        self.stim = stim
         if stim:
             print("Streaming with stim")
         else:
@@ -269,6 +283,7 @@ class streamAdcThread(QThread):
         t_0 = time.time()
 
         # initialize ftdiFIFO thread and start it
+        self.ftdiFIFO.setup(self.stim)
         self.ftdiFIFO.start()
         timeout = False
         while self._running:
@@ -299,6 +314,8 @@ class streamAdcThread(QThread):
                     success += 1
                     data_point = self.dataTable.row
                     data_point['out'] = [data[0] if i == 0 else ((data[i + 1] << 8 | data[i]) & 0x7FFF if i < datalen - 7 else (data[i + 1] << 8 | data[i])) for i in list(range(0, datalen - 3, 2))]
+                    if self.display:
+                        out.append([(data[i + 1] << 8 | data[i]) & 0x7FFF for i in list(range(2*(self.chStart + 1), 2*(self.chStart + 5), 2))])
                     data_point['time'] = data_time
                     data_point.append()
 
@@ -513,8 +530,8 @@ class CMWorker(QThread):
         if not self.cp2130Handle:
             return
         self._sendCmd(nm, cmd)
-        if (cmd == 0x04 or cmd == 0x09):
-            self.adcData.emit(self._getAdc(1000))
+        # if (cmd == 0x04 or cmd == 0x09):
+        #     self.adcData.emit(self._getAdc(1000))
 
     @pyqtSlot(int, int, int)
     def writeReg(self, nm, addr, value):
