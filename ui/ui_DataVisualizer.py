@@ -129,7 +129,7 @@ class Ui_DataVisualizer(object):
         DataVisualizer.setWidget(self.dockWidgetContents)
 
         self.retranslateUi(DataVisualizer)
-        self.numPlotsDisplayed.setCurrentIndex(0)
+        self.numPlotsDisplayed.setCurrentIndex(1)
         QtCore.QMetaObject.connectSlotsByName(DataVisualizer)
 
     def retranslateUi(self, DataVisualizer):
