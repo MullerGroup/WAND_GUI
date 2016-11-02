@@ -19,6 +19,8 @@ if __name__ == '__main__':
     w.cmdline.setInterp(interp)
     w.cmdline.setStdout(stdout)
     w.show()
+    w.activateWindow()
+    w.raise_()
     worker.start()
     interp.start()
     oldstderr = sys.stderr
