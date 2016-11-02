@@ -238,6 +238,7 @@ class DataVisualizer(QDockWidget):
     @pyqtSlot()
     def on_streamBtn_clicked(self):
         if self.ui.streamBtn.isChecked():
+            self.updatePlotDisplay()
             self.streamAdcThread.start()
             self.ui.singleBtn.setDisabled(True)
         else:
@@ -312,8 +313,15 @@ class DataVisualizer(QDockWidget):
             elif i < 99 and i > 95:
                 self.plots[i].setLabel('left', text='Ramp')
             else:
-                self.plots[i].setLabel('left', text="Ch {}".format(plotChannel))
+                if self.ui.streamBtn.isChecked():
+                    if i == 0:
+                        self.plots[i].setLabel('left', text='Raw ECG with blanking')
+                    if i == 1:
+                        self.plots[i].setLabel('left', text='Filtered ECG')
+                else:
+                    self.plots[i].setLabel('left', text="Ch {}".format(plotChannel))
             # self.plots[i].setTitle(title='Ch {}'.format(i), size='10px')
+
 
 #TODO: implement fft plotting. Can place plots in col=1
 
@@ -449,10 +457,8 @@ class DataVisualizer(QDockWidget):
                 # for ch in range(0, 2):
                 #     self.dataPlot[ch][self.plotPointer] = temp[ch]
                     # self.dataPlot[ch][self.plotPointer] = temp.pop(0) # pop data for channel = 0, 1, 2, ...
-                self.dataPlot[0][self.plotPointer] = temp[2]
-                self.dataPlot[1][self.plotPointer] = temp[2]
-                self.dataPlot[2][self.plotPointer] = temp[0]
-                self.dataPlot[3][self.plotPointer] = temp[2] & 0x7FFF
+                self.dataPlot[0][self.plotPointer] = temp[0]
+                self.dataPlot[1][self.plotPointer] = temp[1]
                 # self.dataPlot[2][self.plotPointer] = temp[1]
                 self.plotPointer += 1
             self.data = []
@@ -460,8 +466,8 @@ class DataVisualizer(QDockWidget):
 # TODO: scale all y axes together? turn off auto-scale?
 
         # for ch in range(self.topPlot, self.topPlot + self.numPlotsDisplayed): # only plot currently displayed plots
-        for ch in range(0, 4):
-            if ch < 4:
+        for ch in range(0, 2):
+            if ch < 2:
                 dp = self.dataPlot[ch][0:self.xRange]
                 # add back in to test new autorange
 
@@ -523,8 +529,8 @@ class DataVisualizer(QDockWidget):
 
                 self.plots[ch].clear()
                 # self.fftPlots[ch].clear()
-                if self.plotEn[ch] and ch < 4:
-                    if ch == 0 or ch == 2:
+                if self.plotEn[ch] and ch < 2:
+                    if ch == 0:
                         # self.plots[ch].plot(y=(dp * (0.00305))-50, pen=self.plotColors[ch])  # different color for each plot
                         self.plots[ch].plot(y=dp, pen=self.plotColors[ch])
                     else:

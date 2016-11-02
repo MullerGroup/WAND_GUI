@@ -219,7 +219,8 @@ class streamAdcThread(QThread):
         ftdiFIFO = readFTDIFifoThread()
         ftdiFIFO.start()
 
-
+        oldSample = 0
+        blank = False
         while self._running:
             if self.stim:
                 ftdiFIFO.stim()
@@ -245,7 +246,18 @@ class streamAdcThread(QThread):
             # data = []
             # data_time = 0
             if data[0]==0xAA:
-                out.append([(data[i + 1] << 8 | data[i]) & 0x7FFF if i > 9 else (data[i + 1] << 8 | data[i]) for i in list(range(1, 7, 2))])
+                # out.append([(data[i + 1] << 8 | data[i]) & 0x7FFF if i > 0 else (data[i + 1] << 8 | data[i]) for i in list(range(1, 7, 2))])
+                sample = data[6] << 8 | data[5]
+                if sample & 0x8000:
+                    out.append([(sample & 0x7FFF), oldSample])
+                    blank = True
+                elif blank:
+                    out.append([(sample & 0x7FFF), oldSample])
+                    blank = False
+                else:
+                    out.append([sample, sample])
+                    oldSample = sample
+                    blank = False
                 if count == 20:
                     count = 0
                     self.streamAdcData.emit(out)
