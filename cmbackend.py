@@ -227,7 +227,10 @@ class streamAdcThread(QThread):
 
     streamAdcData = pyqtSignal(list)
     display = True
-    chStart = 0
+    ch0 = 0
+    ch1 = 0
+    ch2 = 0
+    ch3 = 0
     stim = True
 
     def __init__(self):
@@ -241,8 +244,11 @@ class streamAdcThread(QThread):
     def stop(self):
         self._running = False
 
-    def setup(self, disp, stim, ch):
-        self.chStart = ch
+    def setup(self, disp, stim, ch0, ch1, ch2, ch3):
+        self.ch0 = ch0
+        self.ch1 = ch1
+        self.ch2 = ch2
+        self.ch3 = ch3
         self.display = disp
         self.stim = stim
         if stim:
@@ -305,7 +311,8 @@ class streamAdcThread(QThread):
                     data_point = self.dataTable.row
                     data_point['out'] = [data[0] if i == 0 else ((data[i + 1] << 8 | data[i]) & 0x7FFF if i < datalen - 7 else (data[i + 1] << 8 | data[i])) for i in list(range(0, datalen - 3, 2))]
                     if self.display:
-                        out.append([(data[i + 1] << 8 | data[i]) & 0x7FFF for i in list(range(2*(self.chStart + 1), 2*(self.chStart + 5), 2))])
+                        # out.append([(data[i + 1] << 8 | data[i]) & 0x7FFF for i in list(range(2*(self.chStart + 1), 2*(self.chStart + 5), 2))])
+                        out.append([(data[i + 1] << 8 | data[i]) & 0xFFFF for i in [2*(self.ch0 + 1), 2*(self.ch1 + 1), 2*(self.ch2 + 1), 2*(self.ch3 + 1)]])
                     data_point['time'] = data_time
                     data_point.append()
 
@@ -315,7 +322,8 @@ class streamAdcThread(QThread):
                     data_point = self.dataTable.row
                     data_point['out'] = [data[0] if i == 0 else ((data[i + 1] << 8 | data[i]) & 0x7FFF if i < datalen - 7 else (data[i + 1] << 8 | data[i])) for i in list(range(0, datalen - 3, 2))]
                     if self.display:
-                        out.append([(data[i + 1] << 8 | data[i]) & 0x7FFF for i in list(range(2*(self.chStart + 1), 2*(self.chStart + 5), 2))])
+                        # out.append([(data[i + 1] << 8 | data[i]) & 0x7FFF for i in list(range(2*(self.chStart + 1), 2*(self.chStart + 5), 2))])
+                        out.append([(data[i + 1] << 8 | data[i]) & 0xFFFF for i in [2*(self.ch0 + 1), 2*(self.ch1 + 1), 2*(self.ch2 + 1), 2*(self.ch3 + 1)]])
                     data_point['time'] = data_time
                     data_point.append()
 
@@ -405,7 +413,7 @@ class CMWorker(QThread):
             if not write:
                 self._flushRadio()
                 self._regWr(Reg.req, 0x0100)
-                time.sleep(0.03)
+                time.sleep(0.05)
                 while d[1] != 4 and count < 100:
                     d = cp2130_libusb_read(CMWorker.cp2130Handle)
                     count = count + 1
@@ -422,7 +430,7 @@ class CMWorker(QThread):
             if not write:
                 self._flushRadio()
                 self._regWr(Reg.req, 0x0200)
-                time.sleep(0.03)
+                time.sleep(0.05)
                 while d[1] != 4 and count < 150:
                     d = cp2130_libusb_read(CMWorker.cp2130Handle)
                     count = count + 1
@@ -663,5 +671,5 @@ class CMWorker(QThread):
     def stopStream(self):
         if not self.cp2130Handle:
             return
-        # self._regWr(Reg.req, 0x0010)
-        self._regWr(Reg.req, 0x0000)
+        self._regWr(Reg.req, 0x0010)
+        # self._regWr(Reg.req, 0x0000)

@@ -88,6 +88,8 @@ class DataVisualizer(QDockWidget):
     @pyqtSlot()
     def streamingDone(self):
         self.ui.singleBtn.setEnabled(True)
+        self.ui.setupRecordingBtn.setEnabled(True)
+        self.ui.artifactBtn.setEnabled(True)
 
     def setWorker(self, w):
         self.testCommOn.connect(w.testCommOn)
@@ -195,9 +197,11 @@ class DataVisualizer(QDockWidget):
     @pyqtSlot()
     def on_streamBtn_clicked(self):
         if self.ui.streamBtn.isChecked():
-            self.streamAdcThread.setup(self.ui.dispStream.isChecked(), self.ui.stim.isChecked(), self.ui.chStart.value())
+            self.streamAdcThread.setup(self.ui.dispStream.isChecked(), self.ui.stim.isChecked(), self.ui.ch0.value(), self.ui.ch1.value(), self.ui.ch2.value(), self.ui.ch3.value())
             self.streamAdcThread.start()
             self.ui.singleBtn.setDisabled(True)
+            self.ui.setupRecordingBtn.setDisabled(True)
+            self.ui.artifactBtn.setDisabled(True)
         else:
             self.streamAdcThread.stop()
 

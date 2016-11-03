@@ -114,13 +114,37 @@ class Ui_DataVisualizer(object):
         self.xRange.setObjectName(_fromUtf8("xRange"))
         self.gridLayout.addWidget(self.xRange, 3, 4, 1, 1)
 
-        self.chStart = QtGui.QSpinBox(self.dockWidgetContents)
-        self.chStart.setMinimum(0)
-        self.chStart.setMaximum(95)
-        self.chStart.setSingleStep(1)
-        self.chStart.setProperty("value", 0)
-        self.chStart.setObjectName(_fromUtf8("chStart"))
-        self.gridLayout.addWidget(self.chStart, 5, 1, 1, 1)
+        self.ch0 = QtGui.QSpinBox(self.dockWidgetContents)
+        self.ch0.setMinimum(0)
+        self.ch0.setMaximum(98)
+        self.ch0.setSingleStep(1)
+        self.ch0.setProperty("value", 0)
+        self.ch0.setObjectName(_fromUtf8("ch0"))
+        self.gridLayout.addWidget(self.ch0, 5, 1, 1, 1)
+
+        self.ch1 = QtGui.QSpinBox(self.dockWidgetContents)
+        self.ch1.setMinimum(0)
+        self.ch1.setMaximum(98)
+        self.ch1.setSingleStep(1)
+        self.ch1.setProperty("value", 0)
+        self.ch1.setObjectName(_fromUtf8("ch1"))
+        self.gridLayout.addWidget(self.ch1, 5, 2, 1, 1)
+
+        self.ch2 = QtGui.QSpinBox(self.dockWidgetContents)
+        self.ch2.setMinimum(0)
+        self.ch2.setMaximum(98)
+        self.ch2.setSingleStep(1)
+        self.ch2.setProperty("value", 0)
+        self.ch2.setObjectName(_fromUtf8("ch2"))
+        self.gridLayout.addWidget(self.ch2, 5, 3, 1, 1)
+
+        self.ch3 = QtGui.QSpinBox(self.dockWidgetContents)
+        self.ch3.setMinimum(0)
+        self.ch3.setMaximum(98)
+        self.ch3.setSingleStep(1)
+        self.ch3.setProperty("value", 0)
+        self.ch3.setObjectName(_fromUtf8("ch3"))
+        self.gridLayout.addWidget(self.ch3, 5, 4, 1, 1)
 
         self.singleBtn = QtGui.QPushButton(self.dockWidgetContents)
         self.singleBtn.setObjectName(_fromUtf8("singleBtn"))
@@ -148,7 +172,7 @@ class Ui_DataVisualizer(object):
         DataVisualizer.setWidget(self.dockWidgetContents)
 
         self.retranslateUi(DataVisualizer)
-        self.numPlotsDisplayed.setCurrentIndex(0)
+        self.numPlotsDisplayed.setCurrentIndex(2)
         QtCore.QMetaObject.connectSlotsByName(DataVisualizer)
 
     def retranslateUi(self, DataVisualizer):
