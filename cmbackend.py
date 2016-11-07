@@ -298,6 +298,8 @@ class streamAdcThread(QThread):
             except:
                 timeout = True
                 print('timeout reading from data queue at sample {}'.format(samples))
+                self.streamAdcData.emit(out)
+                out = []
             if not timeout:
                 try:
                     data_time = timeQueue.get(timeout=5)
@@ -312,7 +314,7 @@ class streamAdcThread(QThread):
                     data_point['out'] = [data[0] if i == 0 else ((data[i + 1] << 8 | data[i]) & 0x7FFF if i < datalen - 7 else (data[i + 1] << 8 | data[i])) for i in list(range(0, datalen - 3, 2))]
                     if self.display:
                         # out.append([(data[i + 1] << 8 | data[i]) & 0x7FFF for i in list(range(2*(self.chStart + 1), 2*(self.chStart + 5), 2))])
-                        out.append([(data[i + 1] << 8 | data[i]) & 0xFFFF for i in [2*(self.ch0 + 1), 2*(self.ch1 + 1), 2*(self.ch2 + 1), 2*(self.ch3 + 1)]])
+                        out.append([(data[i + 1] << 8 | data[i]) & 0x7FFF for i in [2*(self.ch0 + 1), 2*(self.ch1 + 1), 2*(self.ch2 + 1), 2*(self.ch3 + 1)]])
                     data_point['time'] = data_time
                     data_point.append()
 
@@ -323,7 +325,7 @@ class streamAdcThread(QThread):
                     data_point['out'] = [data[0] if i == 0 else ((data[i + 1] << 8 | data[i]) & 0x7FFF if i < datalen - 7 else (data[i + 1] << 8 | data[i])) for i in list(range(0, datalen - 3, 2))]
                     if self.display:
                         # out.append([(data[i + 1] << 8 | data[i]) & 0x7FFF for i in list(range(2*(self.chStart + 1), 2*(self.chStart + 5), 2))])
-                        out.append([(data[i + 1] << 8 | data[i]) & 0xFFFF for i in [2*(self.ch0 + 1), 2*(self.ch1 + 1), 2*(self.ch2 + 1), 2*(self.ch3 + 1)]])
+                        out.append([(data[i + 1] << 8 | data[i]) & 0x7FFF for i in [2*(self.ch0 + 1), 2*(self.ch1 + 1), 2*(self.ch2 + 1), 2*(self.ch3 + 1)]])
                     data_point['time'] = data_time
                     data_point.append()
 
