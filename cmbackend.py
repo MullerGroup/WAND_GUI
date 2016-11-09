@@ -182,6 +182,7 @@ class readFTDIFifoThread(QThread):
 
     stim = False
     count = 1000
+    rep = 1
 
     def __init__(self):
         QThread.__init__(self)
@@ -193,7 +194,8 @@ class readFTDIFifoThread(QThread):
     def stop(self):
         self._running = False
 
-    def setup(self, stim):
+    def setup(self, stim, rep):
+        self.rep = rep
         self.stim = stim
         self.count = 1000
 
@@ -220,8 +222,8 @@ class readFTDIFifoThread(QThread):
                     self.count = self.count - 1
                     if self.count == 0:
                         print("stimming")
-                        CMWorker().nmicCommand(0, 0x09)
-
+                        # CMWorker().nmicCommand(0, 0x09)
+                        CMWorker()._regWr(Reg.req, (self.rep << 16) | (1 << 13))
 
 class streamAdcThread(QThread):
 
@@ -232,6 +234,7 @@ class streamAdcThread(QThread):
     ch2 = 0
     ch3 = 0
     stim = True
+    rep = 1
 
     def __init__(self):
         QThread.__init__(self)
@@ -244,13 +247,14 @@ class streamAdcThread(QThread):
     def stop(self):
         self._running = False
 
-    def setup(self, disp, stim, ch0, ch1, ch2, ch3):
+    def setup(self, disp, stim, ch0, ch1, ch2, ch3, rep):
         self.ch0 = ch0
         self.ch1 = ch1
         self.ch2 = ch2
         self.ch3 = ch3
         self.display = disp
         self.stim = stim
+        self.rep = rep
         if stim:
             print("Streaming with stim")
         else:
@@ -289,7 +293,7 @@ class streamAdcThread(QThread):
         t_0 = time.time()
 
         # initialize ftdiFIFO thread and start it
-        self.ftdiFIFO.setup(self.stim)
+        self.ftdiFIFO.setup(self.stim, self.rep)
         self.ftdiFIFO.start()
         timeout = False
         while self._running:
@@ -335,7 +339,7 @@ class streamAdcThread(QThread):
                 # flush the tables every 1000 samples (any speed up?)
                 if samples%1000 == 0:
                     self.dataTable.flush()
-                if samples%100 == 0 and self.display:
+                if samples%50 == 0 and self.display:
                     self.streamAdcData.emit(out)
                     out = []
             timeout = False
