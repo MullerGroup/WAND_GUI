@@ -94,7 +94,7 @@ class readFTDIFifoThread(QThread):
                 if count1 == 200:
                     print('Stream dead')
                     self._running = False
-                    CMWorker()._regWr(Reg.req, 0x0000)
+                    CMWorker()._regWr(Reg.req, 0x0010)
                     break
             # self.binaryFile.write(bytearray(data))
 
@@ -158,7 +158,7 @@ class streamAdcThread(QThread):
     def stop(self):
         # self.terminate()
         self._running = False
-        CMWorker()._regWr(Reg.req, 0x0000)
+        CMWorker()._regWr(Reg.req, 0x0010)
 
     @pyqtSlot()
     def pulseStim(self):
@@ -203,7 +203,7 @@ class streamAdcThread(QThread):
         # data_point.append()
         # self.infoTable.flush()
 
-        CMWorker()._regWr(Reg.req, 0x0030 | self.streamChunkSize<<16) # put CM into streaming mode for both NMs
+        CMWorker()._regWr(Reg.req, 0x0020 | self.streamChunkSize<<16) # put CM into streaming mode for both NMs
 
         out = []
         self.read_count = 0
@@ -221,6 +221,7 @@ class streamAdcThread(QThread):
 
         oldSample = 0
         blank = False
+        blank2 = False
         while self._running:
             if self.stim:
                 ftdiFIFO.stim()
@@ -251,9 +252,15 @@ class streamAdcThread(QThread):
                 if sample & 0x8000:
                     out.append([(sample & 0x7FFF), oldSample])
                     blank = True
+                    blank2 = False
                 elif blank:
                     out.append([(sample & 0x7FFF), oldSample])
                     blank = False
+                    blank2 = True
+                elif blank2:
+                    out.append([(sample & 0x7FFF), oldSample])
+                    blank = False
+                    blank2 = False
                 else:
                     out.append([sample, sample])
                     oldSample = sample
@@ -331,7 +338,7 @@ class streamAdcThread(QThread):
         # print("CRCs: {}".format(crcs))
         time.sleep(0.5)
 
-        CMWorker()._regWr(Reg.req, 0x0000) # turn off streaming mode
+        CMWorker()._regWr(Reg.req, 0x0010) # turn off streaming mode
         print("End of Stream")
         CMWorker.ser.flush()
         print("Fifos Flushed")
