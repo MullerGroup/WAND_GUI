@@ -221,7 +221,7 @@ class readFTDIFifoThread(QThread):
                 if self.count > 0 and self.stim:
                     self.count = self.count - 1
                     if self.count == 0:
-                        print("stimming")
+                        # print("stimming")
                         # CMWorker().nmicCommand(0, 0x09)
                         CMWorker()._regWr(Reg.req, (self.rep << 16) | (1 << 13))
 
