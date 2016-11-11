@@ -424,7 +424,8 @@ class CMWorker(QThread):
     def _getAdc(self, N):
 
         out = []
-        self._regWr(Reg.req, 0x0003 | (N-1)<<16) # request N samples from both NMs
+        # self._regWr(Reg.req, 0x0003 | (N-1)<<16) # request N samples from both NMs
+        CMWorker()._regWr(Reg.req, 0x0020)  # put CM into streaming mode for both NMs
         badlengths = 0
         misalignments = []
         emptylengths = 0
@@ -432,7 +433,8 @@ class CMWorker(QThread):
         samples = 0
         # time.sleep(1)
         # return out
-        for loop in range(0,N):
+        # for loop in range(0,N):
+        while samples < N:
             data = []
             count1 = 0
             while (len(data) != datalen):
@@ -459,7 +461,7 @@ class CMWorker(QThread):
                     #out.append([(((data[i + 1] << 8 | data[i]) & 0xFFFF) + 2 ** 15) % 2 ** 16 - 2 ** 15 if i > 192 else (data[i + 1] << 8 | data[i]) & 0x7FFF for i in list(range(1, 199, 2))])
                     out.append([((data[i + 1] << 8 | data[i]) & 0xFFFF) if i > datalen - 8 else (data[i + 1] << 8 | data[i]) & 0x7FFF for i in list(range(1, datalen - 1, 2))])
                 else:
-                    misalignments.append(loop)
+                    misalignments.append(samples)
                     count2 = 0
                     temp = 0
                     # keep reading from serial until we reach end-of-packet byte (flush until next packet)
@@ -477,6 +479,8 @@ class CMWorker(QThread):
 
             if emptylengths > 2:
                 break
+
+        CMWorker()._regWr(Reg.req, 0x0010)  # put CM into streaming mode for both NMs
         print("Samples: {}".format(samples))
         print("Read {} bad lengths".format(badlengths))
         print("Misalignments:")
