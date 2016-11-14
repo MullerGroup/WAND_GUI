@@ -194,10 +194,10 @@ class readFTDIFifoThread(QThread):
     def stop(self):
         self._running = False
 
-    def setup(self, stim, rep):
+    def setup(self, stim, rep, delay):
         self.rep = rep
         self.stim = stim
-        self.count = 1000
+        self.count = delay
 
     def run(self):
         # make sure serial device is open
@@ -221,9 +221,12 @@ class readFTDIFifoThread(QThread):
                 if self.count > 0 and self.stim:
                     self.count = self.count - 1
                     if self.count == 0:
-                        # print("stimming")
+                        print("stimming")
                         # CMWorker().nmicCommand(0, 0x09)
                         CMWorker()._regWr(Reg.req, (self.rep << 16) | (1 << 13))
+
+        dataQueue.queue.clear()
+        timeQueue.queue.clear()
 
 class streamAdcThread(QThread):
 
@@ -235,6 +238,7 @@ class streamAdcThread(QThread):
     ch3 = 0
     stim = True
     rep = 1
+    delay = 1000
 
     def __init__(self):
         QThread.__init__(self)
@@ -247,7 +251,7 @@ class streamAdcThread(QThread):
     def stop(self):
         self._running = False
 
-    def setup(self, disp, stim, ch0, ch1, ch2, ch3, rep):
+    def setup(self, disp, stim, ch0, ch1, ch2, ch3, rep, delay):
         self.ch0 = ch0
         self.ch1 = ch1
         self.ch2 = ch2
@@ -255,6 +259,7 @@ class streamAdcThread(QThread):
         self.display = disp
         self.stim = stim
         self.rep = rep
+        self.delay = delay
         if stim:
             print("Streaming with stim")
         else:
@@ -293,7 +298,7 @@ class streamAdcThread(QThread):
         t_0 = time.time()
 
         # initialize ftdiFIFO thread and start it
-        self.ftdiFIFO.setup(self.stim, self.rep)
+        self.ftdiFIFO.setup(self.stim, self.rep, self.delay)
         self.ftdiFIFO.start()
         timeout = False
         while self._running:
@@ -420,10 +425,10 @@ class CMWorker(QThread):
                 self._flushRadio()
                 self._regWr(Reg.req, 0x0100)
                 time.sleep(0.05)
-                while d[1] != 4 and count < 100:
+                while d[1] != 4 and count < 20:
                     d = cp2130_libusb_read(CMWorker.cp2130Handle)
                     count = count + 1
-                    time.sleep(0.0001)
+                    time.sleep(0.0008)
                 success = (d[1] == 4)
                 add = d[2] + 256*d[3]
                 val = d[4] + 256*d[5]
@@ -440,7 +445,7 @@ class CMWorker(QThread):
                 while d[1] != 4 and count < 150:
                     d = cp2130_libusb_read(CMWorker.cp2130Handle)
                     count = count + 1
-                    time.sleep(0.0001)
+                    time.sleep(0.0008)
                 success = (d[1] == 4)
                 add = d[2] + 256 * d[3]
                 val = d[4] + 256 * d[5]
@@ -582,10 +587,10 @@ class CMWorker(QThread):
             return
         ret = [False, 0, 0]
         tries = 0
-        while (tries < 5) and not(ret[0] and addr == ret[1]):
+        while (tries < 10) and not(ret[0] and addr == ret[1]):
             ret = self._regOp(nm, addr, 0, False)
             tries = tries + 1
-        if tries < 5:
+        if tries < 10:
             print("Read register from NM {}: {:04x} {:04x}".format(nm, addr, ret[2]))
             if addr == 0x04:
                 if nm == 0:

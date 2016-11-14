@@ -177,6 +177,19 @@ class Ui_DataVisualizer(object):
         self.stim.setObjectName(_fromUtf8("stim"))
         self.gridLayout.addWidget(self.stim, 6, 0, 1, 1)
 
+        self.delayLabel = QtGui.QLabel(self.dockWidgetContents)
+        self.delayLabel.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
+        self.delayLabel.setObjectName(_fromUtf8("delayLabel"))
+        self.gridLayout.addWidget(self.delayLabel, 6, 3, 1, 1)
+
+        self.stimDelay = QtGui.QSpinBox(self.dockWidgetContents)
+        self.stimDelay.setMinimum(10)
+        self.stimDelay.setMaximum(10000)
+        self.stimDelay.setSingleStep(1)
+        self.stimDelay.setProperty("value", 1000)
+        self.stimDelay.setObjectName(_fromUtf8("stimDelay"))
+        self.gridLayout.addWidget(self.stimDelay, 6, 4, 1, 1)
+
         DataVisualizer.setWidget(self.dockWidgetContents)
 
         self.retranslateUi(DataVisualizer)
@@ -208,6 +221,7 @@ class Ui_DataVisualizer(object):
         self.label_5.setText(_translate("DataVisualizer", "X-axis range (ms):", None))
         self.singleBtn.setText(_translate("DataVisualizer", "Update", None))
         self.label_3.setText(_translate("DataVisualizer", "Samples:", None))
+        self.delayLabel.setText(_translate("DataVisualizer", "Stim Delay:", None))
         self.dispStream.setText(_translate("DataVisualizer", "Display stream data from Ch:", None))
 
 from pyqtgraph import GraphicsLayoutWidget
