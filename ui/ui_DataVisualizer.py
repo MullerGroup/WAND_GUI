@@ -58,7 +58,13 @@ class Ui_DataVisualizer(object):
         self.artifactBtn = QtGui.QPushButton(self.dockWidgetContents)
         self.artifactBtn.setCheckable(True)
         self.artifactBtn.setObjectName(_fromUtf8("artifactBtn"))
-        self.gridLayout.addWidget(self.artifactBtn, 6, 2, 1, 1)
+        self.gridLayout.addWidget(self.artifactBtn, 7, 0, 1, 1)
+
+        self.interpolateBtn = QtGui.QPushButton(self.dockWidgetContents)
+        self.interpolateBtn.setCheckable(True)
+        self.interpolateBtn.setObjectName(_fromUtf8("interpolateBtn"))
+        self.gridLayout.addWidget(self.interpolateBtn, 7, 1, 1, 1)
+
         # self.testBtn = QtGui.QPushButton(self.dockWidgetContents)
         # self.testBtn.setCheckable(True)
         # self.testBtn.setObjectName(_fromUtf8("testBtn"))
@@ -180,7 +186,7 @@ class Ui_DataVisualizer(object):
         self.delayLabel = QtGui.QLabel(self.dockWidgetContents)
         self.delayLabel.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
         self.delayLabel.setObjectName(_fromUtf8("delayLabel"))
-        self.gridLayout.addWidget(self.delayLabel, 6, 3, 1, 1)
+        self.gridLayout.addWidget(self.delayLabel, 6, 2, 1, 1)
 
         self.stimDelay = QtGui.QSpinBox(self.dockWidgetContents)
         self.stimDelay.setMinimum(10)
@@ -188,7 +194,7 @@ class Ui_DataVisualizer(object):
         self.stimDelay.setSingleStep(1)
         self.stimDelay.setProperty("value", 1000)
         self.stimDelay.setObjectName(_fromUtf8("stimDelay"))
-        self.gridLayout.addWidget(self.stimDelay, 6, 4, 1, 1)
+        self.gridLayout.addWidget(self.stimDelay, 6, 3, 1, 1)
 
         DataVisualizer.setWidget(self.dockWidgetContents)
 
@@ -204,7 +210,8 @@ class Ui_DataVisualizer(object):
         # self.plotEn.setText(_translate("DataVisualizer", "Plot", None))
         self.saveBtn.setText(_translate("DataVisualizer", "Save Plots", None))
         self.streamBtn.setText(_translate("DataVisualizer", "Stream Data", None))
-        self.artifactBtn.setText(_translate("DataVisualizer", "Remove Artifacts", None))
+        self.artifactBtn.setText(_translate("DataVisualizer", "Blank Artifacts", None))
+        self.interpolateBtn.setText(_translate("DataVisualizer", "Interpolate Artifacts", None))
         # self.testBtn.setText(_translate("DataVisualizer", "Test Comm", None))
         self.setupRecordingBtn.setText(_translate("DataVisualizer", "Setup Recording", None))
         self.numPlotsDisplayed.setItemText(0, _translate("DataVisualizer", "1", None))

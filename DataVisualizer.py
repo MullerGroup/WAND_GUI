@@ -33,6 +33,8 @@ class DataVisualizer(QDockWidget):
     setupRecording = pyqtSignal()
     enableArtifact = pyqtSignal()
     disableArtifact = pyqtSignal()
+    enableInterpolate = pyqtSignal()
+    disableInterpolate = pyqtSignal()
 
     def __init__(self, parent=None):
         def populate(listbox, start, stop, step):
@@ -97,6 +99,8 @@ class DataVisualizer(QDockWidget):
         self.setupRecording.connect(w.setupRecording)
         self.enableArtifact.connect(w.enableArtifact)
         self.disableArtifact.connect(w.disableArtifact)
+        self.enableInterpolate.connect(w.enableInterpolate)
+        self.disableInterpolate.connect(w.disableInterpolate)
         self.readAdc.connect(w.readAdc)
         w.adcData.connect(self.adcData)
         w.updateChannels.connect(self.updateChannels)
@@ -222,8 +226,20 @@ class DataVisualizer(QDockWidget):
     def on_artifactBtn_clicked(self):
         if self.ui.artifactBtn.isChecked():
             self.enableArtifact.emit()
+            self.ui.interpolateBtn.setDisabled(True)
         else:
             self.disableArtifact.emit()
+            self.ui.interpolateBtn.setEnabled(True)
+
+
+    @pyqtSlot()
+    def on_interpolateBtn_clicked(self):
+        if self.ui.interpolateBtn.isChecked():
+            self.enableInterpolate.emit()
+            self.ui.artifactBtn.setDisabled(True)
+        else:
+            self.disableInterpolate.emit()
+            self.ui.artifactBtn.setEnabled(True)
 
     @pyqtSlot()
     def clearPlots(self):

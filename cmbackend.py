@@ -664,15 +664,29 @@ class CMWorker(QThread):
     def enableArtifact(self):
         if not self.cp2130Handle:
             return
-        self._regWr(Reg.req, 0x8000)
+        self._regWr(Reg.req, 0x0080)
         print("Enabled Artifact Removal")
 
     @pyqtSlot()
     def disableArtifact(self):
         if not self.cp2130Handle:
             return
-        self._regWr(Reg.req, 0x4000)
+        self._regWr(Reg.req, 0x0040)
         print("Disabled Artifact Removal")
+
+    @pyqtSlot()
+    def enableInterpolate(self):
+        if not self.cp2130Handle:
+            return
+        self._regWr(Reg.req, 0x8000)
+        print("Enabled Artifact Interpolation")
+
+    @pyqtSlot()
+    def disableInterpolate(self):
+        if not self.cp2130Handle:
+            return
+        self._regWr(Reg.req, 0x4000)
+        print("Disabled Artifact Interpolation")
 
     def startStream(self):
         if not self.cp2130Handle:
