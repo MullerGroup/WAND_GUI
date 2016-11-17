@@ -92,15 +92,16 @@ class DataVisualizer(QDockWidget):
         self.ui.singleBtn.setEnabled(True)
         self.ui.setupRecordingBtn.setEnabled(True)
         self.ui.artifactBtn.setEnabled(True)
+        self.ui.interpolateBtn.setEnabled(True)
 
     def setWorker(self, w):
         self.testCommOn.connect(w.testCommOn)
         self.testCommOff.connect(w.testCommOff)
         self.setupRecording.connect(w.setupRecording)
-        self.enableArtifact.connect(w.enableArtifact)
-        self.disableArtifact.connect(w.disableArtifact)
-        self.enableInterpolate.connect(w.enableInterpolate)
-        self.disableInterpolate.connect(w.disableInterpolate)
+        # self.enableArtifact.connect(w.enableArtifact)
+        # self.disableArtifact.connect(w.disableArtifact)
+        # self.enableInterpolate.connect(w.enableInterpolate)
+        # self.disableInterpolate.connect(w.disableInterpolate)
         self.readAdc.connect(w.readAdc)
         w.adcData.connect(self.adcData)
         w.updateChannels.connect(self.updateChannels)
@@ -201,11 +202,12 @@ class DataVisualizer(QDockWidget):
     @pyqtSlot()
     def on_streamBtn_clicked(self):
         if self.ui.streamBtn.isChecked():
-            self.streamAdcThread.setup(self.ui.dispStream.isChecked(), self.ui.stim.isChecked(), self.ui.ch0.value(), self.ui.ch1.value(), self.ui.ch2.value(), self.ui.ch3.value(), self.ui.stimRep.value(), self.ui.stimDelay.value())
+            self.streamAdcThread.setup(self.ui.dispStream.isChecked(), self.ui.stim.isChecked(), self.ui.ch0.value(), self.ui.ch1.value(), self.ui.ch2.value(), self.ui.ch3.value(), self.ui.stimRep.value(), self.ui.stimDelay.value(), self.ui.artifactBtn.isChecked(), self.ui.interpolateBtn.isChecked(), self.ui.artDelay.value())
             self.streamAdcThread.start()
             self.ui.singleBtn.setDisabled(True)
             self.ui.setupRecordingBtn.setDisabled(True)
             self.ui.artifactBtn.setDisabled(True)
+            self.ui.interpolateBtn.setDisabled(True)
         else:
             self.streamAdcThread.stop()
 
@@ -225,20 +227,20 @@ class DataVisualizer(QDockWidget):
     @pyqtSlot()
     def on_artifactBtn_clicked(self):
         if self.ui.artifactBtn.isChecked():
-            self.enableArtifact.emit()
+            # self.enableArtifact.emit()
             self.ui.interpolateBtn.setDisabled(True)
         else:
-            self.disableArtifact.emit()
+            # self.disableArtifact.emit()
             self.ui.interpolateBtn.setEnabled(True)
 
 
     @pyqtSlot()
     def on_interpolateBtn_clicked(self):
         if self.ui.interpolateBtn.isChecked():
-            self.enableInterpolate.emit()
+            # self.enableInterpolate.emit()
             self.ui.artifactBtn.setDisabled(True)
         else:
-            self.disableInterpolate.emit()
+            # self.disableInterpolate.emit()
             self.ui.artifactBtn.setEnabled(True)
 
     @pyqtSlot()

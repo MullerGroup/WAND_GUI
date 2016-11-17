@@ -183,6 +183,9 @@ class readFTDIFifoThread(QThread):
     stim = False
     count = 1000
     rep = 1
+    art = False
+    interp = False
+    artcount = 1000
 
     def __init__(self):
         QThread.__init__(self)
@@ -194,10 +197,13 @@ class readFTDIFifoThread(QThread):
     def stop(self):
         self._running = False
 
-    def setup(self, stim, rep, delay):
+    def setup(self, stim, rep, delay, art, interp, artdelay):
         self.rep = rep
         self.stim = stim
         self.count = delay
+        self.art = art
+        self.interp = interp
+        self.artcount = artdelay + self.count
 
     def run(self):
         # make sure serial device is open
@@ -224,7 +230,17 @@ class readFTDIFifoThread(QThread):
                         print("stimming")
                         # CMWorker().nmicCommand(0, 0x09)
                         CMWorker()._regWr(Reg.req, (self.rep << 16) | (1 << 13))
+                if self.artcount > 0 and self.stim:
+                    self.artcount = self.artcount - 1
+                    if self.artcount == 0:
+                        print("artifact enable")
+                        if self.art:
+                            CMWorker().enableArtifact()
+                        elif self.interp:
+                            CMWorker().enableInterpolate()
 
+        CMWorker().disableArtifact()
+        CMWorker().disableInterpolate()
         dataQueue.queue.clear()
         timeQueue.queue.clear()
 
@@ -239,6 +255,9 @@ class streamAdcThread(QThread):
     stim = True
     rep = 1
     delay = 1000
+    art = False
+    interp = False
+    artdelay = 1000
 
     def __init__(self):
         QThread.__init__(self)
@@ -251,7 +270,7 @@ class streamAdcThread(QThread):
     def stop(self):
         self._running = False
 
-    def setup(self, disp, stim, ch0, ch1, ch2, ch3, rep, delay):
+    def setup(self, disp, stim, ch0, ch1, ch2, ch3, rep, delay, art, interp, artdelay):
         self.ch0 = ch0
         self.ch1 = ch1
         self.ch2 = ch2
@@ -260,10 +279,17 @@ class streamAdcThread(QThread):
         self.stim = stim
         self.rep = rep
         self.delay = delay
+        self.art = art
+        self.interp = interp
+        self.artdelay = artdelay
         if stim:
             print("Streaming with stim")
         else:
             print("Streaming without stim")
+        # print(art)
+        # print(interp)
+        # print(artdelay)
+
 
     def run(self):
         # make sure serial device is open
@@ -298,7 +324,7 @@ class streamAdcThread(QThread):
         t_0 = time.time()
 
         # initialize ftdiFIFO thread and start it
-        self.ftdiFIFO.setup(self.stim, self.rep, self.delay)
+        self.ftdiFIFO.setup(self.stim, self.rep, self.delay, self.art, self.interp, self.artdelay)
         self.ftdiFIFO.start()
         timeout = False
         while self._running:
@@ -660,28 +686,28 @@ class CMWorker(QThread):
             return
         print("Recording setup successfully. You may begin stream.")
 
-    @pyqtSlot()
+    # @pyqtSlot()
     def enableArtifact(self):
         if not self.cp2130Handle:
             return
         self._regWr(Reg.req, 0x0080)
         print("Enabled Artifact Removal")
 
-    @pyqtSlot()
+    # @pyqtSlot()
     def disableArtifact(self):
         if not self.cp2130Handle:
             return
         self._regWr(Reg.req, 0x0040)
         print("Disabled Artifact Removal")
 
-    @pyqtSlot()
+    # @pyqtSlot()
     def enableInterpolate(self):
         if not self.cp2130Handle:
             return
         self._regWr(Reg.req, 0x8000)
         print("Enabled Artifact Interpolation")
 
-    @pyqtSlot()
+    # @pyqtSlot()
     def disableInterpolate(self):
         if not self.cp2130Handle:
             return

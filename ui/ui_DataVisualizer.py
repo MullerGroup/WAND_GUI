@@ -154,7 +154,7 @@ class Ui_DataVisualizer(object):
 
         self.stimRep = QtGui.QSpinBox(self.dockWidgetContents)
         self.stimRep.setMinimum(1)
-        self.stimRep.setMaximum(255)
+        self.stimRep.setMaximum(10000)
         self.stimRep.setSingleStep(1)
         self.stimRep.setProperty("value", 1)
         self.stimRep.setObjectName(_fromUtf8("stimRep"))
@@ -190,11 +190,24 @@ class Ui_DataVisualizer(object):
 
         self.stimDelay = QtGui.QSpinBox(self.dockWidgetContents)
         self.stimDelay.setMinimum(10)
-        self.stimDelay.setMaximum(10000)
+        self.stimDelay.setMaximum(100000)
         self.stimDelay.setSingleStep(1)
         self.stimDelay.setProperty("value", 1000)
         self.stimDelay.setObjectName(_fromUtf8("stimDelay"))
         self.gridLayout.addWidget(self.stimDelay, 6, 3, 1, 1)
+
+        self.artDelayLabel = QtGui.QLabel(self.dockWidgetContents)
+        self.artDelayLabel.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
+        self.artDelayLabel.setObjectName(_fromUtf8("artDelayLabel"))
+        self.gridLayout.addWidget(self.artDelayLabel, 7, 2, 1, 1)
+
+        self.artDelay = QtGui.QSpinBox(self.dockWidgetContents)
+        self.artDelay.setMinimum(10)
+        self.artDelay.setMaximum(100000)
+        self.artDelay.setSingleStep(1)
+        self.artDelay.setProperty("value", 1000)
+        self.artDelay.setObjectName(_fromUtf8("artDelay"))
+        self.gridLayout.addWidget(self.artDelay, 7, 3, 1, 1)
 
         DataVisualizer.setWidget(self.dockWidgetContents)
 
@@ -229,6 +242,7 @@ class Ui_DataVisualizer(object):
         self.singleBtn.setText(_translate("DataVisualizer", "Update", None))
         self.label_3.setText(_translate("DataVisualizer", "Samples:", None))
         self.delayLabel.setText(_translate("DataVisualizer", "Stim Delay:", None))
+        self.artDelayLabel.setText(_translate("DataVisualizer", "Artifact Delay:", None))
         self.dispStream.setText(_translate("DataVisualizer", "Display stream data from Ch:", None))
 
 from pyqtgraph import GraphicsLayoutWidget
