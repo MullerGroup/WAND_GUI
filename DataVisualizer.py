@@ -31,6 +31,7 @@ class DataVisualizer(QDockWidget):
     testCommOn = pyqtSignal()
     testCommOff = pyqtSignal()
     setupRecording = pyqtSignal()
+    setupStim = pyqtSignal()
     enableArtifact = pyqtSignal()
     disableArtifact = pyqtSignal()
     enableInterpolate = pyqtSignal()
@@ -91,6 +92,7 @@ class DataVisualizer(QDockWidget):
     def streamingDone(self):
         self.ui.singleBtn.setEnabled(True)
         self.ui.setupRecordingBtn.setEnabled(True)
+        self.ui.setupStimBtn.setEnabled(True)
         self.ui.artifactBtn.setEnabled(True)
         self.ui.interpolateBtn.setEnabled(True)
 
@@ -98,6 +100,7 @@ class DataVisualizer(QDockWidget):
         self.testCommOn.connect(w.testCommOn)
         self.testCommOff.connect(w.testCommOff)
         self.setupRecording.connect(w.setupRecording)
+        self.setupStim.connect(w.setupStim)
         # self.enableArtifact.connect(w.enableArtifact)
         # self.disableArtifact.connect(w.disableArtifact)
         # self.enableInterpolate.connect(w.enableInterpolate)
@@ -207,6 +210,7 @@ class DataVisualizer(QDockWidget):
             self.streamAdcThread.start()
             self.ui.singleBtn.setDisabled(True)
             self.ui.setupRecordingBtn.setDisabled(True)
+            self.ui.setupStimBtn.setDisabled(True)
             self.ui.artifactBtn.setDisabled(True)
             self.ui.interpolateBtn.setDisabled(True)
         else:
@@ -224,6 +228,11 @@ class DataVisualizer(QDockWidget):
     @pyqtSlot()
     def on_setupRecordingBtn_clicked(self):
         self.setupRecording.emit()
+
+    @pyqtSlot()
+    def on_setupStimBtn_clicked(self):
+        self.setupStim.emit()
+
 
     @pyqtSlot()
     def on_artifactBtn_clicked(self):

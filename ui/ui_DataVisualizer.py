@@ -72,6 +72,11 @@ class Ui_DataVisualizer(object):
         self.setupRecordingBtn = QtGui.QPushButton(self.dockWidgetContents)
         self.setupRecordingBtn.setObjectName(_fromUtf8("setupRecordingBtn"))
         self.gridLayout.addWidget(self.setupRecordingBtn, 4, 0, 1, 1)
+
+        self.setupStimBtn = QtGui.QPushButton(self.dockWidgetContents)
+        self.setupStimBtn.setObjectName(_fromUtf8("setupStimBtn"))
+        self.gridLayout.addWidget(self.setupStimBtn, 4, 1, 1, 1)
+
         self.plot = GraphicsLayoutWidget(self.dockWidgetContents)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(0)
@@ -241,6 +246,7 @@ class Ui_DataVisualizer(object):
         self.interpolateBtn.setText(_translate("DataVisualizer", "Interpolate Artifacts", None))
         # self.testBtn.setText(_translate("DataVisualizer", "Test Comm", None))
         self.setupRecordingBtn.setText(_translate("DataVisualizer", "Setup Recording", None))
+        self.setupStimBtn.setText(_translate("DataVisualizer", "Setup Stim", None))
         self.numPlotsDisplayed.setItemText(0, _translate("DataVisualizer", "1", None))
         self.numPlotsDisplayed.setItemText(1, _translate("DataVisualizer", "2", None))
         self.numPlotsDisplayed.setItemText(2, _translate("DataVisualizer", "4", None))
