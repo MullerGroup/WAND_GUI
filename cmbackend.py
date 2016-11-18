@@ -346,7 +346,7 @@ class streamAdcThread(QThread):
                 if data[0]==0x00: # no CRC
                     success += 1
                     data_point = self.dataTable.row
-                    data_point['out'] = [data[0] if i == 0 else ((data[i + 1] << 8 | data[i]) & 0x7FFF if i < datalen - 7 else (data[i + 1] << 8 | data[i])) for i in list(range(0, datalen - 3, 2))]
+                    data_point['out'] = [data[0] if i == 0 else ((data[i + 1] << 8 | data[i]) & 0xFFFF if i < datalen - 7 else (data[i + 1] << 8 | data[i])) for i in list(range(0, datalen - 3, 2))]
                     if self.display:
                         # out.append([(data[i + 1] << 8 | data[i]) & 0x7FFF for i in list(range(2*(self.chStart + 1), 2*(self.chStart + 5), 2))])
                         out.append([(data[i + 1] << 8 | data[i]) & 0x7FFF for i in [2*(self.ch0 + 1), 2*(self.ch1 + 1), 2*(self.ch2 + 1), 2*(self.ch3 + 1)]])
@@ -357,10 +357,10 @@ class streamAdcThread(QThread):
                     crcs += 1
                     success += 1
                     data_point = self.dataTable.row
-                    data_point['out'] = [data[0] if i == 0 else ((data[i + 1] << 8 | data[i]) & 0x7FFF if i < datalen - 7 else (data[i + 1] << 8 | data[i])) for i in list(range(0, datalen - 3, 2))]
-                    if self.display:
-                        # out.append([(data[i + 1] << 8 | data[i]) & 0x7FFF for i in list(range(2*(self.chStart + 1), 2*(self.chStart + 5), 2))])
-                        out.append([(data[i + 1] << 8 | data[i]) & 0x7FFF for i in [2*(self.ch0 + 1), 2*(self.ch1 + 1), 2*(self.ch2 + 1), 2*(self.ch3 + 1)]])
+                    data_point['out'] = [data[0] if i == 0 else ((data[i + 1] << 8 | data[i]) & 0xFFFF if i < datalen - 7 else (data[i + 1] << 8 | data[i])) for i in list(range(0, datalen - 3, 2))]
+                    # if self.display:
+                    #     # out.append([(data[i + 1] << 8 | data[i]) & 0x7FFF for i in list(range(2*(self.chStart + 1), 2*(self.chStart + 5), 2))])
+                    #     out.append([(data[i + 1] << 8 | data[i]) & 0x7FFF for i in [2*(self.ch0 + 1), 2*(self.ch1 + 1), 2*(self.ch2 + 1), 2*(self.ch3 + 1)]])
                     data_point['time'] = data_time
                     data_point.append()
 
