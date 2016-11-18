@@ -202,7 +202,7 @@ class DataVisualizer(QDockWidget):
     @pyqtSlot()
     def on_streamBtn_clicked(self):
         if self.ui.streamBtn.isChecked():
-            self.streamAdcThread.setup(self.ui.dispStream.isChecked(), self.ui.stim.isChecked(), self.ui.ch0.value(), self.ui.ch1.value(), self.ui.ch2.value(), self.ui.ch3.value(), self.ui.stimRep.value(), self.ui.stimDelay.value(), self.ui.artifactBtn.isChecked(), self.ui.interpolateBtn.isChecked(), self.ui.artDelay.value())
+            self.streamAdcThread.setup(self.ui.dispStream.isChecked(), self.ui.stim.isChecked(), self.ui.ch0.value(), self.ui.ch1.value(), self.ui.ch2.value(), self.ui.ch3.value(), self.ui.stimRep.value(), self.ui.stimDelay.value(), self.ui.artifactBtn.isChecked(), self.ui.interpolateBtn.isChecked(), self.ui.artDelay.value(), self.ui.stimOnNMLabel.currentIndex())
             self.streamAdcThread.start()
             self.ui.singleBtn.setDisabled(True)
             self.ui.setupRecordingBtn.setDisabled(True)

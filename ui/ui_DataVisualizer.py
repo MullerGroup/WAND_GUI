@@ -209,6 +209,20 @@ class Ui_DataVisualizer(object):
         self.artDelay.setObjectName(_fromUtf8("artDelay"))
         self.gridLayout.addWidget(self.artDelay, 7, 3, 1, 1)
 
+        self.stimOnNMLabel = QtGui.QLabel(self.dockWidgetContents)
+        self.stimOnNMLabel.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
+        self.stimOnNMLabel.setObjectName(_fromUtf8("stimOnNMLabel"))
+        self.gridLayout.addWidget(self.stimOnNMLabel, 8, 2, 1, 1)
+
+        self.stimOnNM = QtGui.QComboBox(self.dockWidgetContents)
+        self.stimOnNM.setEditable(False)
+        self.stimOnNM.setMaxVisibleItems(2)
+        self.stimOnNM.setObjectName(_fromUtf8("stimOnNM"))
+        self.stimOnNM.addItem(_fromUtf8(""))
+        self.stimOnNM.addItem(_fromUtf8(""))
+        self.stimOnNM.setCurrentIndex(0)
+        self.gridLayout.addWidget(self.stimOnNM, 8, 3, 1, 1)
+
         DataVisualizer.setWidget(self.dockWidgetContents)
 
         self.retranslateUi(DataVisualizer)
@@ -232,6 +246,8 @@ class Ui_DataVisualizer(object):
         self.numPlotsDisplayed.setItemText(2, _translate("DataVisualizer", "4", None))
         self.numPlotsDisplayed.setItemText(3, _translate("DataVisualizer", "8", None))
         self.numPlotsDisplayed.setItemText(4, _translate("DataVisualizer", "16", None))
+        self.stimOnNM.setItemText(0, _translate("DataVisualizer", "0", None))
+        self.stimOnNM.setItemText(1, _translate("DataVisualizer", "1", None))
         self.clearBtn.setText(_translate("DataVisualizer", "Clear plots", None))
         self.label_4.setText(_translate("DataVisualizer", "Plots", None))
         # self.saveEn.setText(_translate("DataVisualizer", "Save", None))
@@ -243,6 +259,7 @@ class Ui_DataVisualizer(object):
         self.label_3.setText(_translate("DataVisualizer", "Samples:", None))
         self.delayLabel.setText(_translate("DataVisualizer", "Stim Delay:", None))
         self.artDelayLabel.setText(_translate("DataVisualizer", "Artifact Delay:", None))
+        self.stimOnNMLabel.setText(_translate("DataVisualizer", "Stim on NM #:", None))
         self.dispStream.setText(_translate("DataVisualizer", "Display stream data from Ch:", None))
 
 from pyqtgraph import GraphicsLayoutWidget

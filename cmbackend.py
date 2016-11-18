@@ -197,13 +197,14 @@ class readFTDIFifoThread(QThread):
     def stop(self):
         self._running = False
 
-    def setup(self, stim, rep, delay, art, interp, artdelay):
+    def setup(self, stim, rep, delay, art, interp, artdelay, stimOnNM):
         self.rep = rep
         self.stim = stim
         self.count = delay
         self.art = art
         self.interp = interp
         self.artcount = artdelay + self.count
+        self.stimOnNM = stimOnNM
 
     def run(self):
         # make sure serial device is open
@@ -229,7 +230,10 @@ class readFTDIFifoThread(QThread):
                     if self.count == 0:
                         print("stimming")
                         # CMWorker().nmicCommand(0, 0x09)
-                        CMWorker()._regWr(Reg.req, (self.rep << 16) | (1 << 13))
+                        if self.stimOnNM == 0:
+                            CMWorker()._regWr(Reg.req, (self.rep << 16) | (1 << 13) | (1 << 11))
+                        elif self.stimOnNM == 1:
+                            CMWorker()._regWr(Reg.req, (self.rep << 16) | (1 << 13) | (1 << 12))
                 if self.artcount > 0 and self.stim:
                     self.artcount = self.artcount - 1
                     if self.artcount == 0:
