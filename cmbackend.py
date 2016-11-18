@@ -778,6 +778,12 @@ class CMWorker(QThread):
         self.nmicCommand(1, 0x0a)
         time.sleep(0.01)
 
+        # clear error again
+        self.nmicCommand(0, 0x02)
+        time.sleep(0.01)
+        self.nmicCommand(1, 0x02)
+        time.sleep(0.01)
+
     # @pyqtSlot()
     def enableArtifact(self):
         if not self.cp2130Handle:

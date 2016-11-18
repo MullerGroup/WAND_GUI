@@ -145,7 +145,7 @@ class Ui_DataVisualizer(object):
         self.ch2.setMinimum(0)
         self.ch2.setMaximum(98)
         self.ch2.setSingleStep(1)
-        self.ch2.setProperty("value", 98)
+        self.ch2.setProperty("value", 92)
         self.ch2.setObjectName(_fromUtf8("ch2"))
         self.gridLayout.addWidget(self.ch2, 5, 3, 1, 1)
 
@@ -153,7 +153,7 @@ class Ui_DataVisualizer(object):
         self.ch3.setMinimum(0)
         self.ch3.setMaximum(98)
         self.ch3.setSingleStep(1)
-        self.ch3.setProperty("value", 97)
+        self.ch3.setProperty("value", 93)
         self.ch3.setObjectName(_fromUtf8("ch3"))
         self.gridLayout.addWidget(self.ch3, 5, 4, 1, 1)
 
