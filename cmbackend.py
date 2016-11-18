@@ -231,8 +231,10 @@ class readFTDIFifoThread(QThread):
                         print("stimming")
                         # CMWorker().nmicCommand(0, 0x09)
                         if self.stimOnNM == 0:
+                            # print("stim on 0")
                             CMWorker()._regWr(Reg.req, (self.rep << 16) | (1 << 13) | (1 << 11))
-                        elif self.stimOnNM == 1:
+                        if self.stimOnNM == 1:
+                            # print("stim on 1")
                             CMWorker()._regWr(Reg.req, (self.rep << 16) | (1 << 13) | (1 << 12))
                 if self.artcount > 0 and self.stim:
                     self.artcount = self.artcount - 1
@@ -274,7 +276,7 @@ class streamAdcThread(QThread):
     def stop(self):
         self._running = False
 
-    def setup(self, disp, stim, ch0, ch1, ch2, ch3, rep, delay, art, interp, artdelay):
+    def setup(self, disp, stim, ch0, ch1, ch2, ch3, rep, delay, art, interp, artdelay, stimOnNM):
         self.ch0 = ch0
         self.ch1 = ch1
         self.ch2 = ch2
@@ -286,6 +288,7 @@ class streamAdcThread(QThread):
         self.art = art
         self.interp = interp
         self.artdelay = artdelay
+        self.stimOnNM = stimOnNM
         if stim:
             print("Streaming with stim")
         else:
@@ -328,7 +331,7 @@ class streamAdcThread(QThread):
         t_0 = time.time()
 
         # initialize ftdiFIFO thread and start it
-        self.ftdiFIFO.setup(self.stim, self.rep, self.delay, self.art, self.interp, self.artdelay)
+        self.ftdiFIFO.setup(self.stim, self.rep, self.delay, self.art, self.interp, self.artdelay, self.stimOnNM)
         self.ftdiFIFO.start()
         timeout = False
         while self._running:
