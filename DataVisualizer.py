@@ -93,8 +93,10 @@ class DataVisualizer(QDockWidget):
         self.ui.singleBtn.setEnabled(True)
         self.ui.setupRecordingBtn.setEnabled(True)
         self.ui.setupStimBtn.setEnabled(True)
-        self.ui.artifactBtn.setEnabled(True)
-        self.ui.interpolateBtn.setEnabled(True)
+        if not self.ui.interpolateBtn.isChecked():
+            self.ui.artifactBtn.setEnabled(True)
+        if not self.ui.artifactBtn.isChecked():
+            self.ui.interpolateBtn.setEnabled(True)
 
     def setWorker(self, w):
         self.testCommOn.connect(w.testCommOn)
@@ -500,13 +502,13 @@ class DataVisualizer(QDockWidget):
                     self.plots[ch].getViewBox().setMouseMode(self.plots[ch].getViewBox().RectMode)
                     if ch == 1:
                         self.plots[ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=-32768, yMax=32768)
-                        self.plots[ch].getViewBox().setRange(yRange=(avg-(20),avg+(20)),update=True)
+                        self.plots[ch].getViewBox().setRange(yRange=(avg-(sd*2),avg+(sd*2)),update=True)
                     elif ch == 2:
                         self.plots[ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=-32768, yMax=32768)
-                        self.plots[ch].getViewBox().setRange(yRange=(avg-(20),avg+(20)),update=True)
+                        self.plots[ch].getViewBox().setRange(yRange=(avg-(sd*2),avg+(sd*2)),update=True)
                     else:
                         self.plots[ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=-32768, yMax=32768)
-                        self.plots[ch].getViewBox().setRange(yRange=(avg-(20),avg+(20)),update=True)
+                        self.plots[ch].getViewBox().setRange(yRange=(avg-(sd*2),avg+(sd*2)),update=True)
                     if self.ui.autorange.isChecked():
                         # if ch > 0:
                         #     self.plots[ch].getViewBox().autoRange()
