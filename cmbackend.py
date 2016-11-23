@@ -20,6 +20,7 @@ import libusb1
 from ctypes import byref, create_string_buffer, c_int, sizeof, POINTER, \
     cast, c_uint8, c_uint16, c_ubyte, string_at, c_void_p, cdll, addressof, \
     c_char
+import os
 
 datalen = 200
 
@@ -307,7 +308,8 @@ class streamAdcThread(QThread):
         if not self._running:
             self._running = True
 
-        self.saveFile = tables.open_file('streams/' + datetime.datetime.now().strftime("%Y%m%d-%H%M%S") + '.hdf', mode="w", title="Stream")
+        os.makedirs('streams2', exist_ok=True)
+        self.saveFile = tables.open_file('streams2/' + datetime.datetime.now().strftime("%Y%m%d-%H%M%S") + '.hdf', mode="w", title="Stream")
         self.dataGroup = self.saveFile.create_group("/", name='dataGroup', title='Recorded Data Group')
         self.dataTable = self.saveFile.create_table(self.dataGroup, name='dataTable', title='Recorded Data Table', description=stream_data, expectedrows=60000*5*1)
         self.infoGroup = self.saveFile.create_group("/", name='infoGroup', title='Recording Information Group')
