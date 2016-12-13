@@ -228,6 +228,18 @@ class Ui_DataVisualizer(object):
         self.stimOnNM.setCurrentIndex(0)
         self.gridLayout.addWidget(self.stimOnNM, 8, 3, 1, 1)
 
+        self.impStart = QtGui.QCheckBox(self.dockWidgetContents)
+        self.impStart.setObjectName(_fromUtf8("impStart"))
+        self.gridLayout.addWidget(self.impStart, 8, 0, 1, 1)
+
+        self.impDelay = QtGui.QSpinBox(self.dockWidgetContents)
+        self.impDelay.setMinimum(10)
+        self.impDelay.setMaximum(100000)
+        self.impDelay.setSingleStep(1)
+        self.impDelay.setProperty("value", 1000)
+        self.impDelay.setObjectName(_fromUtf8("impDelay"))
+        self.gridLayout.addWidget(self.impDelay, 8, 1, 1, 1)
+
         DataVisualizer.setWidget(self.dockWidgetContents)
 
         self.retranslateUi(DataVisualizer)
@@ -267,5 +279,6 @@ class Ui_DataVisualizer(object):
         self.artDelayLabel.setText(_translate("DataVisualizer", "Artifact Delay:", None))
         self.stimOnNMLabel.setText(_translate("DataVisualizer", "Stim on NM #:", None))
         self.dispStream.setText(_translate("DataVisualizer", "Display stream data from Ch:", None))
+        self.impStart.setText(_translate("DataVisualizer", "Measure Impedance w/ Delay:", None))
 
 from pyqtgraph import GraphicsLayoutWidget

@@ -198,7 +198,7 @@ class readFTDIFifoThread(QThread):
     def stop(self):
         self._running = False
 
-    def setup(self, stim, rep, delay, art, interp, artdelay, stimOnNM):
+    def setup(self, stim, rep, delay, art, interp, artdelay, stimOnNM, imp, impdelay):
         self.rep = rep
         self.stim = stim
         self.count = delay
@@ -206,6 +206,8 @@ class readFTDIFifoThread(QThread):
         self.interp = interp
         self.artcount = artdelay + self.count
         self.stimOnNM = stimOnNM
+        self.imp = imp
+        self.impcount = impdelay
 
     def run(self):
         # make sure serial device is open
@@ -245,6 +247,12 @@ class readFTDIFifoThread(QThread):
                             CMWorker().enableArtifact()
                         elif self.interp:
                             CMWorker().enableInterpolate()
+                if self.impcount > 0 and self.imp and not self.stim:
+                    self.impcount = self.impcount - 1
+                    if self.impcount == 0:
+                            print("impedance measure")
+                            CMWorker().nmicCommand(0, 0x04)
+                            CMWorker().nmicCommand(1, 0x04)
 
         CMWorker().disableArtifact()
         CMWorker().disableInterpolate()
@@ -277,7 +285,7 @@ class streamAdcThread(QThread):
     def stop(self):
         self._running = False
 
-    def setup(self, disp, stim, ch0, ch1, ch2, ch3, rep, delay, art, interp, artdelay, stimOnNM):
+    def setup(self, disp, stim, ch0, ch1, ch2, ch3, rep, delay, art, interp, artdelay, stimOnNM, imp, impdelay):
         self.ch0 = ch0
         self.ch1 = ch1
         self.ch2 = ch2
@@ -290,10 +298,12 @@ class streamAdcThread(QThread):
         self.interp = interp
         self.artdelay = artdelay
         self.stimOnNM = stimOnNM
+        self.imp = imp
+        self.impdelay = impdelay
         if stim:
             print("Streaming with stim")
-        else:
-            print("Streaming without stim")
+        elif imp:
+            print("Streaming with impedance measurement")
         # print(art)
         # print(interp)
         # print(artdelay)
@@ -333,7 +343,7 @@ class streamAdcThread(QThread):
         t_0 = time.time()
 
         # initialize ftdiFIFO thread and start it
-        self.ftdiFIFO.setup(self.stim, self.rep, self.delay, self.art, self.interp, self.artdelay, self.stimOnNM)
+        self.ftdiFIFO.setup(self.stim, self.rep, self.delay, self.art, self.interp, self.artdelay, self.stimOnNM, self.imp, self.impdelay)
         self.ftdiFIFO.start()
         timeout = False
         while self._running:
