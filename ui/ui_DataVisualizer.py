@@ -103,6 +103,16 @@ class Ui_DataVisualizer(object):
         self.xRange.setProperty("value", 4096)
         self.xRange.setObjectName(_fromUtf8("xRange"))
         self.gridLayout.addWidget(self.xRange, 3, 4, 1, 1)
+
+        self.bpmThreshold = QtGui.QSpinBox(self.dockWidgetContents)
+        self.bpmThreshold.setMinimum(-20)
+        self.bpmThreshold.setMaximum(-1)
+        self.bpmThreshold.setSingleStep(1)
+        self.bpmThreshold.setValue(-5)
+        self.bpmThreshold.setProperty("value", -5)
+        self.bpmThreshold.setObjectName(_fromUtf8("bpmThreshold"))
+        self.gridLayout.addWidget(self.bpmThreshold, 2, 5, 1, 1)
+
         self.singleBtn = QtGui.QPushButton(self.dockWidgetContents)
         self.singleBtn.setObjectName(_fromUtf8("singleBtn"))
         self.gridLayout.addWidget(self.singleBtn, 3, 0, 1, 1)

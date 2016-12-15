@@ -203,7 +203,7 @@ class StimConfig(QDockWidget):
         self.setWindowTitle("NM{} Stim Config".format(self.nm))
 
     def saveState(self):
-        s = QSettings()
+        s = QSettings("settings.ini", QSettings.IniFormat)
         cbs = [self.ui.blkAllCheck,
                self.ui.cgndCheck,
                self.ui.doffCheck,
@@ -236,7 +236,7 @@ class StimConfig(QDockWidget):
         self.saveWfms()
 
     def loadState(self):
-        s = QSettings()
+        s = QSettings("settings.ini", QSettings.IniFormat)
         self.loadWfms()
         cbs = [self.ui.blkAllCheck,
                self.ui.cgndCheck,
@@ -284,7 +284,7 @@ class StimConfig(QDockWidget):
         self.writeReg.connect(w.writeReg)
 
     def saveWfms(self):
-        s = QSettings()
+        s = QSettings("settings.ini", QSettings.IniFormat)
         s.beginWriteArray("stimWaveforms")
         i = 0
         for wfm in self.wfmlist.list:
@@ -294,7 +294,7 @@ class StimConfig(QDockWidget):
         s.endArray()
 
     def loadWfms(self):
-        s = QSettings()
+        s = QSettings("settings.ini", QSettings.IniFormat)
         sz = s.beginReadArray("stimWaveforms")
         for i in range(0, sz):
             s.setArrayIndex(i)

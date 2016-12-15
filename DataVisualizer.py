@@ -61,6 +61,7 @@ class DataVisualizer(QDockWidget):
         # added 3 more channels just to display accel data
         self.numPlots = 100
         self.xRange = self.ui.xRange.value() # number of ms (samples) over which to plot continuous data
+        self.bpmThreshold = self.ui.bpmThreshold.value()
 
         self.dataPlot = np.zeros((self.numPlots, self.ui.xRange.maximum())) # aggregation of data to plot (scrolling style)
         self.plotPointer = 0 # pointer to current x position in plot (for plotting scrolling style)
@@ -102,6 +103,7 @@ class DataVisualizer(QDockWidget):
         self.ui.autorange.clicked.connect(self.updatePlot)
         self.ui.numPlotsDisplayed.currentIndexChanged.connect(self.updatePlotDisplay)
         self.ui.xRange.valueChanged.connect(self.updatePlotDisplay)
+        self.ui.bpmThreshold.valueChanged.connect(self.changeBpmThreshold)
         self.ui.clearBtn.clicked.connect(self.clearPlots)
 
         # set some defaults
@@ -285,6 +287,10 @@ class DataVisualizer(QDockWidget):
             (self.numPlots, self.ui.xRange.maximum()))  # aggregation of data to plot (scrolling style)
         for ch in range(self.topPlot, self.topPlot + self.numPlotsDisplayed):
             self.plots[ch].clear()
+
+    @pyqtSlot()
+    def changeBpmThreshold(self):
+        self.bpmThreshold = self.ui.bpmThreshold.value()
 
     @pyqtSlot()
     def updatePlotDisplay(self):
@@ -483,7 +489,7 @@ class DataVisualizer(QDockWidget):
                     dp = signal.filtfilt(self.c,self.d,dp)
                     dp = signal.filtfilt(self.e, self.f, dp)
                     diffs = np.diff(dp)
-                    if self.countDown == 0 and (self.ui.noise.isChecked() or self.ui.thd.isChecked()) and self.plotPointer > 59 and min(diffs[self.plotPointer - 60:self.plotPointer-40]) < -15:
+                    if self.countDown == 0 and (self.ui.noise.isChecked() or self.ui.thd.isChecked()) and self.plotPointer > 59 and min(diffs[self.plotPointer - 60:self.plotPointer-40]) < self.bpmThreshold:
                         if self.plotPointer - 40 < self.lastPulse:
                             bpm = round(60 * 1000 / ((self.xRange + self.plotPointer - 40) - self.lastPulse))
                         else:

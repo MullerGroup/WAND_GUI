@@ -22,26 +22,33 @@ class MainWindow(QMainWindow):
         self.worker = None
 
         self.DataVisualizer = DataVisualizer(self)
+        self.DataVisualizer.setFeatures(QDockWidget.DockWidgetFloatable | QDockWidget.DockWidgetMovable)
         self.addDockWidget(Qt.LeftDockWidgetArea, self.DataVisualizer)
-        
+
         # self.regEdit0 = RegisterEditor(self, 0)
         self.regEdit0 = RegisterEditor_v2(self, 0)
+        self.regEdit0.setFeatures(QDockWidget.DockWidgetFloatable | QDockWidget.DockWidgetMovable)
         self.addDockWidget(Qt.RightDockWidgetArea, self.regEdit0)
 
         # self.regEdit1 = RegisterEditor(self, 1)
         self.regEdit1 = RegisterEditor_v2(self, 1)
+        self.regEdit1.setFeatures(QDockWidget.DockWidgetFloatable | QDockWidget.DockWidgetMovable)
         self.addDockWidget(Qt.RightDockWidgetArea, self.regEdit1)
 
         self.sConfig0 = StimConfig(self, 0)
+        self.sConfig0.setFeatures(QDockWidget.DockWidgetFloatable | QDockWidget.DockWidgetMovable)
         self.addDockWidget(Qt.RightDockWidgetArea, self.sConfig0)
 
         self.sConfig1 = StimConfig(self, 1)
+        self.sConfig1.setFeatures(QDockWidget.DockWidgetFloatable | QDockWidget.DockWidgetMovable)
         self.addDockWidget(Qt.RightDockWidgetArea, self.sConfig1)
 
         self.nmicCommand0 = NmicCommand(self, 0)
+        self.nmicCommand0.setFeatures(QDockWidget.DockWidgetFloatable | QDockWidget.DockWidgetMovable)
         self.addDockWidget(Qt.RightDockWidgetArea, self.nmicCommand0)
 
         self.nmicCommand1 = NmicCommand(self, 1)
+        self.nmicCommand1.setFeatures(QDockWidget.DockWidgetFloatable | QDockWidget.DockWidgetMovable)
         self.addDockWidget(Qt.RightDockWidgetArea, self.nmicCommand1)
 
         # NM0 widgets grouping
@@ -55,14 +62,16 @@ class MainWindow(QMainWindow):
         self.sConfig1.loadState()
 
         self.boardControl = BoardControl(self)
+        self.boardControl.setFeatures(QDockWidget.DockWidgetFloatable | QDockWidget.DockWidgetMovable)
         self.addDockWidget(Qt.RightDockWidgetArea, self.boardControl)
 
         self.cmdline = CommandLineWidget(self)
+        self.cmdline.setFeatures(QDockWidget.DockWidgetFloatable | QDockWidget.DockWidgetMovable)
         self.addDockWidget(Qt.RightDockWidgetArea, self.cmdline)
 
         self.tabifyDockWidget(self.boardControl, self.cmdline)
 
-        s = QSettings()
+        s = QSettings("settings.ini", QSettings.IniFormat)
         if s.value("mainwindow/geometry") is not None:
             self.restoreGeometry(s.value("mainwindow/geometry"))
             self.restoreState(s.value("mainwindow/state"))
@@ -83,7 +92,7 @@ class MainWindow(QMainWindow):
 
     @pyqtSlot()
     def loadState(self):
-        s = QSettings()
+        s = QSettings("settings.ini", QSettings.IniFormat)
         if s.value("mainwindow/state") is not None:
             self.restoreState(s.value("mainwindow/state"))
 
@@ -92,7 +101,7 @@ class MainWindow(QMainWindow):
         self.sConfig1.saveState()
         self.regEdit0.saveSettings()
         self.regEdit1.saveSettings()
-        s = QSettings()
+        s = QSettings("settings.ini", QSettings.IniFormat)
         s.setValue("mainwindow/geometry", self.saveGeometry())
         s.setValue("mainwindow/state", self.saveState())
         super().closeEvent(event)
