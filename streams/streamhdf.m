@@ -45,6 +45,7 @@ classdef streamhdf < handle
         ramp;
         rssi;
         crc_errors;
+        stim;
         
         % for plotting the raw data
         chidx;              % current ploted channel
@@ -61,6 +62,10 @@ classdef streamhdf < handle
         chidx_fft_next;
         chidx_fft_prev;
         
+        stidx;
+        stidx_next;
+        stidx_prev;
+        
     end
     
     properties
@@ -74,6 +79,9 @@ classdef streamhdf < handle
             
             if nargin < 3
                 start = 1;
+                if nargin == 0
+                    hdffile = uigetfile('*.hdf');
+                end
                 temp_info = h5info(hdffile);
                 count = temp_info.Groups(1).Datasets(1).Dataspace.Size;
             end
@@ -137,6 +145,10 @@ classdef streamhdf < handle
             this.chidx_fft_next = 2;
             this.chidx_fft_prev = this.numchannels;
             
+            this.stidx = 1;
+            this.stidx_next = 2;
+            this.stidx_prev = this.numchannels;
+            
             % error analysis
             this.error_loc = cell(1,this.numchannels);
             this.num_errors = zeros(1,this.numchannels);
@@ -147,11 +159,12 @@ classdef streamhdf < handle
             
             % fft stuff
             this.fftdata = zeros(500,this.numchannels);
+            this.stim = zeros(this.count, this.numchannels);
             
-            
-            
+            this.get_stim();
+            this.plotstim(1,1);
             % start the plot
-            this.plotch(1,1);
+%             this.plotch(1,1);
             % plot error analysis
             this.get_errors();
 %             % clean the data
@@ -184,6 +197,82 @@ classdef streamhdf < handle
                 this.chidx_prev = ch_index - 1;
             end
             
+        end
+        
+        function plotstim(this, stim_index, new)
+            
+            t0 = 500;
+            t1 = 10500;
+            t2 = 20500;
+            samples = 9000;
+            stim1 = 14;
+            stim2 = 25;
+            
+            stim_samples = [];
+            for i = t1:t1+samples-1
+                if (this.stim(i,stim1) ~= 0) || (this.stim(i,stim2) ~= 0)
+                    stim_samples(1,end+1) = i;
+                    stim_samples(2,end) = this.data(i,stim_index);
+                end
+            end
+            
+            if new == 1
+                figure
+            end
+            
+            subplot(5,1,1)
+            plot(this.time, this.data(:,stim_index));
+            title(strcat('Channel',{' '},num2str(this.channels(stim_index)),{' '},'Raw Data'));
+            ylabel('Full Recording');
+            
+            subplot(5,1,2)
+            plot(this.time(t0:t0+samples-1), this.data(t0:t0+samples-1,stim_index));
+            s1 = stream_fft(this.data(t0:t0+samples-1,stim_index));
+            ylabel('No Stim');
+            
+            subplot(5,1,3)
+            plot(this.time(t1:t1+samples-1), this.data(t1:t1+samples-1,stim_index));
+            s2 = stream_fft(this.data(t1:t1+samples-1,stim_index));
+            ylabel('Stim w/o Artifact Cancellation');
+            hold on
+            scatter(this.time(stim_samples(1,:)), stim_samples(2,:));
+            hold off
+            
+            subplot(5,1,4)
+            plot(this.time(t2:t2+samples-1), this.data(t2:t2+samples-1,stim_index))
+            s3 = stream_fft(this.data(t2:t2+samples-1,stim_index));
+            ylabel('Stim w/ Artifact Cancellation');
+            xlabel('Time (s)');
+            
+            subplot(5,1,5)
+            loglog(s1);
+            hold on
+            loglog(s2);
+            loglog(s3);
+            hold off
+            ylabel('Spectrum');
+            xlabel('log(Frequency)');
+            legend('No Stim', 'Stim w/o Cancellation', 'Stim /w Cancellation');
+            
+            this.fig = gcf;
+            set(this.fig,'KeyPressFcn',@(src,evt) stim_callback(this,src,evt));
+            
+            this.stidx = stim_index;
+            this.stidx_next = mod(stim_index, this.numchannels) + 1;
+            if stim_index == 1
+                this.stidx_prev = this.numchannels;
+            else
+                this.stidx_prev = stim_index - 1;
+            end
+            
+        end
+        
+        function stim_callback(this,obj,evt)
+            if strcmp(evt.Key,'rightarrow') == 1
+                this.plotstim(this.stidx_next,0);
+            elseif strcmp(evt.Key,'leftarrow') == 1
+                this.plotstim(this.stidx_prev,0);
+            end
         end
         
         function keypress_callback(this,obj,evt)
@@ -247,6 +336,16 @@ classdef streamhdf < handle
             this.crc_errors = num_crcs;
         end
         
+        function get_stim(this)
+            for i = 1:this.numchannels
+                for j = 1:this.count
+                    if this.data(j,i) >= 32768
+                        this.data(j,i) = this.data(j,i) - 32768;
+                        this.stim(j,i) = 1;
+                    end
+                end
+            end
+        end
             
         function clean_data(this)
             this.data_clean = this.data;

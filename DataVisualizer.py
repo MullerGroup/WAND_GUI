@@ -305,6 +305,7 @@ class DataVisualizer(QDockWidget):
 
         noisedata = []
         means = []
+        good_ch = 0
 
 
         if self.data:
@@ -315,6 +316,13 @@ class DataVisualizer(QDockWidget):
 
             for ch in range(0,95):
                 means.append(np.mean(noisedata[ch]))
+
+            for ch in range(0,95):
+                if means[ch] < ((2**15) - self.ui.thresh.value()) and means[ch] > self.ui.thresh.value():
+                    good_ch = good_ch + 1
+                    print(ch)
+            print(good_ch)
+            print(self.ui.thresh.value())
 
             for ch in range(0, self.numPlots-1):
                 if self.ui.noise.isChecked():

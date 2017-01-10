@@ -240,6 +240,14 @@ class Ui_DataVisualizer(object):
         self.impDelay.setObjectName(_fromUtf8("impDelay"))
         self.gridLayout.addWidget(self.impDelay, 8, 1, 1, 1)
 
+        self.thresh = QtGui.QSpinBox(self.dockWidgetContents)
+        self.thresh.setMinimum(10)
+        self.thresh.setMaximum(100000)
+        self.thresh.setSingleStep(1)
+        self.thresh.setProperty("value", 1000)
+        self.thresh.setObjectName(_fromUtf8("thresh"))
+        self.gridLayout.addWidget(self.thresh, 8, 4, 1, 1)
+
         DataVisualizer.setWidget(self.dockWidgetContents)
 
         self.retranslateUi(DataVisualizer)
