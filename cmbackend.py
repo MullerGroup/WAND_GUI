@@ -796,6 +796,14 @@ class CMWorker(QThread):
         self.nmicCommand(1, 0x02)
         time.sleep(0.01)
 
+    @pyqtSlot(int, int)
+    def writeCL(self, addr, value):
+        if not self.cp2130Handle:
+            print(hex(addr))
+            print(bin(value))
+            return
+        self._regWr(addr, value)
+
     # @pyqtSlot()
     def enableArtifact(self):
         if not self.cp2130Handle:

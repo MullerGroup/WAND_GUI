@@ -85,6 +85,7 @@ class MainWindow(QMainWindow):
         self.sConfig0.setWorker(worker)
         self.sConfig1.setWorker(worker)
         self.DataVisualizer.setWorker(worker)
+        self.closedLoop.setWorker(worker)
 
 
     @pyqtSlot()
