@@ -12,6 +12,7 @@ from cmdline import CommandLineWidget
 #from backend import *
 from nmicCommand import NmicCommand
 from DataVisualizer import DataVisualizer
+from closedLoop import ClosedLoop
 
 class MainWindow(QMainWindow):   
     def __init__(self, parent=None):
@@ -44,12 +45,17 @@ class MainWindow(QMainWindow):
         self.nmicCommand1 = NmicCommand(self, 1)
         self.addDockWidget(Qt.RightDockWidgetArea, self.nmicCommand1)
 
+        self.closedLoop = ClosedLoop(self)
+        self.addDockWidget(Qt.RightDockWidgetArea, self.closedLoop)
+
+
         # NM0 widgets grouping
         self.tabifyDockWidget(self.regEdit0, self.regEdit1)
         self.tabifyDockWidget(self.regEdit1, self.sConfig0)
         self.tabifyDockWidget(self.sConfig0, self.sConfig1)
         self.tabifyDockWidget(self.sConfig1, self.nmicCommand0)
         self.tabifyDockWidget(self.nmicCommand0, self.nmicCommand1)
+        self.tabifyDockWidget(self.nmicCommand1, self.closedLoop)
 
         self.sConfig0.loadState()
         self.sConfig1.loadState()
