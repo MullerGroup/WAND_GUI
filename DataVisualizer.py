@@ -18,7 +18,7 @@ class omni_data(IsDescription):
     # data = UInt16Col(shape=(1,64))
     # data = UInt16Col(shape=(1,96))
     # 96 neural channels, 3 accelerometer channels
-    data = UInt16Col(shape=(1,99))
+    data = UInt16Col(shape=(1,5))
     time = StringCol(26)
 
 def calculateFFT(d):
@@ -47,7 +47,7 @@ class DataVisualizer(QDockWidget):
         self.data = []
         # self.numPlots = 64
         # added 3 more channels just to display accel data
-        self.numPlots = 100
+        self.numPlots = 5
         self.xRange = self.ui.xRange.value() # number of ms (samples) over which to plot continuous data
 
         self.dataPlot = np.zeros((self.numPlots, self.ui.xRange.maximum())) # aggregation of data to plot (scrolling style)
@@ -67,8 +67,8 @@ class DataVisualizer(QDockWidget):
         self.streamAdcThread.streamAdcData.connect(self.streamAdcData)
         # self.connect(self.streamAdcThread, SIGNAL('streamDataOut(PyQt_PyObject)'), self.streamAdcData)
 
-        self.file = open('gui_data.csv','w')
-        self.csvfile = csv.writer(self.file)
+        # self.file = open('gui_data.csv','w')
+        # self.csvfile = csv.writer(self.file)
 
         self.setWindowTitle("Data Visualizer")
 
@@ -310,45 +310,45 @@ class DataVisualizer(QDockWidget):
 
         if self.data:
             # creates structure of arrays indexed by channel first, then sample
-            for ch in range(0, self.numPlots-1):
-                # data.append((np.array([i[ch] for i in self.data])-32768/2)*(100e-3/32768)*1e6)
-                noisedata.append((np.array([i[ch] for i in self.data])))
+            # for ch in range(0, self.numPlots-1):
+            #     # data.append((np.array([i[ch] for i in self.data])-32768/2)*(100e-3/32768)*1e6)
+            #     noisedata.append((np.array([i[ch] for i in self.data])))
 
-            for ch in range(0,95):
-                means.append(np.mean(noisedata[ch]))
+            # for ch in range(0,95):
+            #     means.append(np.mean(noisedata[ch]))
 
-            for ch in range(0,95):
-                if means[ch] < ((2**15) - self.ui.thresh.value()) and means[ch] > self.ui.thresh.value():
-                    good_ch = good_ch + 1
-                    print(ch)
-            print(good_ch)
-            print(self.ui.thresh.value())
+            # for ch in range(0,95):
+            #     if means[ch] < ((2**15) - self.ui.thresh.value()) and means[ch] > self.ui.thresh.value():
+            #         good_ch = good_ch + 1
+            #         print(ch)
+            # print(good_ch)
+            # print(self.ui.thresh.value())
 
-            for ch in range(0, self.numPlots-1):
-                if self.ui.noise.isChecked():
-                    d = noisedata[ch]
-                    rms = np.std(d)
-                    # ff = np.abs(np.fft.fft(d)) / len(d)
-                    # ff[0] = 0
-                    # # notch out 60 hz harmonics
-                    # rms60 = 0
-                    # for i in range(1, 5):
-                    #     rms60 += ff[60 * i] ** 2
-                    #     ff[60 * i] = 0
-                    # rms60 **= 0.5
-                    # rms = np.sum(ff[0:500] ** 2) ** 0.5
-                    if ch < 96: print("Ch {} Noise: {:0.1f} rms".format(ch,rms))
-                    #print("{}".format(dp))
-                    #print("{:0.1f} rms".format(self.measureRms(dp)))
+            # for ch in range(0, self.numPlots-1):
+            #     if self.ui.noise.isChecked():
+            #         d = noisedata[ch]
+            #         rms = np.std(d)
+            #         # ff = np.abs(np.fft.fft(d)) / len(d)
+            #         # ff[0] = 0
+            #         # # notch out 60 hz harmonics
+            #         # rms60 = 0
+            #         # for i in range(1, 5):
+            #         #     rms60 += ff[60 * i] ** 2
+            #         #     ff[60 * i] = 0
+            #         # rms60 **= 0.5
+            #         # rms = np.sum(ff[0:500] ** 2) ** 0.5
+            #         if ch < 96: print("Ch {} Noise: {:0.1f} rms".format(ch,rms))
+            #         #print("{}".format(dp))
+            #         #print("{:0.1f} rms".format(self.measureRms(dp)))
 
-                    indx = 11
-                    dfft = np.abs(np.fft.fft(d))
-                    fund = dfft[indx]
-                    dist = 0
-                    for i in range(2, 32):
-                        dist += dfft[i * indx] ** 2
-                    db = 20 * np.log10(dist ** 0.5 / fund)
-                    if ch < 96: print("Ch {} THD: {:0.0f} dB".format(ch, db))
+            #         indx = 11
+            #         dfft = np.abs(np.fft.fft(d))
+            #         fund = dfft[indx]
+            #         dist = 0
+            #         for i in range(2, 32):
+            #             dist += dfft[i * indx] ** 2
+            #         db = 20 * np.log10(dist ** 0.5 / fund)
+            #         if ch < 96: print("Ch {} THD: {:0.0f} dB".format(ch, db))
 
 
             for t in range(0, len(self.data)):
@@ -398,7 +398,7 @@ class DataVisualizer(QDockWidget):
                     # add back in to test new autorange
                     self.plots[ch].getViewBox().setMouseEnabled(x=True,y=True)
                     self.plots[ch].getViewBox().setMouseMode(self.plots[ch].getViewBox().RectMode)
-                    if ch < 99 and ch > 95:
+                    if ch < 5 and ch > 3:
                         self.plots[ch].getViewBox().setLimits(xMin=0,xMax=self.xRange,yMin=-100,yMax=65636)
                     else:
                         self.plots[ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=-100, yMax=32868)
@@ -426,6 +426,7 @@ class DataVisualizer(QDockWidget):
                 self.dataPlot[1][self.plotPointer] = temp[1]
                 self.dataPlot[2][self.plotPointer] = temp[2]
                 self.dataPlot[3][self.plotPointer] = temp[3]
+                self.dataPlot[3][self.plotPointer] = temp[4]
                 # self.dataPlot[2][self.plotPointer] = temp[1]
                 self.plotPointer += 1
             self.data = []
@@ -433,8 +434,8 @@ class DataVisualizer(QDockWidget):
             # TODO: scale all y axes together? turn off auto-scale?
 
         # for ch in range(self.topPlot, self.topPlot + self.numPlotsDisplayed): # only plot currently displayed plots
-        for ch in range(0, 4):
-            if ch < 4:
+        for ch in range(0, 5):
+            if ch < 5:
                 dp = self.dataPlot[ch][0:self.xRange]
                 # add back in to test new autorange
 
@@ -498,7 +499,7 @@ class DataVisualizer(QDockWidget):
 
                 self.plots[ch].clear()
                 # self.fftPlots[ch].clear()
-                if self.plotEn[ch] and ch < 4:
+                if self.plotEn[ch] and ch < 5:
                     if ch == 0 or ch == 2:
                         # self.plots[ch].plot(y=(dp * (0.00305))-50, pen=self.plotColors[ch])  # different color for each plot
                         self.plots[ch].plot(y=dp, pen=self.plotColors[ch])
@@ -508,8 +509,8 @@ class DataVisualizer(QDockWidget):
                     # add back in to test new autorange
                     self.plots[ch].getViewBox().setMouseEnabled(x=True, y=True)
                     self.plots[ch].getViewBox().setMouseMode(self.plots[ch].getViewBox().RectMode)
-                    if ch == 1:
-                        self.plots[ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=-32768, yMax=32768)
+                    if ch == 4:
+                        self.plots[ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=-32768, yMax=65536)
                         self.plots[ch].getViewBox().setRange(yRange=(avg-(sd*2),avg+(sd*2)),update=True)
                     elif ch == 2:
                         self.plots[ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=-32768, yMax=32768)

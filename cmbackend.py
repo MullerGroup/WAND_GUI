@@ -22,7 +22,7 @@ from ctypes import byref, create_string_buffer, c_int, sizeof, POINTER, \
     c_char
 import os
 
-datalen = 200
+datalen = 12
 
 # CM register addresses
 class Reg(Enum):
@@ -225,7 +225,7 @@ class readFTDIFifoThread(QThread):
             data = cp2130_libusb_read(CMWorker.cp2130Handle)
             if data == False:
                 pass
-            elif data[1] == 198:
+            elif data[1] == datalen - 2:
                 dataQueue.put(data)
                 timeQueue.put(time.time() - t_0)
                 if self.count > 0 and self.stim:
@@ -365,10 +365,10 @@ class streamAdcThread(QThread):
                 if data[0]==0x00: # no CRC
                     success += 1
                     data_point = self.dataTable.row
-                    data_point['out'] = [data[0] if i == 0 else ((data[i + 1] << 8 | data[i]) & 0xFFFF if i < datalen - 7 else (data[i + 1] << 8 | data[i])) for i in list(range(0, datalen - 3, 2))]
+                    data_point['out'] = [data[0] if i == 0 else ((data[i + 1] << 8 | data[i]) & 0xFFFF if i < datalen - 7 else (data[i + 1] << 8 | data[i])) for i in list(range(0, datalen - 1, 2))]
                     if self.display:
                         # out.append([(data[i + 1] << 8 | data[i]) & 0x7FFF for i in list(range(2*(self.chStart + 1), 2*(self.chStart + 5), 2))])
-                        out.append([(data[i + 1] << 8 | data[i]) & 0x7FFF for i in [2*(self.ch0 + 1), 2*(self.ch1 + 1), 2*(self.ch2 + 1), 2*(self.ch3 + 1)]])
+                        out.append([(data[i + 1] << 8 | data[i]) & 0x7FFF for i in [2*(0 + 1), 2*(1 + 1), 2*(2 + 1), 2*(3 + 1), 2*(4 + 1)]])
                     data_point['time'] = data_time
                     data_point.append()
 
@@ -376,7 +376,7 @@ class streamAdcThread(QThread):
                     crcs += 1
                     success += 1
                     data_point = self.dataTable.row
-                    data_point['out'] = [data[0] if i == 0 else ((data[i + 1] << 8 | data[i]) & 0xFFFF if i < datalen - 7 else (data[i + 1] << 8 | data[i])) for i in list(range(0, datalen - 3, 2))]
+                    data_point['out'] = [data[0] if i == 0 else ((data[i + 1] << 8 | data[i]) & 0xFFFF if i < datalen - 7 else (data[i + 1] << 8 | data[i])) for i in list(range(0, datalen - 1, 2))]
                     # if self.display:
                     #     # out.append([(data[i + 1] << 8 | data[i]) & 0x7FFF for i in list(range(2*(self.chStart + 1), 2*(self.chStart + 5), 2))])
                     #     out.append([(data[i + 1] << 8 | data[i]) & 0x7FFF for i in [2*(self.ch0 + 1), 2*(self.ch1 + 1), 2*(self.ch2 + 1), 2*(self.ch3 + 1)]])
@@ -509,9 +509,9 @@ class CMWorker(QThread):
             data = cp2130_libusb_read(CMWorker.cp2130Handle)
 
             if data:
-                if data[1] == 198:
+                if data[1] == datalen - 2:
                     timeout = 0
-                    out.append([data[i+1] << 8 | data[i] if i > datalen - 8 else (data[i+1] << 8 | data[i]) & 0x7FFF for i in list(range(2, datalen-1, 2))])
+                    out.append([data[i+1] << 8 | data[i] if i > datalen - 5 else (data[i+1] << 8 | data[i]) & 0x7FFF for i in list(range(2, datalen-1, 2))])
                     samples = samples + 1
                     if data[0] == 0xFF:
                         crcs = crcs + 1
