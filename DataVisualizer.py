@@ -426,7 +426,7 @@ class DataVisualizer(QDockWidget):
                 self.dataPlot[1][self.plotPointer] = temp[1]
                 self.dataPlot[2][self.plotPointer] = temp[2]
                 self.dataPlot[3][self.plotPointer] = temp[3]
-                self.dataPlot[3][self.plotPointer] = temp[4]
+                self.dataPlot[4][self.plotPointer] = temp[4]
                 # self.dataPlot[2][self.plotPointer] = temp[1]
                 self.plotPointer += 1
             self.data = []
@@ -510,7 +510,7 @@ class DataVisualizer(QDockWidget):
                     self.plots[ch].getViewBox().setMouseEnabled(x=True, y=True)
                     self.plots[ch].getViewBox().setMouseMode(self.plots[ch].getViewBox().RectMode)
                     if ch == 4:
-                        self.plots[ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=-32768, yMax=65536)
+                        self.plots[ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=-32768, yMax=32768)
                         self.plots[ch].getViewBox().setRange(yRange=(avg-(sd*2),avg+(sd*2)),update=True)
                     elif ch == 2:
                         self.plots[ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=-32768, yMax=32768)

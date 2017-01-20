@@ -39,7 +39,7 @@ class stream_data(IsDescription):
     # data = UInt16Col(shape=(96))
     # ramp = UInt16Col()
     # time = FloatCol()
-    out = UInt16Col(int(datalen/2 - 1))
+    out = UInt16Col(int(datalen/2))
     time = FloatCol()
 
 class stream_info(IsDescription):
