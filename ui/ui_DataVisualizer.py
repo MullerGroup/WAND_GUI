@@ -251,7 +251,7 @@ class Ui_DataVisualizer(object):
         DataVisualizer.setWidget(self.dockWidgetContents)
 
         self.retranslateUi(DataVisualizer)
-        self.numPlotsDisplayed.setCurrentIndex(2)
+        self.numPlotsDisplayed.setCurrentIndex(3)
         QtCore.QMetaObject.connectSlotsByName(DataVisualizer)
         self.dispStream.setProperty("checked", True)
 

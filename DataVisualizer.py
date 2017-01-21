@@ -434,7 +434,7 @@ class DataVisualizer(QDockWidget):
             # TODO: scale all y axes together? turn off auto-scale?
 
         # for ch in range(self.topPlot, self.topPlot + self.numPlotsDisplayed): # only plot currently displayed plots
-        for ch in range(0, 5):
+        for ch in range(0, self.numPlotsDisplayed):
             if ch < 5:
                 dp = self.dataPlot[ch][0:self.xRange]
                 # add back in to test new autorange
@@ -497,31 +497,26 @@ class DataVisualizer(QDockWidget):
                 #         # negative
                 #         dp = -(dp & 0x7FFF)
 
-                self.plots[ch].clear()
+                self.plots[self.topPlot+ch].clear()
                 # self.fftPlots[ch].clear()
-                if self.plotEn[ch] and ch < 5:
-                    if ch == 0 or ch == 2:
-                        # self.plots[ch].plot(y=(dp * (0.00305))-50, pen=self.plotColors[ch])  # different color for each plot
-                        self.plots[ch].plot(y=dp, pen=self.plotColors[ch])
-                    else:
-                        # self.plots[ch].plot(y=dp*(0.00305), pen=self.plotColors[ch]) # different color for each plot
-                        self.plots[ch].plot(y=dp, pen=self.plotColors[ch])
+                if self.plotEn[self.topPlot+ch]:
+                    self.plots[self.topPlot+ch].plot(y=dp, pen=self.plotColors[self.topPlot+ch])
                     # add back in to test new autorange
-                    self.plots[ch].getViewBox().setMouseEnabled(x=True, y=True)
-                    self.plots[ch].getViewBox().setMouseMode(self.plots[ch].getViewBox().RectMode)
+                    self.plots[self.topPlot+ch].getViewBox().setMouseEnabled(x=True, y=True)
+                    self.plots[self.topPlot+ch].getViewBox().setMouseMode(self.plots[self.topPlot+ch].getViewBox().RectMode)
                     if ch == 4:
-                        self.plots[ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=-32768, yMax=32768)
-                        self.plots[ch].getViewBox().setRange(yRange=(avg-(sd*2),avg+(sd*2)),update=True)
+                        self.plots[self.topPlot+ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=-32768, yMax=32768)
+                        self.plots[self.topPlot+ch].getViewBox().setRange(yRange=(avg-(sd*2),avg+(sd*2)),update=True)
                     elif ch == 2:
-                        self.plots[ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=-32768, yMax=32768)
-                        self.plots[ch].getViewBox().setRange(yRange=(avg-(sd*2),avg+(sd*2)),update=True)
+                        self.plots[self.topPlot+ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=-32768, yMax=32768)
+                        self.plots[self.topPlot+ch].getViewBox().setRange(yRange=(avg-(sd*2),avg+(sd*2)),update=True)
                     else:
-                        self.plots[ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=-32768, yMax=32768)
-                        self.plots[ch].getViewBox().setRange(yRange=(avg-(sd*2),avg+(sd*2)),update=True)
+                        self.plots[self.topPlot+ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=-32768, yMax=32768)
+                        self.plots[self.topPlot+ch].getViewBox().setRange(yRange=(avg-(sd*2),avg+(sd*2)),update=True)
                     if self.ui.autorange.isChecked():
                         # if ch > 0:
                         #     self.plots[ch].getViewBox().autoRange()
-                        self.plots[ch].getViewBox().autoRange()
+                        self.plots[self.topPlot+ch].getViewBox().autoRange()
                         # self.fftPlots[ch].plot(y=calculateFFT(dp), pen=(102,204,255))
                         # if self.ui.autorange.isChecked():
                         # self.fftPlots[ch].getViewBox().autoRange()
