@@ -79,6 +79,7 @@ class ClosedLoop(QDockWidget):
         CL0_off = int(not self.ui.enable0.isChecked())
         CL1_on = int(self.ui.enable1.isChecked())
         CL0_on = int(self.ui.enable0.isChecked())
+        chStim = self.ui.chStim.value()
 
         self.writeCL.emit(0xBB, self.makeBit(en_a,31,1,1) | self.makeBit(ch_a,24,7,1) | 
             self.makeBit(dir_a,23,1,1) | self.makeBit(thresh_a,16,7,1) |
@@ -90,5 +91,5 @@ class ClosedLoop(QDockWidget):
             self.makeBit(dir_d,7,1,1) | self.makeBit(thresh_d,0,7,1))
         self.writeCL.emit(0xAA, self.makeBit(dead_len,16,16,1) | self.makeBit(rand_mode,4,1,1) |
             self.makeBit(CL1_off,3,1,1) | self.makeBit(CL1_on,2,1,1) | 
-            self.makeBit(CL0_off,1,1,1) | self.makeBit(CL0_on,0,1,1))
+            self.makeBit(CL0_off,1,1,1) | self.makeBit(CL0_on,0,1,1) | self.makeBit(chStim,8,7,1))
 

@@ -203,6 +203,18 @@ class Ui_closedLoop(object):
         self.randomMode.setObjectName(_fromUtf8("randomMode"))
         self.gridLayout.addWidget(self.randomMode, 2, 2, 1, 1)
 
+        self.chStimLabel = QtGui.QLabel(self.dockWidgetContents)
+        self.chStimLabel.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
+        self.chStimLabel.setObjectName(_fromUtf8("chStimLabel"))
+        self.gridLayout.addWidget(self.chStimLabel, 2, 3, 1, 1)
+        self.chStim = QtGui.QSpinBox(self.dockWidgetContents)
+        self.chStim.setMinimum(0)
+        self.chStim.setMaximum(127)
+        self.chStim.setSingleStep(1)
+        self.chStim.setProperty("value", 0)
+        self.chStim.setObjectName(_fromUtf8("chStim"))
+        self.gridLayout.addWidget(self.chStim, 2, 4, 1, 1)
+
         closedLoop.setWidget(self.dockWidgetContents)
 
         self.retranslateUi(closedLoop)
@@ -246,5 +258,6 @@ class Ui_closedLoop(object):
         self.threshold4Label.setText(_translate("closedLoop", "Threshold:", None))
 
         self.deadLabel.setText(_translate("closedLoop", "Dead Length:", None))
+        self.chStimLabel.setText(_translate("closedLoop", "Stim Channel:", None))
 
         self.randomMode.setText(_translate("closedLoop", "Random (Control) Mode", None))
