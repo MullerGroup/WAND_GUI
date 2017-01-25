@@ -2,10 +2,26 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from ui.ui_closedLoop import Ui_closedLoop
 import datetime
+from enum import Enum
+import time
+
+
+# CM register addresses
+class Reg(Enum):
+    ctrl = 0x00
+    rst = 0x04
+    n0d1 = 0x10
+    n0d2 = 0x14
+    n1d1 = 0x20
+    n1d2 = 0x24
+    req = 0xff
+    cl1 = 0xDD
+    cl2 = 0xBB
+    cl3 = 0xCC
 
 class ClosedLoop(QDockWidget):
 
-    writeCL = pyqtSignal(int, int)
+    writeCL = pyqtSignal(Reg, int)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -81,15 +97,19 @@ class ClosedLoop(QDockWidget):
         CL0_on = int(self.ui.enable0.isChecked())
         chStim = self.ui.chStim.value()
 
-        self.writeCL.emit(0xBB, self.makeBit(en_a,31,1,1) | self.makeBit(ch_a,24,7,1) | 
+        self.writeCL.emit(Reg.cl2, self.makeBit(en_a,31,1,1) | self.makeBit(ch_a,24,7,1) | 
             self.makeBit(dir_a,23,1,1) | self.makeBit(thresh_a,16,7,1) |
             self.makeBit(en_b,15,1,1) | self.makeBit(ch_b,8,7,1) | 
             self.makeBit(dir_b,7,1,1) | self.makeBit(thresh_b,0,7,1))
-        self.writeCL.emit(0xCC, self.makeBit(en_c,31,1,1) | self.makeBit(ch_c,24,7,1) | 
-            self.makeBit(dir_c,23,1,1) | self.makeBit(thresh_c,16,7,1) |
-            self.makeBit(en_d,15,1,1) | self.makeBit(ch_d,8,7,1) | 
-            self.makeBit(dir_d,7,1,1) | self.makeBit(thresh_d,0,7,1))
-        self.writeCL.emit(0xAA, self.makeBit(dead_len,16,16,1) | self.makeBit(rand_mode,4,1,1) |
+
+        # time.sleep(0.1)
+
+        # self.writeCL.emit(Reg.cl3, self.makeBit(en_c,31,1,1) | self.makeBit(ch_c,24,7,1) | 
+        #     self.makeBit(dir_c,23,1,1) | self.makeBit(thresh_c,16,7,1) |
+        #     self.makeBit(en_d,15,1,1) | self.makeBit(ch_d,8,7,1) | 
+        #     self.makeBit(dir_d,7,1,1) | self.makeBit(thresh_d,0,7,1))
+
+        self.writeCL.emit(Reg.cl1, self.makeBit(dead_len,16,16,1) | self.makeBit(rand_mode,4,1,1) |
             self.makeBit(CL1_off,3,1,1) | self.makeBit(CL1_on,2,1,1) | 
             self.makeBit(CL0_off,1,1,1) | self.makeBit(CL0_on,0,1,1) | self.makeBit(chStim,8,7,1))
 

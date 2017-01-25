@@ -33,6 +33,9 @@ class Reg(Enum):
     n1d1 = 0x20
     n1d2 = 0x24
     req = 0xff
+    cl1 = 0xDD
+    cl2 = 0xBB
+    cl3 = 0xCC
 
 class stream_data(IsDescription):
     # crc = UInt8Col()
@@ -77,6 +80,8 @@ def cp2130_libusb_write(handle, value): # value should be a list of 5 bytes to w
     write_command_buf[8:13] = value
     bytesWritten = c_int()
     usbTimeout = 500
+
+    # print(write_command_buf[8:13])
 
     error_code = libusb1.libusb_bulk_transfer(handle, 0x02, write_command_buf, sizeof(write_command_buf), byref(bytesWritten), usbTimeout)
     if error_code:
@@ -796,13 +801,13 @@ class CMWorker(QThread):
         self.nmicCommand(1, 0x02)
         time.sleep(0.01)
 
-    @pyqtSlot(int, int)
+    @pyqtSlot(Reg, int)
     def writeCL(self, addr, value):
+        # print(hex(addr.value))
+        # print(bin(value))
         if not self.cp2130Handle:
-            print(hex(addr))
-            print(bin(value))
             return
-        self._regWr(addr, value)
+        self._regWr(addr, value & 0xFFFFFFFF)
 
     # @pyqtSlot()
     def enableArtifact(self):
