@@ -21,6 +21,9 @@ from ctypes import byref, create_string_buffer, c_int, sizeof, POINTER, \
     cast, c_uint8, c_uint16, c_ubyte, string_at, c_void_p, cdll, addressof, \
     c_char
 import os
+import math
+from numpy import arange
+
 
 datalen = 12
 
@@ -267,6 +270,7 @@ class readFTDIFifoThread(QThread):
 class streamAdcThread(QThread):
 
     streamAdcData = pyqtSignal(list)
+    plotfft = pyqtSignal(list)
     display = True
     ch0 = 0
     ch1 = 0
@@ -305,6 +309,7 @@ class streamAdcThread(QThread):
         self.stimOnNM = stimOnNM
         self.imp = imp
         self.impdelay = impdelay
+        self.fft_data = [];
         if stim:
             print("Streaming with stim")
         elif imp:
@@ -373,7 +378,20 @@ class streamAdcThread(QThread):
                     data_point['out'] = [data[0] if i == 0 else ((data[i + 1] << 8 | data[i]) & 0xFFFF if i < datalen - 7 else (data[i + 1] << 8 | data[i])) for i in list(range(0, datalen - 1, 2))]
                     if self.display:
                         # out.append([(data[i + 1] << 8 | data[i]) & 0x7FFF for i in list(range(2*(self.chStart + 1), 2*(self.chStart + 5), 2))])
-                        out.append([(data[i + 1] << 8 | data[i]) & 0x7FFF for i in [2*(0 + 1), 2*(1 + 1), 2*(2 + 1), 2*(3 + 1), 2*(4 + 1)]])
+                        out.append([(data[i + 1] << 8 | data[i]) & 0xFFFF for i in [2*(0 + 1), 2*(1 + 1), 2*(2 + 1), 2*(3 + 1), 2*(4 + 1)]])
+                        if data[3] & 0x80:
+                            if len(self.fft_data) == 1024:
+                                self.plotfft.emit(self.fft_data)
+                            self.fft_data = [];
+                        # real = - ((data[7] << 8 | data[6]) & 0x8000) | ((data[7] << 8 | data[6]) & 0x7FFF)
+                        # imag = - ((data[9] << 8 | data[8]) & 0x8000) | ((data[9] << 8 | data[8]) & 0x7FFF)
+                        real = (data[7] << 8 | data[6]) 
+                        if real >= 0x8000:
+                            real -= 0x10000
+                        imag = (data[9] << 8 | data[8])
+                        if imag >= 0x8000:
+                            imag -= 0x10000
+                        self.fft_data.append(real**2 + imag**2)
                     data_point['time'] = data_time
                     data_point.append()
 

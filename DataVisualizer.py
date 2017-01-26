@@ -13,6 +13,7 @@ import time
 # import QThread
 import cmbackend
 import csv
+from numpy import arange
 
 class omni_data(IsDescription):
     # data = UInt16Col(shape=(1,64))
@@ -45,6 +46,7 @@ class DataVisualizer(QDockWidget):
         self.ui = Ui_DataVisualizer()
         self.ui.setupUi(self)
         self.data = []
+        self.fft_data = []
         # self.numPlots = 64
         # added 3 more channels just to display accel data
         self.numPlots = 5
@@ -65,6 +67,7 @@ class DataVisualizer(QDockWidget):
         self.streamAdcThread = cmbackend.streamAdcThread()
         self.connect(self.streamAdcThread, SIGNAL("finished()"), self.streamingDone)
         self.streamAdcThread.streamAdcData.connect(self.streamAdcData)
+        self.streamAdcThread.plotfft.connect(self.plotfft)
         # self.connect(self.streamAdcThread, SIGNAL('streamDataOut(PyQt_PyObject)'), self.streamAdcData)
 
         # self.file = open('gui_data.csv','w')
@@ -180,6 +183,30 @@ class DataVisualizer(QDockWidget):
     def streamAdcData(self, data):
         self.data = data
         self.updatePlotStream()
+
+    @pyqtSlot(list)
+    def plotfft(self,fft_data):
+        self.fft_data = []
+        n = len(fft_data)
+        if n == 1024:
+            indexs = arange(n)
+            for i in self.bit_reverse_traverse(indexs):
+                self.fft_data.append(fft_data[i])
+
+    @pyqtSlot(list)
+    def bit_reverse_traverse(self,a):
+        n = a.shape[0]
+        assert(not n&(n-1)) # assert that n is a power of 2
+
+        if n == 1:
+            yield a[0]
+        else:
+            even_index = arange(n/2)*2
+            odd_index = arange(n/2)*2 + 1
+            for even in self.bit_reverse_traverse(a[even_index.astype(int)]):
+                yield even
+            for odd in self.bit_reverse_traverse(a[odd_index.astype(int)]):
+                yield odd
 
     # @pyqtSlot(list)
     # def streamAdcData(self, data):
@@ -424,9 +451,9 @@ class DataVisualizer(QDockWidget):
                 # self.dataPlot[ch][self.plotPointer] = temp.pop(0) # pop data for channel = 0, 1, 2, ...
                 self.dataPlot[0][self.plotPointer] = temp[0]
                 self.dataPlot[1][self.plotPointer] = temp[1]
-                self.dataPlot[2][self.plotPointer] = temp[2]
-                self.dataPlot[3][self.plotPointer] = temp[3]
-                self.dataPlot[4][self.plotPointer] = temp[4]
+                # self.dataPlot[2][self.plotPointer] = temp[2]
+                self.dataPlot[3][self.plotPointer] = temp[4]
+                # self.dataPlot[4][self.plotPointer] = temp[4]
                 # self.dataPlot[2][self.plotPointer] = temp[1]
                 self.plotPointer += 1
             self.data = []
@@ -436,7 +463,10 @@ class DataVisualizer(QDockWidget):
         # for ch in range(self.topPlot, self.topPlot + self.numPlotsDisplayed): # only plot currently displayed plots
         for ch in range(0, self.numPlotsDisplayed):
             if ch < 5:
-                dp = self.dataPlot[ch][0:self.xRange]
+                if ch == 2:
+                    dp = self.fft_data
+                else:
+                    dp = self.dataPlot[ch][0:self.xRange]
                 # add back in to test new autorange
 
                 # fft = scipy.fft(dp)
@@ -504,12 +534,12 @@ class DataVisualizer(QDockWidget):
                     # add back in to test new autorange
                     self.plots[self.topPlot+ch].getViewBox().setMouseEnabled(x=True, y=True)
                     self.plots[self.topPlot+ch].getViewBox().setMouseMode(self.plots[self.topPlot+ch].getViewBox().RectMode)
-                    if ch == 4:
-                        self.plots[self.topPlot+ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=-32768, yMax=32768)
+                    if ch == 3:
+                        self.plots[self.topPlot+ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=0, yMax=65536)
                         self.plots[self.topPlot+ch].getViewBox().setRange(yRange=(avg-(sd*2),avg+(sd*2)),update=True)
                     elif ch == 2:
-                        self.plots[self.topPlot+ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=-32768, yMax=32768)
-                        self.plots[self.topPlot+ch].getViewBox().setRange(yRange=(avg-(sd*2),avg+(sd*2)),update=True)
+                        self.plots[self.topPlot+ch].getViewBox().setLimits(xMin=0, xMax=100, yMin=0, yMax=10000000000)
+                        # self.plots[self.topPlot+ch].getViewBox().setRange(yRange=(avg-(sd*2),avg+(sd*2)),update=True)
                     else:
                         self.plots[self.topPlot+ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=-32768, yMax=32768)
                         self.plots[self.topPlot+ch].getViewBox().setRange(yRange=(avg-(sd*2),avg+(sd*2)),update=True)
@@ -522,3 +552,4 @@ class DataVisualizer(QDockWidget):
                         # self.fftPlots[ch].getViewBox().autoRange()
 
                         # TODO: add FFT plotting + a way to enable/disable channels
+        
