@@ -186,12 +186,14 @@ class DataVisualizer(QDockWidget):
 
     @pyqtSlot(list)
     def plotfft(self,fft_data):
+        # self.fft_data = fft_data
         self.fft_data = []
         n = len(fft_data)
         if n == 1024:
             indexs = arange(n)
             for i in self.bit_reverse_traverse(indexs):
                 self.fft_data.append(fft_data[i])
+
 
     @pyqtSlot(list)
     def bit_reverse_traverse(self,a):
@@ -284,6 +286,7 @@ class DataVisualizer(QDockWidget):
 
     @pyqtSlot()
     def clearPlots(self):
+        self.fft_data = []
         self.plotPointer = 0
         self.dataPlot = np.zeros(
             (self.numPlots, self.ui.xRange.maximum()))  # aggregation of data to plot (scrolling style)
@@ -449,8 +452,8 @@ class DataVisualizer(QDockWidget):
                 # for ch in range(0, 2):
                 #     self.dataPlot[ch][self.plotPointer] = temp[ch]
                 # self.dataPlot[ch][self.plotPointer] = temp.pop(0) # pop data for channel = 0, 1, 2, ...
-                self.dataPlot[0][self.plotPointer] = temp[0]
-                self.dataPlot[1][self.plotPointer] = temp[1]
+                self.dataPlot[0][self.plotPointer] = temp[0]&0x7FFF
+                self.dataPlot[1][self.plotPointer] = temp[1]&0x7FFF
                 # self.dataPlot[2][self.plotPointer] = temp[2]
                 self.dataPlot[3][self.plotPointer] = temp[4]
                 # self.dataPlot[4][self.plotPointer] = temp[4]
@@ -538,7 +541,7 @@ class DataVisualizer(QDockWidget):
                         self.plots[self.topPlot+ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=0, yMax=65536)
                         self.plots[self.topPlot+ch].getViewBox().setRange(yRange=(avg-(sd*2),avg+(sd*2)),update=True)
                     elif ch == 2:
-                        self.plots[self.topPlot+ch].getViewBox().setLimits(xMin=0, xMax=100, yMin=0, yMax=10000000000)
+                        self.plots[self.topPlot+ch].getViewBox().setLimits(xMin=0, xMax=1024, yMin=0, yMax=10000000000)
                         # self.plots[self.topPlot+ch].getViewBox().setRange(yRange=(avg-(sd*2),avg+(sd*2)),update=True)
                     else:
                         self.plots[self.topPlot+ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=-32768, yMax=32768)

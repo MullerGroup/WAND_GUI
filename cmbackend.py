@@ -379,10 +379,9 @@ class streamAdcThread(QThread):
                     if self.display:
                         # out.append([(data[i + 1] << 8 | data[i]) & 0x7FFF for i in list(range(2*(self.chStart + 1), 2*(self.chStart + 5), 2))])
                         out.append([(data[i + 1] << 8 | data[i]) & 0xFFFF for i in [2*(0 + 1), 2*(1 + 1), 2*(2 + 1), 2*(3 + 1), 2*(4 + 1)]])
+                        
                         if data[3] & 0x80:
-                            if len(self.fft_data) == 1024:
-                                self.plotfft.emit(self.fft_data)
-                            self.fft_data = [];
+                            self.fft_data = []
                         # real = - ((data[7] << 8 | data[6]) & 0x8000) | ((data[7] << 8 | data[6]) & 0x7FFF)
                         # imag = - ((data[9] << 8 | data[8]) & 0x8000) | ((data[9] << 8 | data[8]) & 0x7FFF)
                         real = (data[7] << 8 | data[6]) 
@@ -392,6 +391,9 @@ class streamAdcThread(QThread):
                         if imag >= 0x8000:
                             imag -= 0x10000
                         self.fft_data.append(real**2 + imag**2)
+                        if len(self.fft_data) == 1024:
+                            # self.plotfft.emit(self.fft_data)
+                            self.plotfft.emit(list(range(0,1024)))
                     data_point['time'] = data_time
                     data_point.append()
 
@@ -403,6 +405,23 @@ class streamAdcThread(QThread):
                     # if self.display:
                     #     # out.append([(data[i + 1] << 8 | data[i]) & 0x7FFF for i in list(range(2*(self.chStart + 1), 2*(self.chStart + 5), 2))])
                     #     out.append([(data[i + 1] << 8 | data[i]) & 0x7FFF for i in [2*(self.ch0 + 1), 2*(self.ch1 + 1), 2*(self.ch2 + 1), 2*(self.ch3 + 1)]])
+                    # if self.display:
+                    #     # out.append([(data[i + 1] << 8 | data[i]) & 0x7FFF for i in list(range(2*(self.chStart + 1), 2*(self.chStart + 5), 2))])
+                    #     # out.append([(data[i + 1] << 8 | data[i]) & 0xFFFF for i in [2*(0 + 1), 2*(1 + 1), 2*(2 + 1), 2*(3 + 1), 2*(4 + 1)]])
+                        
+                    #     if data[3] & 0x80:
+                    #         self.fft_data = []
+                    #     # real = - ((data[7] << 8 | data[6]) & 0x8000) | ((data[7] << 8 | data[6]) & 0x7FFF)
+                    #     # imag = - ((data[9] << 8 | data[8]) & 0x8000) | ((data[9] << 8 | data[8]) & 0x7FFF)
+                    #     real = (data[7] << 8 | data[6]) 
+                    #     if real >= 0x8000:
+                    #         real -= 0x10000
+                    #     imag = (data[9] << 8 | data[8])
+                    #     if imag >= 0x8000:
+                    #         imag -= 0x10000
+                    #     self.fft_data.append(real**2 + imag**2)
+                    #     if len(self.fft_data) == 1024:
+                    #         self.plotfft.emit(self.fft_data)
                     data_point['time'] = data_time
                     data_point.append()
 
@@ -821,8 +840,8 @@ class CMWorker(QThread):
 
     @pyqtSlot(Reg, int)
     def writeCL(self, addr, value):
-        # print(hex(addr.value))
-        # print(bin(value))
+        print(hex(addr.value))
+        print(bin(value))
         if not self.cp2130Handle:
             return
         self._regWr(addr, value & 0xFFFFFFFF)

@@ -150,6 +150,14 @@ class Ui_closedLoop(object):
         self.threshold1.setObjectName(_fromUtf8("threshold1"))
         self.gridLayout.addWidget(self.threshold1, 5, 1, 1, 1)
 
+        self.freq1 = QtGui.QSpinBox(self.dockWidgetContents)
+        self.freq1.setMinimum(0)
+        self.freq1.setMaximum(65535)
+        self.freq1.setSingleStep(1)
+        self.freq1.setProperty("value", 0)
+        self.freq1.setObjectName(_fromUtf8("freq1"))
+        self.gridLayout.addWidget(self.freq1, 6, 1, 1, 1)
+
         self.threshold2Label = QtGui.QLabel(self.dockWidgetContents)
         self.threshold2Label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
         self.threshold2Label.setObjectName(_fromUtf8("threshold2Label"))

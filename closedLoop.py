@@ -73,6 +73,7 @@ class ClosedLoop(QDockWidget):
         ch_a = self.ui.ch1.value()
         dir_a = int(self.ui.ch1Enable.currentIndex() == 1)
         thresh_a = self.ui.threshold1.value()
+        freq_a = self.ui.freq1.value()
 
         en_b = int(self.ui.ch2Enable.currentIndex() != 0)
         ch_b = self.ui.ch2.value()
@@ -99,8 +100,7 @@ class ClosedLoop(QDockWidget):
 
         self.writeCL.emit(Reg.cl2, self.makeBit(en_a,31,1,1) | self.makeBit(ch_a,24,7,1) | 
             self.makeBit(dir_a,23,1,1) | self.makeBit(thresh_a,16,7,1) |
-            self.makeBit(en_b,15,1,1) | self.makeBit(ch_b,8,7,1) | 
-            self.makeBit(dir_b,7,1,1) | self.makeBit(thresh_b,0,7,1))
+            self.makeBit(freq_a,0,16,1))
 
         # time.sleep(0.1)
 
