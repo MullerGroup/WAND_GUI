@@ -94,7 +94,6 @@ class Ui_DataVisualizer(object):
         self.numPlotsDisplayed.addItem(_fromUtf8(""))
         self.numPlotsDisplayed.addItem(_fromUtf8(""))
         self.numPlotsDisplayed.addItem(_fromUtf8(""))
-        self.numPlotsDisplayed.addItem(_fromUtf8(""))
         self.gridLayout.addWidget(self.numPlotsDisplayed, 2, 4, 1, 1)
         self.clearBtn = QtGui.QPushButton(self.dockWidgetContents)
         self.clearBtn.setObjectName(_fromUtf8("clearBtn"))
@@ -251,7 +250,7 @@ class Ui_DataVisualizer(object):
         DataVisualizer.setWidget(self.dockWidgetContents)
 
         self.retranslateUi(DataVisualizer)
-        self.numPlotsDisplayed.setCurrentIndex(2)
+        self.numPlotsDisplayed.setCurrentIndex(3)
         QtCore.QMetaObject.connectSlotsByName(DataVisualizer)
         self.dispStream.setProperty("checked", True)
 
@@ -271,7 +270,6 @@ class Ui_DataVisualizer(object):
         self.numPlotsDisplayed.setItemText(1, _translate("DataVisualizer", "2", None))
         self.numPlotsDisplayed.setItemText(2, _translate("DataVisualizer", "4", None))
         self.numPlotsDisplayed.setItemText(3, _translate("DataVisualizer", "5", None))
-        self.numPlotsDisplayed.setItemText(4, _translate("DataVisualizer", "5", None))
         self.stimOnNM.setItemText(0, _translate("DataVisualizer", "0", None))
         self.stimOnNM.setItemText(1, _translate("DataVisualizer", "1", None))
         self.clearBtn.setText(_translate("DataVisualizer", "Clear plots", None))

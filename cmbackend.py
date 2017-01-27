@@ -25,7 +25,7 @@ import math
 from numpy import arange
 
 
-datalen = 12
+datalen = 20
 
 # CM register addresses
 class Reg(Enum):
@@ -377,10 +377,10 @@ class streamAdcThread(QThread):
                 if data[0]==0x00: # no CRC
                     success += 1
                     data_point = self.dataTable.row
-                    data_point['out'] = [data[0] if i == 0 else ((data[i + 1] << 8 | data[i]) & 0xFFFF if i < datalen - 7 else (data[i + 1] << 8 | data[i])) for i in list(range(0, datalen - 1, 2))]
+                    data_point['out'] = [data[0] if i == 0 else (data[i + 1] << 8 | data[i]) for i in list(range(0, datalen - 1, 2))]
                     if self.display:
                         # out.append([(data[i + 1] << 8 | data[i]) & 0x7FFF for i in list(range(2*(self.chStart + 1), 2*(self.chStart + 5), 2))])
-                        out.append([(data[i + 1] << 8 | data[i]) & 0xFFFF for i in [2*(0 + 1), 2*(1 + 1), 2*(2 + 1), 2*(3 + 1), 2*(4 + 1)]])
+                        out.append([(data[i + 1] << 8 | data[i]) & 0xFFFF for i in [2, 4, 18]])
                         
                         real = (data[7] << 8 | data[6]) 
                         if real >= 0x8000:
@@ -389,6 +389,16 @@ class streamAdcThread(QThread):
                         if imag >= 0x8000:
                             imag -= 0x10000
                         mag = (data[11] << 8 | data[10])
+                        self.fft_data.append(real**2 + imag**2)
+                        self.mag_data.append(mag)
+
+                        real = (data[13] << 8 | data[12]) 
+                        if real >= 0x8000:
+                            real -= 0x10000
+                        imag = (data[15] << 8 | data[14])
+                        if imag >= 0x8000:
+                            imag -= 0x10000
+                        mag = (data[17] << 8 | data[16])
                         self.fft_data.append(real**2 + imag**2)
                         self.mag_data.append(mag)
 
@@ -411,7 +421,7 @@ class streamAdcThread(QThread):
                     crcs += 1
                     success += 1
                     data_point = self.dataTable.row
-                    data_point['out'] = [data[0] if i == 0 else ((data[i + 1] << 8 | data[i]) & 0xFFFF if i < datalen - 7 else (data[i + 1] << 8 | data[i])) for i in list(range(0, datalen - 1, 2))]
+                    data_point['out'] = [data[0] if i == 0 else (data[i + 1] << 8 | data[i]) for i in list(range(0, datalen - 1, 2))]
                     # if self.display:
                     #     # out.append([(data[i + 1] << 8 | data[i]) & 0x7FFF for i in list(range(2*(self.chStart + 1), 2*(self.chStart + 5), 2))])
                     #     out.append([(data[i + 1] << 8 | data[i]) & 0x7FFF for i in [2*(self.ch0 + 1), 2*(self.ch1 + 1), 2*(self.ch2 + 1), 2*(self.ch3 + 1)]])
