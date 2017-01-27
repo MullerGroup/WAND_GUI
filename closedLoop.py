@@ -75,20 +75,20 @@ class ClosedLoop(QDockWidget):
         thresh_a = self.ui.threshold1.value()
         freq_a = self.ui.freq1.value()
 
-        en_b = int(self.ui.ch2Enable.currentIndex() != 0)
-        ch_b = self.ui.ch2.value()
-        dir_b = int(self.ui.ch2Enable.currentIndex() == 1)
-        thresh_b = self.ui.threshold2.value()
+        # en_b = int(self.ui.ch2Enable.currentIndex() != 0)
+        # ch_b = self.ui.ch2.value()
+        # dir_b = int(self.ui.ch2Enable.currentIndex() == 1)
+        # thresh_b = self.ui.threshold2.value()
 
-        en_c = int(self.ui.ch3Enable.currentIndex() != 0)
-        ch_c = self.ui.ch3.value()
-        dir_c = int(self.ui.ch3Enable.currentIndex() == 1)
-        thresh_c = self.ui.threshold3.value()
+        # en_c = int(self.ui.ch3Enable.currentIndex() != 0)
+        # ch_c = self.ui.ch3.value()
+        # dir_c = int(self.ui.ch3Enable.currentIndex() == 1)
+        # thresh_c = self.ui.threshold3.value()
 
-        en_d = int(self.ui.ch4Enable.currentIndex() != 0)
-        ch_d = self.ui.ch4.value()
-        dir_d = int(self.ui.ch4Enable.currentIndex() == 1)
-        thresh_d = self.ui.threshold4.value()
+        # en_d = int(self.ui.ch4Enable.currentIndex() != 0)
+        # ch_d = self.ui.ch4.value()
+        # dir_d = int(self.ui.ch4Enable.currentIndex() == 1)
+        # thresh_d = self.ui.threshold4.value()
 
         dead_len = self.ui.deadLength.value()
         rand_mode = int(self.ui.randomMode.isChecked())
@@ -97,7 +97,7 @@ class ClosedLoop(QDockWidget):
         CL1_on = int(self.ui.enable1.isChecked())
         CL0_on = int(self.ui.enable0.isChecked())
         chStim = self.ui.chStim.value()
-        fftSize = freq_a
+        fftSize = self.ui.nfft.currentIndex()
 
         self.writeCL.emit(Reg.cl2, self.makeBit(en_a,31,1,1) | self.makeBit(ch_a,24,7,1) | 
             self.makeBit(dir_a,23,1,1) | self.makeBit(thresh_a,16,7,1) |
