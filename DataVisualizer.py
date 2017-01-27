@@ -47,6 +47,7 @@ class DataVisualizer(QDockWidget):
         self.ui.setupUi(self)
         self.data = []
         self.fft_data = []
+        self.mag_data = []
         # self.numPlots = 64
         # added 3 more channels just to display accel data
         self.numPlots = 5
@@ -68,6 +69,7 @@ class DataVisualizer(QDockWidget):
         self.connect(self.streamAdcThread, SIGNAL("finished()"), self.streamingDone)
         self.streamAdcThread.streamAdcData.connect(self.streamAdcData)
         self.streamAdcThread.plotfft.connect(self.plotfft)
+        self.streamAdcThread.plotmag.connect(self.plotmag)
         # self.connect(self.streamAdcThread, SIGNAL('streamDataOut(PyQt_PyObject)'), self.streamAdcData)
 
         # self.file = open('gui_data.csv','w')
@@ -210,6 +212,18 @@ class DataVisualizer(QDockWidget):
                 if fft_data[n-i-1] > self.fft_data[i]:
                     self.fft_data[i] = fft_data[n-i-1]
 
+    @pyqtSlot(list)
+    def plotmag(self,mag_data):
+        self.mag_data = []
+        n = len(mag_data)
+        for i in range(0,int(n/2)):
+            self.mag_data.append(mag_data[i])
+        # self.mag_data = []
+        # temp = []
+        # n = len(mag_data)
+        # if (n & (n-1) == 0):
+        #     for i in range(0,int(n/2)):
+        #         self.mag_data.append(mag_data[i])
 
     # @pyqtSlot(list)
     # def bit_reverse_traverse(self,a):
@@ -303,6 +317,7 @@ class DataVisualizer(QDockWidget):
     @pyqtSlot()
     def clearPlots(self):
         self.fft_data = []
+        self.mag_data = []
         self.plotPointer = 0
         self.dataPlot = np.zeros(
             (self.numPlots, self.ui.xRange.maximum()))  # aggregation of data to plot (scrolling style)
@@ -484,6 +499,8 @@ class DataVisualizer(QDockWidget):
             if ch < 5:
                 if ch == 2:
                     dp = self.fft_data
+                elif ch == 3:
+                    dp = self.mag_data
                 else:
                     dp = self.dataPlot[ch][0:self.xRange]
                 # add back in to test new autorange
@@ -552,7 +569,7 @@ class DataVisualizer(QDockWidget):
                     if ch == 2:
                         freq = list(range(0,len(dp)))
                         for i in range(0,len(dp)):
-                            freq[i] = freq[i]*1000/1024
+                            freq[i] = freq[i]*1000/(2*len(dp))
                         # for i in range(0,len(dp)):
                         #     dp[i] = 10*np.log10(dp[i])
                         self.plots[self.topPlot+ch].plot(x=freq, y=dp, pen=self.plotColors[self.topPlot+ch])
@@ -561,7 +578,15 @@ class DataVisualizer(QDockWidget):
                         self.plots[self.topPlot+ch].getViewBox().setMouseEnabled(x=True, y=True)
                         self.plots[self.topPlot+ch].getViewBox().setMouseMode(self.plots[self.topPlot+ch].getViewBox().RectMode)
 
-                        self.plots[self.topPlot+ch].getViewBox().setLimits(xMin=0, xMax=1024, yMin=0, yMax=20000000)
+                        self.plots[self.topPlot+ch].getViewBox().setLimits(xMin=0, xMax=500, yMin=0, yMax=20000000)
+                    elif ch == 3:
+                        freq2 = list(range(0,len(dp)))
+                        for i in range(0,len(dp)):
+                            freq2[i] = freq2[i]*1000/(2*len(dp))
+                        self.plots[self.topPlot+ch].plot(x=freq2, y=dp, pen=self.plotColors[self.topPlot+ch])
+                        self.plots[self.topPlot+ch].getViewBox().setMouseEnabled(x=True, y=True)
+                        self.plots[self.topPlot+ch].getViewBox().setMouseMode(self.plots[self.topPlot+ch].getViewBox().RectMode)
+                        self.plots[self.topPlot+ch].getViewBox().setLimits(xMin=0, xMax=500, yMin=0, yMax=20000000)
                     else:
                         self.plots[self.topPlot+ch].plot(y=dp, pen=self.plotColors[self.topPlot+ch])
                         # add back in to test new autorange
