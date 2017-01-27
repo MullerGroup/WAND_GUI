@@ -97,6 +97,7 @@ class ClosedLoop(QDockWidget):
         CL1_on = int(self.ui.enable1.isChecked())
         CL0_on = int(self.ui.enable0.isChecked())
         chStim = self.ui.chStim.value()
+        fftSize = freq_a
 
         self.writeCL.emit(Reg.cl2, self.makeBit(en_a,31,1,1) | self.makeBit(ch_a,24,7,1) | 
             self.makeBit(dir_a,23,1,1) | self.makeBit(thresh_a,16,7,1) |
@@ -111,5 +112,5 @@ class ClosedLoop(QDockWidget):
 
         self.writeCL.emit(Reg.cl1, self.makeBit(dead_len,16,16,1) | self.makeBit(rand_mode,4,1,1) |
             self.makeBit(CL1_off,3,1,1) | self.makeBit(CL1_on,2,1,1) | 
-            self.makeBit(CL0_off,1,1,1) | self.makeBit(CL0_on,0,1,1) | self.makeBit(chStim,8,7,1))
+            self.makeBit(CL0_off,1,1,1) | self.makeBit(CL0_on,0,1,1) | self.makeBit(chStim,8,7,1) | self.makeBit(fftSize,5,3,1))
 

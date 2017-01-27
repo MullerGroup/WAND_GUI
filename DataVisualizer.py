@@ -187,28 +187,44 @@ class DataVisualizer(QDockWidget):
     @pyqtSlot(list)
     def plotfft(self,fft_data):
         # self.fft_data = fft_data
+        # self.fft_data = []
+        # temp = []
+        # n = len(fft_data)
+        # if (n & (n-1) == 0):
+        #     indexs = arange(n)
+        #     for i in self.bit_reverse_traverse(indexs):
+        #         temp.append(fft_data[i])
+        #     for i in range(0,int(n/2)):
+        #         self.fft_data.append(temp[i])
+        #     for i in range(0,int(n/2)):
+        #         if temp[n-i-1] > self.fft_data[i]:
+        #             self.fft_data[i] = temp[n-i-1]
+
         self.fft_data = []
+        temp = []
         n = len(fft_data)
-        if n == 1024:
-            indexs = arange(n)
-            for i in self.bit_reverse_traverse(indexs):
+        if (n & (n-1) == 0):
+            for i in range(0,int(n/2)):
                 self.fft_data.append(fft_data[i])
+            for i in range(0,int(n/2)):
+                if fft_data[n-i-1] > self.fft_data[i]:
+                    self.fft_data[i] = fft_data[n-i-1]
 
 
-    @pyqtSlot(list)
-    def bit_reverse_traverse(self,a):
-        n = a.shape[0]
-        assert(not n&(n-1)) # assert that n is a power of 2
+    # @pyqtSlot(list)
+    # def bit_reverse_traverse(self,a):
+    #     n = a.shape[0]
+    #     assert(not n&(n-1)) # assert that n is a power of 2
 
-        if n == 1:
-            yield a[0]
-        else:
-            even_index = arange(n/2)*2
-            odd_index = arange(n/2)*2 + 1
-            for even in self.bit_reverse_traverse(a[even_index.astype(int)]):
-                yield even
-            for odd in self.bit_reverse_traverse(a[odd_index.astype(int)]):
-                yield odd
+    #     if n == 1:
+    #         yield a[0]
+    #     else:
+    #         even_index = arange(n/2)*2
+    #         odd_index = arange(n/2)*2 + 1
+    #         for even in self.bit_reverse_traverse(a[even_index.astype(int)]):
+    #             yield even
+    #         for odd in self.bit_reverse_traverse(a[odd_index.astype(int)]):
+    #             yield odd
 
     # @pyqtSlot(list)
     # def streamAdcData(self, data):
@@ -533,26 +549,37 @@ class DataVisualizer(QDockWidget):
                 self.plots[self.topPlot+ch].clear()
                 # self.fftPlots[ch].clear()
                 if self.plotEn[self.topPlot+ch]:
-                    self.plots[self.topPlot+ch].plot(y=dp, pen=self.plotColors[self.topPlot+ch])
-                    # add back in to test new autorange
-                    self.plots[self.topPlot+ch].getViewBox().setMouseEnabled(x=True, y=True)
-                    self.plots[self.topPlot+ch].getViewBox().setMouseMode(self.plots[self.topPlot+ch].getViewBox().RectMode)
-                    if ch == 3:
-                        self.plots[self.topPlot+ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=0, yMax=65536)
-                        self.plots[self.topPlot+ch].getViewBox().setRange(yRange=(avg-(sd*2),avg+(sd*2)),update=True)
-                    elif ch == 2:
-                        self.plots[self.topPlot+ch].getViewBox().setLimits(xMin=0, xMax=1024, yMin=0, yMax=10000000000)
-                        # self.plots[self.topPlot+ch].getViewBox().setRange(yRange=(avg-(sd*2),avg+(sd*2)),update=True)
+                    if ch == 2:
+                        freq = list(range(0,len(dp)))
+                        for i in range(0,len(dp)):
+                            freq[i] = freq[i]*1000/1024
+                        # for i in range(0,len(dp)):
+                        #     dp[i] = 10*np.log10(dp[i])
+                        self.plots[self.topPlot+ch].plot(x=freq, y=dp, pen=self.plotColors[self.topPlot+ch])
+                        # self.plots[self.topPlot+ch].plot(y=dp, pen=self.plotColors[self.topPlot+ch])
+                        # add back in to test new autorange
+                        self.plots[self.topPlot+ch].getViewBox().setMouseEnabled(x=True, y=True)
+                        self.plots[self.topPlot+ch].getViewBox().setMouseMode(self.plots[self.topPlot+ch].getViewBox().RectMode)
+
+                        self.plots[self.topPlot+ch].getViewBox().setLimits(xMin=0, xMax=1024, yMin=0, yMax=20000000)
                     else:
-                        self.plots[self.topPlot+ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=-32768, yMax=32768)
-                        self.plots[self.topPlot+ch].getViewBox().setRange(yRange=(avg-(sd*2),avg+(sd*2)),update=True)
+                        self.plots[self.topPlot+ch].plot(y=dp, pen=self.plotColors[self.topPlot+ch])
+                        # add back in to test new autorange
+                        self.plots[self.topPlot+ch].getViewBox().setMouseEnabled(x=True, y=True)
+                        self.plots[self.topPlot+ch].getViewBox().setMouseMode(self.plots[self.topPlot+ch].getViewBox().RectMode)
+                        if ch == 3:
+                            self.plots[self.topPlot+ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=0, yMax=65536)
+                            self.plots[self.topPlot+ch].getViewBox().setRange(yRange=(avg-(sd*2),avg+(sd*2)),update=True)
+                        else:
+                            self.plots[self.topPlot+ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=-32768, yMax=32768)
+                            self.plots[self.topPlot+ch].getViewBox().setRange(yRange=(avg-(sd*2),avg+(sd*2)),update=True)
                     if self.ui.autorange.isChecked():
                         # if ch > 0:
                         #     self.plots[ch].getViewBox().autoRange()
                         self.plots[self.topPlot+ch].getViewBox().autoRange()
-                        # self.fftPlots[ch].plot(y=calculateFFT(dp), pen=(102,204,255))
-                        # if self.ui.autorange.isChecked():
-                        # self.fftPlots[ch].getViewBox().autoRange()
+                            # self.fftPlots[ch].plot(y=calculateFFT(dp), pen=(102,204,255))
+                            # if self.ui.autorange.isChecked():
+                            # self.fftPlots[ch].getViewBox().autoRange()
 
-                        # TODO: add FFT plotting + a way to enable/disable channels
-        
+                            # TODO: add FFT plotting + a way to enable/disable channels
+            
