@@ -218,6 +218,9 @@ class DataVisualizer(QDockWidget):
         n = len(mag_data)
         for i in range(0,int(n/2)):
             self.mag_data.append(mag_data[i])
+        for i in range(0,int(n/2)):
+            if mag_data[n-i-1] > self.mag_data[i]:
+                self.mag_data[i] = mag_data[n-i-1]
         # self.mag_data = []
         # temp = []
         # n = len(mag_data)
@@ -486,7 +489,7 @@ class DataVisualizer(QDockWidget):
                 self.dataPlot[0][self.plotPointer] = temp[0]&0x7FFF
                 self.dataPlot[1][self.plotPointer] = temp[1]&0x7FFF
                 # self.dataPlot[2][self.plotPointer] = temp[2]
-                self.dataPlot[3][self.plotPointer] = temp[4]
+                self.dataPlot[4][self.plotPointer] = temp[2]
                 # self.dataPlot[4][self.plotPointer] = temp[4]
                 # self.dataPlot[2][self.plotPointer] = temp[1]
                 self.plotPointer += 1
@@ -592,7 +595,7 @@ class DataVisualizer(QDockWidget):
                         # add back in to test new autorange
                         self.plots[self.topPlot+ch].getViewBox().setMouseEnabled(x=True, y=True)
                         self.plots[self.topPlot+ch].getViewBox().setMouseMode(self.plots[self.topPlot+ch].getViewBox().RectMode)
-                        if ch == 3:
+                        if ch == 4:
                             self.plots[self.topPlot+ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=0, yMax=65536)
                             self.plots[self.topPlot+ch].getViewBox().setRange(yRange=(avg-(sd*2),avg+(sd*2)),update=True)
                         else:

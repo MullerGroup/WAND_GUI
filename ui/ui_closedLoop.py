@@ -156,11 +156,24 @@ class Ui_closedLoop(object):
         self.gridLayout.addWidget(self.freq1Label, 2, 5, 1, 1)
         self.freq1 = QtGui.QSpinBox(self.dockWidgetContents)
         self.freq1.setMinimum(0)
-        self.freq1.setMaximum(65535)
+        self.freq1.setMaximum(500)
         self.freq1.setSingleStep(1)
         self.freq1.setProperty("value", 0)
         self.freq1.setObjectName(_fromUtf8("freq1"))
         self.gridLayout.addWidget(self.freq1, 2, 6, 1, 1)
+
+        self.freq2Label = QtGui.QLabel(self.dockWidgetContents)
+        self.freq2Label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
+        self.freq2Label.setObjectName(_fromUtf8("freq2Label"))
+        self.gridLayout.addWidget(self.freq2Label, 3, 5, 1, 1)
+        self.freq2 = QtGui.QSpinBox(self.dockWidgetContents)
+        self.freq2.setMinimum(0)
+        self.freq2.setMaximum(500)
+        self.freq2.setSingleStep(1)
+        self.freq2.setProperty("value", 0)
+        self.freq2.setObjectName(_fromUtf8("freq2"))
+        self.gridLayout.addWidget(self.freq2, 3, 6, 1, 1)
+
 
         # self.threshold2Label = QtGui.QLabel(self.dockWidgetContents)
         # self.threshold2Label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
@@ -303,4 +316,6 @@ class Ui_closedLoop(object):
         self.nfft.setItemText(5, _translate("closedLoop", "512", None))
         self.nfft.setItemText(6, _translate("closedLoop", "1024", None))
         self.nfft.setItemText(7, _translate("closedLoop", "2048", None))
-        self.freq1Label.setText(_translate("closedLoop", "Frequency Bin:", None))
+        self.freq1Label.setText(_translate("closedLoop", "Frequency Min:", None))
+        self.freq2Label.setText(_translate("closedLoop", "Frequency Max:", None))
+
