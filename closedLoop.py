@@ -22,6 +22,7 @@ class Reg(Enum):
 class ClosedLoop(QDockWidget):
 
     writeCL = pyqtSignal(Reg, int)
+    writeCLCh = pyqtSignal(int,int)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -33,6 +34,7 @@ class ClosedLoop(QDockWidget):
 
     def setWorker(self, w):
         self.writeCL.connect(w.writeCL)
+        self.writeCLCh.connect(w.writeCLCh)
 
     @pyqtSlot()
     def on_enable0_clicked(self):
@@ -85,8 +87,8 @@ class ClosedLoop(QDockWidget):
         ch_a = self.ui.ch1.value()
         dir_a = int(self.ui.ch1Enable.currentIndex() == 1)
         thresh_a = self.ui.threshold1.value()
-        freq_min = self.ui.freq1.value()
-        freq_max = self.ui.freq2.value()
+        freq_min = int((self.ui.freq1.value()/1000)*(2**(self.ui.nfft.currentIndex() + 4)))
+        freq_max = int((self.ui.freq2.value()/1000)*(2**(self.ui.nfft.currentIndex() + 4)))
 
         # en_b = int(self.ui.ch2Enable.currentIndex() != 0)
         # ch_b = self.ui.ch2.value()
@@ -114,8 +116,12 @@ class ClosedLoop(QDockWidget):
 
         ch_order = int(ch_a < chStim)
 
+        self.writeCLCh.emit(ch_a, chStim)
+        # self.writeCLCh.emit(ch_a, chStim)
+
+
         self.writeCL.emit(Reg.cl2, self.makeBit(en_a,31,1,1) | self.makeBit(ch_a,24,7,1) | 
-            self.makeBit(dir_a,23,1,1) | self.makeBit(thresh_a,16,7,1))
+            self.makeBit(dir_a,23,1,1) | self.makeBit(thresh_a,8,15,1))
 
         self.writeCL.emit(Reg.cl3, self.makeBit(freq_max,16,10,1) | self.makeBit(freq_min,0,10,1))
 

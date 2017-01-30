@@ -144,7 +144,7 @@ class Ui_closedLoop(object):
         self.gridLayout.addWidget(self.threshold1Label, 4, 3, 1, 1)
         self.threshold1 = QtGui.QSpinBox(self.dockWidgetContents)
         self.threshold1.setMinimum(0)
-        self.threshold1.setMaximum(127)
+        self.threshold1.setMaximum(2**16 - 1)
         self.threshold1.setSingleStep(1)
         self.threshold1.setProperty("value", 0)
         self.threshold1.setObjectName(_fromUtf8("threshold1"))
@@ -261,7 +261,13 @@ class Ui_closedLoop(object):
 
         closedLoop.setWidget(self.dockWidgetContents)
 
-        self.nfft.setCurrentIndex(6)
+        self.nfft.setCurrentIndex(4)
+        self.chStim.setValue(29)
+        self.ch1.setValue(28)
+        self.threshold1.setValue(1000)
+        self.ch1Enable.setCurrentIndex(1)
+        self.freq1.setValue(20)
+        self.freq2.setValue(20)
 
         self.retranslateUi(closedLoop)
         QtCore.QMetaObject.connectSlotsByName(closedLoop)

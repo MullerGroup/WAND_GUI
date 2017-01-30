@@ -866,6 +866,74 @@ class CMWorker(QThread):
             return
         self._regWr(addr, value & 0xFFFFFFFF)
 
+    @pyqtSlot(int, int)
+    def writeCLCh(self, ctrl, stim):
+        rec0_0 = 0;
+        if ctrl <= 15:
+            rec0_0 |= 0x01 << ctrl
+        if stim <= 15:
+            rec0_0 |= 0x01 << stim
+
+        rec0_1 = 0;
+        if ctrl > 15 and ctrl <= 31:
+            rec0_1 |= 0x01 << (ctrl - 16)
+        if stim > 15 and stim <= 31:
+            rec0_1|= 0x01 << (stim - 16)
+
+        rec0_2 = 0;
+        if ctrl > 31 and ctrl <= 47:
+            rec0_2 |= 0x01 << (ctrl - 32)
+        if stim > 31 and stim <= 47:
+            rec0_2 |= 0x01 << (stim - 32)
+
+        rec0_3 = 0;
+        if ctrl > 47 and ctrl <= 63:
+            rec0_3 |= 0x01 << (ctrl - 48)
+        if stim > 47 and stim <= 63:
+            rec0_3 |= 0x01 << (stim - 48)
+
+        rec1_0 = 0;
+        if ctrl > 63 and ctrl <= 79:
+            rec1_0 |= 0x01 << (ctrl - 64)
+        if stim > 63 and stim <= 79:
+            rec1_0 |= 0x01 << (stim - 64)
+
+        rec1_1 = 0;
+        if ctrl > 79 and ctrl <= 95:
+            rec1_1 |= 0x01 << (ctrl - 80)
+        if stim > 79 and stim <= 95:
+            rec1_1 |= 0x01 << (stim - 80)
+
+        rec1_2 = 0;
+        if ctrl > 95 and ctrl <= 111:
+            rec1_2 |= 0x01 << (ctrl - 96)
+        if stim > 95 and stim <= 111:
+            rec1_2 |= 0x01 << (stim - 96)
+
+        rec1_3 = 0;
+        if ctrl > 111 and ctrl <= 127:
+            rec1_3 |= 0x01 << (ctrl - 112)
+        if stim > 111 and stim <= 127:
+            rec1_3 |= 0x01 << (stim - 112)
+
+        self.writeReg(0,0x04, rec0_0)
+        time.sleep(0.01)
+        self.writeReg(0,0x05, rec0_1)
+        time.sleep(0.01)
+        self.writeReg(0,0x06, rec0_2)
+        time.sleep(0.01)
+        self.writeReg(0,0x07, rec0_3)
+        time.sleep(0.01)
+        self.writeReg(1,0x04, rec1_0)
+        time.sleep(0.01)
+        self.writeReg(1,0x05, rec1_1)
+        time.sleep(0.01)
+        self.writeReg(1,0x06, rec1_2)
+        time.sleep(0.01)
+        self.writeReg(1,0x07, rec1_3)
+        time.sleep(0.01)
+
+
     # @pyqtSlot()
     def enableArtifact(self):
         if not self.cp2130Handle:
