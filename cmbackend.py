@@ -37,7 +37,7 @@ class Reg(Enum):
     n1d2 = 0x24
     req = 0xff
     cl1 = 0xDD
-    cl2 = 0xBB
+    cl2 = 0xEE
     cl3 = 0xCC
 
 class stream_data(IsDescription):
@@ -526,8 +526,11 @@ class CMWorker(QThread):
         count = 0
         if nm==0:
             self._regWr(Reg.n0d1, 1 if write else 0)
+            time.sleep(0.01)
             self._regWr(Reg.n0d2, addr << 16 | data)
+            time.sleep(0.01)
             self._regWr(Reg.ctrl, 0x1000)
+            time.sleep(0.01)
             if not write:
                 self._flushRadio()
                 self._regWr(Reg.req, 0x0100)
@@ -543,8 +546,11 @@ class CMWorker(QThread):
 
         if nm==1:
             self._regWr(Reg.n1d1, 1 if write else 0)
+            time.sleep(0.01)
             self._regWr(Reg.n1d2, addr << 16 | data)
+            time.sleep(0.01)
             self._regWr(Reg.ctrl, 0x2000)
+            time.sleep(0.01)
             if not write:
                 self._flushRadio()
                 self._regWr(Reg.req, 0x0200)
@@ -694,9 +700,10 @@ class CMWorker(QThread):
             return
         ret = [False, 0, 0]
         tries = 0
-        while (tries < 10) and not(ret[0] and addr == ret[1]):
+        while (tries < 20) and not(ret[0] and addr == ret[1]):
             ret = self._regOp(nm, addr, 0, False)
             tries = tries + 1
+            # time.sleep(0.001)
         if tries < 10:
             print("Read register from NM {}: {:04x} {:04x}".format(nm, addr, ret[2]))
             if addr == 0x04:

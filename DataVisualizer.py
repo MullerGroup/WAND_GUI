@@ -487,7 +487,7 @@ class DataVisualizer(QDockWidget):
                 #     self.dataPlot[ch][self.plotPointer] = temp[ch]
                 # self.dataPlot[ch][self.plotPointer] = temp.pop(0) # pop data for channel = 0, 1, 2, ...
                 self.dataPlot[0][self.plotPointer] = temp[0]&0x7FFF
-                self.dataPlot[1][self.plotPointer] = temp[1]&0x7FFF
+                self.dataPlot[1][self.plotPointer] = temp[1]
                 # self.dataPlot[2][self.plotPointer] = temp[2]
                 self.dataPlot[4][self.plotPointer] = temp[2]
                 # self.dataPlot[4][self.plotPointer] = temp[4]
@@ -550,11 +550,11 @@ class DataVisualizer(QDockWidget):
                 #             self.countDown = 4
                 #             if self.ui.thd.isChecked():
                 #                 self.pulseStim.emit()
-
-                avg = np.mean(dp)
-                sd = np.std(dp)
-                if sd < 10:
-                    sd = 10
+                if len(dp) != 0:
+                    avg = np.mean(dp)
+                    sd = np.std(dp)
+                    if sd < 10:
+                        sd = 10
 
                 # # formatting the data for neural/accelerometer channels
                 # if ch > 95:

@@ -16,7 +16,7 @@ class Reg(Enum):
     n1d2 = 0x24
     req = 0xff
     cl1 = 0xDD
-    cl2 = 0xBB
+    cl2 = 0xEE
     cl3 = 0xCC
 
 class ClosedLoop(QDockWidget):
@@ -42,11 +42,12 @@ class ClosedLoop(QDockWidget):
             self.ui.enable1.setDisabled(True)
             start = datetime.datetime.now()
             print("NM0 Closed Loop Enabled at: {}".format(start))
+            self.closedLoopCmd()
         else:
             stop = datetime.datetime.now()
             print("NM0 Closed Loop Disabled at: {}".format(stop))
             self.ui.enable1.setEnabled(True)
-        self.closedLoopCmd()
+            self.closedLoopOff()
 
     @pyqtSlot()
     def on_enable1_clicked(self):
@@ -54,11 +55,12 @@ class ClosedLoop(QDockWidget):
             self.ui.enable0.setDisabled(True)
             start = datetime.datetime.now()
             print("NM1 Closed Loop Enabled at: {}".format(start))
+            self.closedLoopCmd()
         else:
             stop = datetime.datetime.now()
             print("NM1 Closed Loop Disabled at: {}".format(stop))
             self.ui.enable0.setEnabled(True)
-        self.closedLoopCmd()
+            self.closedLoopOff()
 
     @pyqtSlot()
     def on_freq1_valueChanged(self):
@@ -117,13 +119,18 @@ class ClosedLoop(QDockWidget):
         ch_order = int(ch_a < chStim)
 
         self.writeCLCh.emit(ch_a, chStim)
+        time.sleep(0.4)
         # self.writeCLCh.emit(ch_a, chStim)
 
 
         self.writeCL.emit(Reg.cl2, self.makeBit(en_a,31,1,1) | self.makeBit(ch_a,24,7,1) | 
             self.makeBit(dir_a,23,1,1) | self.makeBit(thresh_a,8,15,1))
 
+        time.sleep(0.02)
+
         self.writeCL.emit(Reg.cl3, self.makeBit(freq_max,16,10,1) | self.makeBit(freq_min,0,10,1))
+
+        time.sleep(0.02)
 
         # time.sleep(0.1)
 
@@ -137,3 +144,24 @@ class ClosedLoop(QDockWidget):
             self.makeBit(CL0_off,1,1,1) | self.makeBit(CL0_on,0,1,1) | self.makeBit(chStim,8,7,1) | self.makeBit(fftSize,5,3,1) |
             self.makeBit(ch_order,15,1,1))
 
+        time.sleep(0.02)
+
+    def closedLoopOff(self):
+
+        dead_len = self.ui.deadLength.value()
+        rand_mode = int(self.ui.randomMode.isChecked())
+        CL1_off = int(not self.ui.enable1.isChecked())
+        CL0_off = int(not self.ui.enable0.isChecked())
+        CL1_on = int(self.ui.enable1.isChecked())
+        CL0_on = int(self.ui.enable0.isChecked())
+        chStim = self.ui.chStim.value()
+        fftSize = self.ui.nfft.currentIndex()
+        ch_a = self.ui.ch1.value()
+        ch_order = int(ch_a < chStim)
+
+        self.writeCL.emit(Reg.cl1, self.makeBit(dead_len,16,16,1) | self.makeBit(rand_mode,4,1,1) |
+            self.makeBit(CL1_off,3,1,1) | self.makeBit(CL1_on,2,1,1) | 
+            self.makeBit(CL0_off,1,1,1) | self.makeBit(CL0_on,0,1,1) | self.makeBit(chStim,8,7,1) | self.makeBit(fftSize,5,3,1) |
+            self.makeBit(ch_order,15,1,1))
+
+        time.sleep(0.02)
