@@ -228,6 +228,23 @@ class Ui_closedLoop(object):
         self.randomMode.setObjectName(_fromUtf8("randomMode"))
         self.gridLayout.addWidget(self.randomMode, 2, 0, 1, 1)
 
+        self.randMin = QtGui.QSpinBox(self.dockWidgetContents)
+        self.randMin.setMinimum(0)
+        self.randMin.setMaximum(10000)
+        self.randMin.setSingleStep(1)
+        self.randMin.setProperty("value", 0)
+        self.randMin.setObjectName(_fromUtf8("randMin"))
+        self.gridLayout.addWidget(self.randMin, 3, 0, 1, 1)
+
+        self.randMax = QtGui.QSpinBox(self.dockWidgetContents)
+        self.randMax.setMinimum(0)
+        self.randMax.setMaximum(10000)
+        self.randMax.setSingleStep(1)
+        self.randMax.setProperty("value", 0)
+        self.randMax.setObjectName(_fromUtf8("randMax"))
+        self.gridLayout.addWidget(self.randMax, 4, 0, 1, 1)
+
+
         self.chStimLabel = QtGui.QLabel(self.dockWidgetContents)
         self.chStimLabel.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
         self.chStimLabel.setObjectName(_fromUtf8("chStimLabel"))

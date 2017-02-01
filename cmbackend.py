@@ -39,6 +39,7 @@ class Reg(Enum):
     cl1 = 0xDD
     cl2 = 0xEE
     cl3 = 0xCC
+    cl4 = 0xBB
 
 class stream_data(IsDescription):
     # crc = UInt8Col()

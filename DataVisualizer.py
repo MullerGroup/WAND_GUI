@@ -586,8 +586,8 @@ class DataVisualizer(QDockWidget):
                         freq2 = list(range(0,len(dp)))
                         for i in range(0,len(dp)):
                             freq2[i] = freq2[i]*1000/(2*len(dp))
-                        # self.plots[self.topPlot+ch].plot(x=freq2, y=dp, pen=self.plotColors[self.topPlot+ch])
-                        self.plots[self.topPlot+ch].plot(y=dp, pen=self.plotColors[self.topPlot+ch])
+                        self.plots[self.topPlot+ch].plot(x=freq2, y=dp, pen=self.plotColors[self.topPlot+ch])
+                        # self.plots[self.topPlot+ch].plot(y=dp, pen=self.plotColors[self.topPlot+ch])
                         self.plots[self.topPlot+ch].getViewBox().setMouseEnabled(x=True, y=True)
                         self.plots[self.topPlot+ch].getViewBox().setMouseMode(self.plots[self.topPlot+ch].getViewBox().RectMode)
                         self.plots[self.topPlot+ch].getViewBox().setLimits(xMin=0, xMax=500, yMin=0, yMax=20000000)

@@ -18,6 +18,7 @@ class Reg(Enum):
     cl1 = 0xDD
     cl2 = 0xEE
     cl3 = 0xCC
+    cl4 = 0xBB
 
 class ClosedLoop(QDockWidget):
 
@@ -31,6 +32,8 @@ class ClosedLoop(QDockWidget):
         self.setWindowTitle("Closed Loop Config")
         self.ui.freq1.valueChanged.connect(self.on_freq1_valueChanged)
         self.ui.freq2.valueChanged.connect(self.on_freq2_valueChanged)
+        self.ui.randMin.valueChanged.connect(self.on_randMin_valueChanged)
+        self.ui.randMax.valueChanged.connect(self.on_randMax_valueChanged)
 
     def setWorker(self, w):
         self.writeCL.connect(w.writeCL)
@@ -71,6 +74,16 @@ class ClosedLoop(QDockWidget):
     def on_freq2_valueChanged(self):
         if self.ui.freq2.value() < self.ui.freq1.value():
             self.ui.freq1.setValue(self.ui.freq2.value())
+
+    @pyqtSlot()
+    def on_randMax_valueChanged(self):
+        if self.ui.randMin.value() > self.ui.randMax.value():
+            self.ui.randMin.setValue(self.ui.randMax.value())
+
+    @pyqtSlot()
+    def on_randMin_valueChanged(self):
+        if self.ui.randMin.value() > self.ui.randMax.value():
+            self.ui.randMax.setValue(self.ui.randMin.value())
 
     def createBitMask(self, bitShift, bitSpan):
         bitMask = 0
@@ -116,6 +129,9 @@ class ClosedLoop(QDockWidget):
         chStim = self.ui.chStim.value()
         fftSize = self.ui.nfft.currentIndex()
 
+        randMin = self.ui.randMin.value()
+        randMax = self.ui.randMax.value()
+
         ch_order = int(ch_a < chStim)
 
         self.writeCLCh.emit(ch_a, chStim)
@@ -129,6 +145,10 @@ class ClosedLoop(QDockWidget):
         time.sleep(0.02)
 
         self.writeCL.emit(Reg.cl3, self.makeBit(freq_max,16,10,1) | self.makeBit(freq_min,0,10,1))
+
+        time.sleep(0.02)
+
+        self.writeCL.emit(Reg.cl4, self.makeBit(randMax,16,16,1) | self.makeBit(randMin,0,16,1))
 
         time.sleep(0.02)
 
