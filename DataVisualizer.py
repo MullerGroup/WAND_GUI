@@ -489,7 +489,7 @@ class DataVisualizer(QDockWidget):
                 self.dataPlot[0][self.plotPointer] = temp[0]&0x7FFF
                 self.dataPlot[1][self.plotPointer] = temp[1]
                 # self.dataPlot[2][self.plotPointer] = temp[2]
-                self.dataPlot[4][self.plotPointer] = temp[2]
+                self.dataPlot[3][self.plotPointer] = temp[2]
                 # self.dataPlot[4][self.plotPointer] = temp[4]
                 # self.dataPlot[2][self.plotPointer] = temp[1]
                 self.plotPointer += 1
@@ -501,8 +501,6 @@ class DataVisualizer(QDockWidget):
         for ch in range(0, self.numPlotsDisplayed):
             if ch < 5:
                 if ch == 2:
-                    dp = self.fft_data
-                elif ch == 3:
                     dp = self.mag_data
                 else:
                     dp = self.dataPlot[ch][0:self.xRange]
@@ -569,23 +567,27 @@ class DataVisualizer(QDockWidget):
                 self.plots[self.topPlot+ch].clear()
                 # self.fftPlots[ch].clear()
                 if self.plotEn[self.topPlot+ch]:
-                    if ch == 2:
-                        freq = list(range(0,len(dp)))
-                        for i in range(0,len(dp)):
-                            freq[i] = freq[i]*1000/(2*len(dp))
-                        # for i in range(0,len(dp)):
-                        #     dp[i] = 10*np.log10(dp[i])
-                        self.plots[self.topPlot+ch].plot(x=freq, y=dp, pen=self.plotColors[self.topPlot+ch])
-                        # self.plots[self.topPlot+ch].plot(y=dp, pen=self.plotColors[self.topPlot+ch])
-                        # add back in to test new autorange
-                        self.plots[self.topPlot+ch].getViewBox().setMouseEnabled(x=True, y=True)
-                        self.plots[self.topPlot+ch].getViewBox().setMouseMode(self.plots[self.topPlot+ch].getViewBox().RectMode)
+                    # if ch == 2:
+                    #     freq = list(range(0,len(dp)))
+                    #     for i in range(0,len(dp)):
+                    #         freq[i] = freq[i]*1000/(2*len(dp))
+                    #     # for i in range(0,len(dp)):
+                    #     #     dp[i] = 10*np.log10(dp[i])
+                    #     if len(dp) != 0:
+                    #         dp[0]=0
+                    #     self.plots[self.topPlot+ch].plot(x=freq, y=dp, pen=self.plotColors[self.topPlot+ch])
+                    #     # self.plots[self.topPlot+ch].plot(y=dp, pen=self.plotColors[self.topPlot+ch])
+                    #     # add back in to test new autorange
+                    #     self.plots[self.topPlot+ch].getViewBox().setMouseEnabled(x=True, y=True)
+                    #     self.plots[self.topPlot+ch].getViewBox().setMouseMode(self.plots[self.topPlot+ch].getViewBox().RectMode)
 
-                        self.plots[self.topPlot+ch].getViewBox().setLimits(xMin=0, xMax=500, yMin=0, yMax=20000000)
-                    elif ch == 3:
+                    #     self.plots[self.topPlot+ch].getViewBox().setLimits(xMin=0, xMax=500, yMin=0, yMax=20000000)
+                    if ch == 2:
                         freq2 = list(range(0,len(dp)))
                         for i in range(0,len(dp)):
                             freq2[i] = freq2[i]*1000/(2*len(dp))
+                        if len(dp) != 0:
+                            dp[0]=0
                         self.plots[self.topPlot+ch].plot(x=freq2, y=dp, pen=self.plotColors[self.topPlot+ch])
                         # self.plots[self.topPlot+ch].plot(y=dp, pen=self.plotColors[self.topPlot+ch])
                         self.plots[self.topPlot+ch].getViewBox().setMouseEnabled(x=True, y=True)
@@ -596,7 +598,7 @@ class DataVisualizer(QDockWidget):
                         # add back in to test new autorange
                         self.plots[self.topPlot+ch].getViewBox().setMouseEnabled(x=True, y=True)
                         self.plots[self.topPlot+ch].getViewBox().setMouseMode(self.plots[self.topPlot+ch].getViewBox().RectMode)
-                        if ch == 4:
+                        if ch == 3:
                             self.plots[self.topPlot+ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=0, yMax=65536)
                             self.plots[self.topPlot+ch].getViewBox().setRange(yRange=(avg-(sd*2),avg+(sd*2)),update=True)
                         else:

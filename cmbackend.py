@@ -25,7 +25,7 @@ import math
 from numpy import arange
 
 
-datalen = 20
+datalen = 12
 
 # CM register addresses
 class Reg(Enum):
@@ -381,33 +381,33 @@ class streamAdcThread(QThread):
                     data_point['out'] = [data[0] if i == 0 else (data[i + 1] << 8 | data[i]) for i in list(range(0, datalen - 1, 2))]
                     if self.display:
                         # out.append([(data[i + 1] << 8 | data[i]) & 0x7FFF for i in list(range(2*(self.chStart + 1), 2*(self.chStart + 5), 2))])
-                        out.append([(data[i + 1] << 8 | data[i]) & 0xFFFF for i in [2, 4, 18]])
+                        out.append([(data[i + 1] << 8 | data[i]) & 0xFFFF for i in [2, 4, 10]])
                         
-                        real = (data[7] << 8 | data[6]) 
-                        if real >= 0x8000:
-                            real -= 0x10000
-                        imag = (data[9] << 8 | data[8])
-                        if imag >= 0x8000:
-                            imag -= 0x10000
-                        mag = (data[11] << 8 | data[10])
-                        self.fft_data.append(real**2 + imag**2)
+                        # real = (data[7] << 8 | data[6]) 
+                        # if real >= 0x8000:
+                        #     real -= 0x10000
+                        # imag = (data[9] << 8 | data[8])
+                        # if imag >= 0x8000:
+                        #     imag -= 0x10000
+                        mag = (data[7] << 8 | data[6])
+                        # self.fft_data.append(real**2 + imag**2)
                         self.mag_data.append(mag)
 
-                        real = (data[13] << 8 | data[12]) 
-                        if real >= 0x8000:
-                            real -= 0x10000
-                        imag = (data[15] << 8 | data[14])
-                        if imag >= 0x8000:
-                            imag -= 0x10000
-                        mag = (data[17] << 8 | data[16])
-                        self.fft_data.append(real**2 + imag**2)
+                        # real = (data[13] << 8 | data[12]) 
+                        # if real >= 0x8000:
+                        #     real -= 0x10000
+                        # imag = (data[15] << 8 | data[14])
+                        # if imag >= 0x8000:
+                        #     imag -= 0x10000
+                        mag = (data[9] << 8 | data[8])
+                        # self.fft_data.append(real**2 + imag**2)
                         self.mag_data.append(mag)
 
                         if (data[3] & 0x80 == 0x80):
                             if (len(self.fft_data) & (len(self.fft_data) - 1) == 0):
-                                self.plotfft.emit(self.fft_data)
+                                # self.plotfft.emit(self.fft_data)
                                 self.plotmag.emit(self.mag_data)
-                            self.fft_data = []
+                            # self.fft_data = []
                             self.mag_data = []
                         # real = - ((data[7] << 8 | data[6]) & 0x8000) | ((data[7] << 8 | data[6]) & 0x7FFF)
                         # imag = - ((data[9] << 8 | data[8]) & 0x8000) | ((data[9] << 8 | data[8]) & 0x7FFF)
@@ -527,11 +527,11 @@ class CMWorker(QThread):
         count = 0
         if nm==0:
             self._regWr(Reg.n0d1, 1 if write else 0)
-            time.sleep(0.01)
+            time.sleep(0.005)
             self._regWr(Reg.n0d2, addr << 16 | data)
-            time.sleep(0.01)
+            time.sleep(0.005)
             self._regWr(Reg.ctrl, 0x1000)
-            time.sleep(0.01)
+            time.sleep(0.005)
             if not write:
                 self._flushRadio()
                 self._regWr(Reg.req, 0x0100)
@@ -547,11 +547,11 @@ class CMWorker(QThread):
 
         if nm==1:
             self._regWr(Reg.n1d1, 1 if write else 0)
-            time.sleep(0.01)
+            time.sleep(0.001)
             self._regWr(Reg.n1d2, addr << 16 | data)
-            time.sleep(0.01)
+            time.sleep(0.001)
             self._regWr(Reg.ctrl, 0x2000)
-            time.sleep(0.01)
+            time.sleep(0.001)
             if not write:
                 self._flushRadio()
                 self._regWr(Reg.req, 0x0200)

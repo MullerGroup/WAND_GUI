@@ -134,13 +134,16 @@ class ClosedLoop(QDockWidget):
 
         ch_order = int(ch_a < chStim)
 
+        fakeStim = int(self.ui.fakeStim.isChecked())
+
         self.writeCLCh.emit(ch_a, chStim)
         time.sleep(0.4)
         # self.writeCLCh.emit(ch_a, chStim)
 
 
         self.writeCL.emit(Reg.cl2, self.makeBit(en_a,31,1,1) | self.makeBit(ch_a,24,7,1) | 
-            self.makeBit(dir_a,23,1,1) | self.makeBit(thresh_a,8,15,1))
+            self.makeBit(dir_a,23,1,1) | self.makeBit(thresh_a,8,15,1) | self.makeBit(chStim,0,7,1) | 
+            self.makeBit(ch_order,7,1,1))
 
         time.sleep(0.02)
 
@@ -161,8 +164,8 @@ class ClosedLoop(QDockWidget):
 
         self.writeCL.emit(Reg.cl1, self.makeBit(dead_len,16,16,1) | self.makeBit(rand_mode,4,1,1) |
             self.makeBit(CL1_off,3,1,1) | self.makeBit(CL1_on,2,1,1) | 
-            self.makeBit(CL0_off,1,1,1) | self.makeBit(CL0_on,0,1,1) | self.makeBit(chStim,8,7,1) | self.makeBit(fftSize,5,3,1) |
-            self.makeBit(ch_order,15,1,1))
+            self.makeBit(CL0_off,1,1,1) | self.makeBit(CL0_on,0,1,1) | self.makeBit(fftSize,5,3,1) |
+            self.makeBit(fakeStim,8,1,1))
 
         time.sleep(0.02)
 
@@ -178,10 +181,11 @@ class ClosedLoop(QDockWidget):
         fftSize = self.ui.nfft.currentIndex()
         ch_a = self.ui.ch1.value()
         ch_order = int(ch_a < chStim)
+        fakeStim = int(self.ui.fakeStim.isChecked())     
 
         self.writeCL.emit(Reg.cl1, self.makeBit(dead_len,16,16,1) | self.makeBit(rand_mode,4,1,1) |
             self.makeBit(CL1_off,3,1,1) | self.makeBit(CL1_on,2,1,1) | 
-            self.makeBit(CL0_off,1,1,1) | self.makeBit(CL0_on,0,1,1) | self.makeBit(chStim,8,7,1) | self.makeBit(fftSize,5,3,1) |
-            self.makeBit(ch_order,15,1,1))
+            self.makeBit(CL0_off,1,1,1) | self.makeBit(CL0_on,0,1,1) | self.makeBit(fftSize,5,3,1) |
+            self.makeBit(fakeStim,8,1,1))
 
         time.sleep(0.02)

@@ -228,6 +228,11 @@ class Ui_closedLoop(object):
         self.randomMode.setObjectName(_fromUtf8("randomMode"))
         self.gridLayout.addWidget(self.randomMode, 2, 0, 1, 1)
 
+        self.fakeStim = QtGui.QCheckBox(self.dockWidgetContents)
+        self.fakeStim.setCheckable(True)
+        self.fakeStim.setObjectName(_fromUtf8("fakeStim"))
+        self.gridLayout.addWidget(self.fakeStim, 4, 6, 1, 1)
+
         self.randMin = QtGui.QSpinBox(self.dockWidgetContents)
         self.randMin.setMinimum(0)
         self.randMin.setMaximum(10000)
@@ -330,6 +335,7 @@ class Ui_closedLoop(object):
         self.chStimLabel.setText(_translate("closedLoop", "Stim Channel:", None))
 
         self.randomMode.setText(_translate("closedLoop", "Random (Control) Mode", None))
+        self.fakeStim.setText(_translate("closedLoop", "Fake Stim Mode", None))
         self.nfftLabel.setText(_translate("closedLoop", "NFFT:", None))
         self.nfft.setItemText(0, _translate("closedLoop", "16", None))
         self.nfft.setItemText(1, _translate("closedLoop", "32", None))
