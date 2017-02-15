@@ -19,6 +19,8 @@ class Reg(Enum):
     cl2 = 0xEE
     cl3 = 0xCC
     cl4 = 0xBB
+    cl5 = 0xAB
+    cl6 = 0xCD
 
 class ClosedLoop(QDockWidget):
 
@@ -32,6 +34,8 @@ class ClosedLoop(QDockWidget):
         self.setWindowTitle("Closed Loop Config")
         self.ui.freq1.valueChanged.connect(self.on_freq1_valueChanged)
         self.ui.freq2.valueChanged.connect(self.on_freq2_valueChanged)
+        self.ui.freq3.valueChanged.connect(self.on_freq3_valueChanged)
+        self.ui.freq4.valueChanged.connect(self.on_freq4_valueChanged)
         self.ui.randMin.valueChanged.connect(self.on_randMin_valueChanged)
         self.ui.randMax.valueChanged.connect(self.on_randMax_valueChanged)
 
@@ -76,6 +80,16 @@ class ClosedLoop(QDockWidget):
             self.ui.freq1.setValue(self.ui.freq2.value())
 
     @pyqtSlot()
+    def on_freq3_valueChanged(self):
+        if self.ui.freq4.value() < self.ui.freq3.value():
+            self.ui.freq4.setValue(self.ui.freq3.value())
+
+    @pyqtSlot()
+    def on_freq4_valueChanged(self):
+        if self.ui.freq4.value() < self.ui.freq3.value():
+            self.ui.freq3.setValue(self.ui.freq4.value())
+
+    @pyqtSlot()
     def on_randMax_valueChanged(self):
         if self.ui.randMin.value() > self.ui.randMax.value():
             self.ui.randMin.setValue(self.ui.randMax.value())
@@ -98,12 +112,18 @@ class ClosedLoop(QDockWidget):
         return (decVal << bitShift) & bitMask
 
     def closedLoopCmd(self):
-        en_a = int(self.ui.ch1Enable.currentIndex() != 0)
+        en1_a = int(self.ui.ch1Enable.currentIndex() != 0)
+        en2_a = int(self.ui.ch1Enable2.currentIndex() != 0)
         ch_a = self.ui.ch1.value()
-        dir_a = int(self.ui.ch1Enable.currentIndex() == 1)
-        thresh_a = self.ui.threshold1.value()
-        freq_min = int((self.ui.freq1.value()/1000)*(2**(self.ui.nfft.currentIndex() + 4)))
-        freq_max = int((self.ui.freq2.value()/1000)*(2**(self.ui.nfft.currentIndex() + 4)))
+        dir1_a = int(self.ui.ch1Enable.currentIndex() == 1)
+        thresh1_a = self.ui.threshold1.value()
+        freq1_min = int((self.ui.freq1.value()/1000)*(2**(self.ui.nfft.currentIndex() + 4)))
+        freq1_max = int((self.ui.freq2.value()/1000)*(2**(self.ui.nfft.currentIndex() + 4)))
+
+        dir2_a = int(self.ui.ch1Enable2.currentIndex() == 1)
+        thresh2_a = self.ui.threshold2.value()
+        freq2_min = int((self.ui.freq3.value()/1000)*(2**(self.ui.nfft.currentIndex() + 4)))
+        freq2_max = int((self.ui.freq4.value()/1000)*(2**(self.ui.nfft.currentIndex() + 4)))
 
         # en_b = int(self.ui.ch2Enable.currentIndex() != 0)
         # ch_b = self.ui.ch2.value()
@@ -131,6 +151,7 @@ class ClosedLoop(QDockWidget):
 
         randMin = self.ui.randMin.value()
         randMax = self.ui.randMax.value()
+        andor = self.ui.andor.currentIndex()
 
         ch_order = int(ch_a < chStim)
 
@@ -141,13 +162,23 @@ class ClosedLoop(QDockWidget):
         # self.writeCLCh.emit(ch_a, chStim)
 
 
-        self.writeCL.emit(Reg.cl2, self.makeBit(en_a,31,1,1) | self.makeBit(ch_a,24,7,1) | 
-            self.makeBit(dir_a,23,1,1) | self.makeBit(thresh_a,8,15,1) | self.makeBit(chStim,0,7,1) | 
+        self.writeCL.emit(Reg.cl2, self.makeBit(en1_a,31,1,1) | self.makeBit(ch_a,24,7,1) | 
+            self.makeBit(dir1_a,23,1,1) | self.makeBit(thresh1_a,8,15,1) | self.makeBit(chStim,0,7,1) | 
             self.makeBit(ch_order,7,1,1))
 
         time.sleep(0.02)
 
-        self.writeCL.emit(Reg.cl3, self.makeBit(freq_max,16,10,1) | self.makeBit(freq_min,0,10,1))
+        self.writeCL.emit(Reg.cl3, self.makeBit(freq1_max,16,10,1) | self.makeBit(freq1_min,0,10,1))
+
+        time.sleep(0.02)
+
+        self.writeCL.emit(Reg.cl5, self.makeBit(freq2_max,16,10,1) | self.makeBit(freq2_min,0,10,1))
+
+        time.sleep(0.02)
+
+        self.writeCL.emit(Reg.cl6, self.makeBit(en2_a,31,1,1) | 
+            self.makeBit(dir2_a,23,1,1) | self.makeBit(thresh2_a,8,15,1) |
+            self.makeBit(andor,7,1,1))
 
         time.sleep(0.02)
 
