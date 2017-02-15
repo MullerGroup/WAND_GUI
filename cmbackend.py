@@ -389,9 +389,9 @@ class streamAdcThread(QThread):
                         # imag = (data[9] << 8 | data[8])
                         # if imag >= 0x8000:
                         #     imag -= 0x10000
-                        mag = (data[7] << 8 | data[6])
+                        mag = ((data[9] << 24) | (data[8] << 16) | (data[7] << 8) | data[6])
                         # self.fft_data.append(real**2 + imag**2)
-                        self.mag_data.append(mag)
+                        # self.mag_data.append(mag)
 
                         # real = (data[13] << 8 | data[12]) 
                         # if real >= 0x8000:
@@ -399,12 +399,12 @@ class streamAdcThread(QThread):
                         # imag = (data[15] << 8 | data[14])
                         # if imag >= 0x8000:
                         #     imag -= 0x10000
-                        mag = (data[9] << 8 | data[8])
+                        # mag = (data[9] << 8 | data[8])
                         # self.fft_data.append(real**2 + imag**2)
                         self.mag_data.append(mag)
 
                         if (data[3] & 0x80 == 0x80):
-                            if (len(self.fft_data) & (len(self.fft_data) - 1) == 0):
+                            if (len(self.mag_data) & (len(self.mag_data) - 1) == 0):
                                 # self.plotfft.emit(self.fft_data)
                                 self.plotmag.emit(self.mag_data)
                             # self.fft_data = []

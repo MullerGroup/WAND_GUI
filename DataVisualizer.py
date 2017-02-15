@@ -214,13 +214,13 @@ class DataVisualizer(QDockWidget):
 
     @pyqtSlot(list)
     def plotmag(self,mag_data):
-        self.mag_data = []
-        n = len(mag_data)
-        for i in range(0,int(n/2)):
-            self.mag_data.append(mag_data[i])
-        for i in range(0,int(n/2)):
-            if mag_data[n-i-1] > self.mag_data[i]:
-                self.mag_data[i] = mag_data[n-i-1]
+        self.mag_data = mag_data
+        # n = len(mag_data)
+        # for i in range(0,int(n/2)):
+        #     self.mag_data.append(mag_data[i])
+        # for i in range(0,int(n/2)):
+        #     if mag_data[n-i-1] > self.mag_data[i]:
+        #         self.mag_data[i] = mag_data[n-i-1]
         # self.mag_data = []
         # temp = []
         # n = len(mag_data)
