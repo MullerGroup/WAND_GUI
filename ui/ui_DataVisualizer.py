@@ -193,7 +193,7 @@ class Ui_DataVisualizer(object):
         self.gridLayout.addWidget(self.delayLabel, 6, 2, 1, 1)
 
         self.stimDelay = QtGui.QSpinBox(self.dockWidgetContents)
-        self.stimDelay.setMinimum(10)
+        self.stimDelay.setMinimum(0)
         self.stimDelay.setMaximum(100000)
         self.stimDelay.setSingleStep(1)
         self.stimDelay.setProperty("value", 1000)
@@ -206,7 +206,7 @@ class Ui_DataVisualizer(object):
         self.gridLayout.addWidget(self.artDelayLabel, 7, 2, 1, 1)
 
         self.artDelay = QtGui.QSpinBox(self.dockWidgetContents)
-        self.artDelay.setMinimum(10)
+        self.artDelay.setMinimum(0)
         self.artDelay.setMaximum(100000)
         self.artDelay.setSingleStep(1)
         self.artDelay.setProperty("value", 1000)

@@ -250,7 +250,7 @@ class readFTDIFifoThread(QThread):
                         if self.stimOnNM == 1:
                             # print("stim on 1")
                             CMWorker()._regWr(Reg.req, (self.rep << 16) | (1 << 13) | (1 << 12))
-                if self.artcount > 0 and self.stim:
+                if self.artcount > 0:
                     self.artcount = self.artcount - 1
                     if self.artcount == 0:
                         print("artifact enable")

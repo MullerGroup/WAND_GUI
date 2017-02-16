@@ -346,18 +346,18 @@ class Ui_closedLoop(object):
 
         closedLoop.setWidget(self.dockWidgetContents)
 
-        self.nfft.setCurrentIndex(4)
+        self.nfft.setCurrentIndex(5)
         self.chStim.setValue(29)
         self.ch1.setValue(28)
-        self.threshold1.setValue(1000)
+        self.threshold1.setValue(6000)
         self.threshold2.setValue(1000)
         self.ch1Enable.setCurrentIndex(1)
-        self.ch1Enable2.setCurrentIndex(1)
+        self.ch1Enable2.setCurrentIndex(2)
         self.freq1.setValue(13)
         self.freq2.setValue(30)
         self.freq3.setValue(70)
         self.freq4.setValue(100)
-        self.deadLength.setValue(100)
+        self.deadLength.setValue(200)
 
         self.retranslateUi(closedLoop)
         QtCore.QMetaObject.connectSlotsByName(closedLoop)
