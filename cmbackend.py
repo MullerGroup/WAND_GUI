@@ -52,7 +52,28 @@ class stream_data(IsDescription):
     time = FloatCol()
 
 class stream_info(IsDescription):
-    channels = UInt16Col(shape=(8))
+    deadlen = UInt16Col()
+    fakestim = UInt16Col()
+    fftsize = UInt16Col()
+    randmode = UInt16Col()
+    en1 = UInt16Col()
+    en0 = UInt16Col()
+    enA = UInt16Col()
+    chctrl = UInt16Col()
+    dirA = UInt16Col()
+    threshA = UInt16Col()
+    chorder = UInt16Col()
+    chstim = UInt16Col()
+    freqmaxA = UInt16Col()
+    freqminA = UInt16Col()
+    randMax = UInt16Col()
+    randMin = UInt16Col()
+    freqmaxB = UInt16Col()
+    freqminB = UInt16Col()
+    enB = UInt16Col()
+    dirB = UInt16Col()
+    threshB = UInt16Col()
+    andor = UInt16Col()
 
 dataQueue = Queue()
 timeQueue = Queue()
@@ -286,6 +307,28 @@ class streamAdcThread(QThread):
     art = False
     interp = False
     artdelay = 1000
+    deadlen = (0 >> 16) & 0xFFFF
+    fakestim = (0 >> 8) & 0x01
+    fftsize = (0 >> 5) & 0x07
+    randmode = (0 >> 4) & 0x01
+    en1 = (0 >> 2) & 0x01
+    en0 = 0 & 0x01
+    enA = (0 >> 31) & 0x01
+    chctrl = (0 >> 24) & 0x7F
+    dirA = (0>>23) & 0x01
+    threshA = (0 >> 8) & 0x7FFF
+    chorder = (0 >> 7) & 0x01
+    chstim = 0 & 0x7F
+    freqmaxA = (0 >> 16) & 0x3FF
+    freqminA = 0 & 0x3FF
+    randMax = (0 >> 16) & 0xFF
+    randMin = 0 & 0xFF
+    freqmaxB = (0 >> 16) & 0x3FF
+    freqminB = 0 & 0x3FF
+    enB = (0 >> 31) & 0x01
+    dirB = (0 >> 23) & 0x01
+    threshB = (0 >> 8) & 0x7FFF
+    andor = (0 >> 7) & 0x01
 
     def __init__(self):
         QThread.__init__(self)
@@ -323,6 +366,32 @@ class streamAdcThread(QThread):
         # print(interp)
         # print(artdelay)
 
+    def writeCLInfo(self, deadlen, fakestim, fftsize, randmode, en1, en0,
+                    enA, chctrl, dirA, threshA, chorder, chstim,
+                    freqmaxA, freqminA, randMax, randMin, freqmaxB, freqminB,
+                    enB, dirB, threshB, andor):
+        self.deadlen = deadlen
+        self.fakestim = fakestim
+        self.fftsize = fftsize
+        self.randmode = randmode
+        self.en1 = en1
+        self.en0 = en0
+        self.enA = enA
+        self.chctrl = chctrl
+        self.dirA = dirA
+        self.threshA = threshA
+        self.chorder = chorder
+        self.chstim = chstim
+        self.freqmaxA = freqmaxA
+        self.freqminA = freqminA
+        self.randMax = randMax
+        self.randMin = randMin
+        self.freqmaxB = freqmaxB
+        self.freqminB = freqminB
+        self.enB = enB
+        self.dirB = dirB
+        self.threshB = threshB
+        self.andor = andor
 
     def run(self):
         # make sure serial device is open
@@ -343,7 +412,30 @@ class streamAdcThread(QThread):
         start = datetime.datetime.now()
         print("Stream started at: {}".format(start))
         data_point = self.infoTable.row
-        data_point['channels'] = CMWorker.enabledChannels
+
+        data_point['deadlen'] = self.deadlen
+        data_point['fakestim'] = self.fakestim
+        data_point['fftsize'] = self.fftsize
+        data_point['randmode'] = self.randmode
+        data_point['en1'] = self.en1
+        data_point['en0'] = self.en0
+        data_point['enA'] = self.enA
+        data_point['chctrl'] = self.chctrl
+        data_point['dirA'] = self.dirA
+        data_point['threshA'] = self.threshA
+        data_point['chorder'] = self.chorder
+        data_point['chstim'] = self.chstim
+        data_point['freqmaxA'] = self.freqmaxA
+        data_point['freqminA'] = self.freqminA
+        data_point['randMax'] = self.randMax
+        data_point['randMin'] = self.randMin
+        data_point['freqmaxB'] = self.freqmaxB
+        data_point['freqminB'] = self.freqminB
+        data_point['enB'] = self.enB
+        data_point['dirB'] = self.dirB
+        data_point['threshB'] = self.threshB
+        data_point['andor'] = self.andor
+
         data_point.append()
         self.infoTable.flush()
 
@@ -405,7 +497,13 @@ class streamAdcThread(QThread):
                         # self.fft_data.append(real**2 + imag**2)
                         self.mag_data.append(mag)
 
-                        if (data[3] & 0x80 == 0x80):
+                        if (data[3] & 0x80 == 0x80 and self.chorder == 1):
+                            if (len(self.mag_data) & (len(self.mag_data) - 1) == 0):
+                                # self.plotfft.emit(self.fft_data)
+                                self.plotmag.emit(self.mag_data)
+                            # self.fft_data = []
+                            self.mag_data = []
+                        if (data[5] & 0x80 == 0x80 and self.chorder == 0):
                             if (len(self.mag_data) & (len(self.mag_data) - 1) == 0):
                                 # self.plotfft.emit(self.fft_data)
                                 self.plotmag.emit(self.mag_data)
@@ -476,8 +574,8 @@ class CMWorker(QThread):
     connStateChanged = pyqtSignal(bool)
     boardsChanged = pyqtSignal(list)
     regReadData = pyqtSignal(int, int, int)
-    adcData = pyqtSignal(list)
     updateChannels = pyqtSignal(list)
+    writeCLInfo = pyqtSignal(int, int)
 
     enabledChannels = [65535,65535,65535,65535,65535,65535,0,0]
 
@@ -567,44 +665,6 @@ class CMWorker(QThread):
                 val = d[4] + 256 * d[5]
                 return [success, add, val]
 
-    def _getAdc(self, N):
-        print('Requesting data...')
-        out = []
-        self._flushRadio()
-        self.startStream() # put CM into streaming mode
-        crcs = 0
-        samples = 0
-        running = True
-        timeout = 0
-        while samples < N and running:
-            data = cp2130_libusb_read(CMWorker.cp2130Handle)
-
-            if data:
-                if data[1] == datalen - 2:
-                    timeout = 0
-                    out.append([data[i+1] << 8 | data[i] if i > datalen - 5 else (data[i+1] << 8 | data[i]) & 0x7FFF for i in list(range(2, datalen-1, 2))])
-                    samples = samples + 1
-                    if data[0] == 0xFF:
-                        crcs = crcs + 1
-                else:
-                    # TODO: decrease timeout
-                    timeout = timeout + 1
-                    if timeout > 1000:
-                        running = False
-                        print('Request failed')
-
-        print("Samples: {}".format(samples))
-        print("CRCs: {}".format(crcs))
-        self.stopStream() # stop streamining
-        self._flushRadio()
-        return out
-
-    @pyqtSlot(int)
-    def readAdc(self, ns):
-        if not self.cp2130Handle:
-            return
-        self.adcData.emit(self._getAdc(ns))
-
     def exit_cp2130(self):
         if self.cp2130Handle:
             libusb1.libusb_release_interface(self.cp2130Handle, 0)
@@ -665,8 +725,6 @@ class CMWorker(QThread):
         if not self.cp2130Handle:
             return
         self._sendCmd(nm, cmd)
-        # if (cmd == 0x04 or cmd == 0x09):
-        #     self.adcData.emit(self._getAdc(1000))
 
     @pyqtSlot(int, int, int)
     def writeReg(self, nm, addr, value):
@@ -869,12 +927,13 @@ class CMWorker(QThread):
         time.sleep(0.01)
 
     @pyqtSlot(Reg, int)
-    def writeCL(self, addr, value):
+    def writeCL(self, addr, val):
         # print(hex(addr.value))
         # print(bin(value))
         if not self.cp2130Handle:
             return
-        self._regWr(addr, value & 0xFFFFFFFF)
+        self._regWr(addr, val & 0xFFFFFFFF)
+        self.writeCLInfo.emit(addr.value ,val & 0xFFFFFFFF)
 
     @pyqtSlot(int, int)
     def writeCLCh(self, ctrl, stim):

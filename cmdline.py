@@ -25,7 +25,6 @@ class SysCtrl(QObject):
     # signals to worker
     _writeReg = pyqtSignal(int, int)
     _cmd = pyqtSignal(int)
-    _adcReq = pyqtSignal(int)
 
     class CmdType(enum.Enum):
         Reset = 0x01
@@ -43,8 +42,6 @@ class SysCtrl(QObject):
     def setWorker(self, w):
         self._writeReg.connect(w.writeReg)
         self._cmd.connect(w.nmicCommand)
-        self._adcReq.connect(w.readAdc, QtCore.Qt.BlockingQueuedConnection)
-        w.adcData.connect(self._adcData, QtCore.Qt.DirectConnection)
 
     def clear(self):
         self._clearLog.emit()
@@ -56,7 +53,6 @@ class SysCtrl(QObject):
         self._cmd.emit(cmd.value)
 
     def getAdc(self, num):
-        self._adcReq.emit(num)
         return self.data
 
     def saveMat(self, filename):
@@ -69,10 +65,6 @@ class SysCtrl(QObject):
         data = np.array(data)
         scipy.io.savemat(filename, dict(chan_data=data))
 
-
-    @pyqtSlot(list)
-    def _adcData(self, data):
-        self.data = data
 
 # command interpreter object
 # runs in its own thread

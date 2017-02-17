@@ -26,12 +26,12 @@ class Ui_closedLoop(object):
         self.enable0 = QtGui.QPushButton(self.dockWidgetContents)
         self.enable0.setObjectName(_fromUtf8("enable0"))
         self.enable0.setCheckable(True)
-        self.gridLayout.addWidget(self.enable0, 0, 0, 1, 8)
+        self.gridLayout.addWidget(self.enable0, 0, 0, 1, 9)
 
         self.enable1 = QtGui.QPushButton(self.dockWidgetContents)
         self.enable1.setObjectName(_fromUtf8("enable1"))
         self.enable1.setCheckable(True)
-        self.gridLayout.addWidget(self.enable1, 1, 0, 1, 8)
+        self.gridLayout.addWidget(self.enable1, 1, 0, 1, 9)
 
 
         self.ch1Label = QtGui.QLabel(self.dockWidgetContents)
@@ -349,7 +349,7 @@ class Ui_closedLoop(object):
         self.nfft.setCurrentIndex(5)
         self.chStim.setValue(29)
         self.ch1.setValue(28)
-        self.threshold1.setValue(6000)
+        self.threshold1.setValue(4000)
         self.threshold2.setValue(1000)
         self.ch1Enable.setCurrentIndex(1)
         self.ch1Enable2.setCurrentIndex(2)
