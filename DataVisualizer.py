@@ -76,6 +76,7 @@ class DataVisualizer(QDockWidget):
     mag_dataA = 0
     mag_dataB = 0
     derivative = 0
+    derivativeB = 0
     signA = 0
     signB = 0
 
@@ -210,6 +211,7 @@ class DataVisualizer(QDockWidget):
             self.deadlen = (value >> 16) & 0xFFFF
             self.fakestim = (value >> 8) & 0x01
             self.derivative = (value >> 9) & 0x01
+            self.derivativeB = (value >> 10) & 0x01
             self.fftsize = (value >> 5) & 0x07
             self.randmode = (value >> 4) & 0x01
             self.en1 = (value >> 2) & 0x01
@@ -218,7 +220,7 @@ class DataVisualizer(QDockWidget):
                 self.streamAdcThread.writeCLInfo(self.deadlen, self.fakestim, self.fftsize, self.randmode, self.en1, self.en0,
                     self.enA, self.chctrl, self.dirA, self.threshA, self.chorder, self.chstim,
                     self.freqmaxA, self.freqminA, self.randMax, self.randMin, self.freqmaxB, self.freqminB,
-                    self.enB, self.dirB, self.threshB, self.andor, self.derivative, self.signA, self.signB)
+                    self.enB, self.dirB, self.threshB, self.andor, self.derivative, self.signA, self.signB, self.derivativeB)
 
         elif addr == Reg.cl2:
             self.enA = (value >> 31) & 0x01
@@ -527,6 +529,7 @@ class DataVisualizer(QDockWidget):
                                 self.plots[self.topPlot+ch].plot(y=A)
                                 self.plots[self.topPlot+ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=0, yMax=2*self.threshA)
                                 self.plots[self.topPlot+ch].getViewBox().setRange(yRange=(0,2*self.threshA),update=True)
+                        if self.derivativeB == 0:
                             if ch == 3:
                                 self.plots[self.topPlot+ch].plot(y=B)
                                 self.plots[self.topPlot+ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=0, yMax=2*self.threshB)

@@ -297,6 +297,11 @@ class Ui_closedLoop(object):
         self.derivative.setObjectName(_fromUtf8("derivative"))
         self.gridLayout.addWidget(self.derivative, 3, 8, 1, 1)
 
+        self.derivativeB = QtGui.QCheckBox(self.dockWidgetContents)
+        self.derivativeB.setCheckable(True)
+        self.derivativeB.setObjectName(_fromUtf8("derivativeB"))
+        self.gridLayout.addWidget(self.derivativeB, 4, 8, 1, 1)
+
         self.randMin = QtGui.QSpinBox(self.dockWidgetContents)
         self.randMin.setMinimum(0)
         self.randMin.setMaximum(10000)
@@ -412,7 +417,8 @@ class Ui_closedLoop(object):
 
         self.randomMode.setText(_translate("closedLoop", "Random (Control) Mode", None))
         self.fakeStim.setText(_translate("closedLoop", "Fake Stim Mode", None))
-        self.derivative.setText(_translate("closedLoop", "Derivative Mode", None))
+        self.derivative.setText(_translate("closedLoop", "Derivative Mode A", None))
+        self.derivativeB.setText(_translate("closedLoop", "Derivative Mode B", None))
         self.nfftLabel.setText(_translate("closedLoop", "NFFT:", None))
         self.nfft.setItemText(0, _translate("closedLoop", "16", None))
         self.nfft.setItemText(1, _translate("closedLoop", "32", None))

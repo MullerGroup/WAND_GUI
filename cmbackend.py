@@ -75,6 +75,7 @@ class stream_info(IsDescription):
     threshB = UInt16Col()
     andor = UInt16Col()
     derivative = UInt16Col()
+    derivativeB = UInt16Col()
     signA = UInt16Col()
     signB = UInt16Col()
 
@@ -333,6 +334,7 @@ class streamAdcThread(QThread):
     threshB = (0 >> 8) & 0x7FFF
     andor = (0 >> 7) & 0x01
     derivative = 0;
+    derivativeB = 0;
     signA = 0;
     signB = 0;
 
@@ -375,7 +377,7 @@ class streamAdcThread(QThread):
     def writeCLInfo(self, deadlen, fakestim, fftsize, randmode, en1, en0,
                     enA, chctrl, dirA, threshA, chorder, chstim,
                     freqmaxA, freqminA, randMax, randMin, freqmaxB, freqminB,
-                    enB, dirB, threshB, andor, derivative, signA, signB):
+                    enB, dirB, threshB, andor, derivative, signA, signB, derivativeB):
         self.deadlen = deadlen
         self.fakestim = fakestim
         self.fftsize = fftsize
@@ -399,6 +401,7 @@ class streamAdcThread(QThread):
         self.threshB = threshB
         self.andor = andor
         self.derivative = derivative
+        self.derivativeB = derivativeB
         self.signA = signA
         self.signB = signB
 
@@ -448,6 +451,7 @@ class streamAdcThread(QThread):
         data_point['derivative'] = self.derivative
         data_point['signA'] = self.signA
         data_point['signB'] = self.signB
+        data_point['derivativeB'] = self.derivativeB
 
         data_point.append()
         self.infoTable.flush()
