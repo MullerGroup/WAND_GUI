@@ -509,8 +509,14 @@ class DataVisualizer(QDockWidget):
                     A = list(range(0,len(dp)))
                     B = list(range(0,len(dp)))
                     for i in range(0,len(dp)):
-                        A[i] = self.threshA * (-1*self.signA)
-                        B[i] = self.threshB * (-1*self.signB)
+                        if self.signA == 0:
+                            A[i] = self.threshA
+                        else:
+                            A[i] = -self.threshA
+                        if self.signB == 0:
+                            B[i] = self.threshB
+                        else:
+                            B[i] = -self.threshB
                     if ch == 2 or ch == 3:
                         self.plots[self.topPlot+ch].plot(y=dp, pen=self.plotColors[self.topPlot+ch])
                         # self.plots[self.topPlot+ch].plot(y=dp, pen=self.plotColors[self.topPlot+ch])
