@@ -74,6 +74,9 @@ class stream_info(IsDescription):
     dirB = UInt16Col()
     threshB = UInt16Col()
     andor = UInt16Col()
+    derivative = UInt16Col()
+    signA = UInt16Col()
+    signB = UInt16Col()
 
 dataQueue = Queue()
 timeQueue = Queue()
@@ -329,6 +332,9 @@ class streamAdcThread(QThread):
     dirB = (0 >> 23) & 0x01
     threshB = (0 >> 8) & 0x7FFF
     andor = (0 >> 7) & 0x01
+    derivative = 0;
+    signA = 0;
+    signB = 0;
 
     def __init__(self):
         QThread.__init__(self)
@@ -369,7 +375,7 @@ class streamAdcThread(QThread):
     def writeCLInfo(self, deadlen, fakestim, fftsize, randmode, en1, en0,
                     enA, chctrl, dirA, threshA, chorder, chstim,
                     freqmaxA, freqminA, randMax, randMin, freqmaxB, freqminB,
-                    enB, dirB, threshB, andor):
+                    enB, dirB, threshB, andor, derivative, signA, signB):
         self.deadlen = deadlen
         self.fakestim = fakestim
         self.fftsize = fftsize
@@ -392,6 +398,10 @@ class streamAdcThread(QThread):
         self.dirB = dirB
         self.threshB = threshB
         self.andor = andor
+        self.derivative = derivative
+        self.signA = signA
+        self.signB = signB
+
 
     def run(self):
         # make sure serial device is open
@@ -435,6 +445,9 @@ class streamAdcThread(QThread):
         data_point['dirB'] = self.dirB
         data_point['threshB'] = self.threshB
         data_point['andor'] = self.andor
+        data_point['derivative'] = self.derivative
+        data_point['signA'] = self.signA
+        data_point['signB'] = self.signB
 
         data_point.append()
         self.infoTable.flush()

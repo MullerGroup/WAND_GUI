@@ -112,16 +112,26 @@ class ClosedLoop(QDockWidget):
         return (decVal << bitShift) & bitMask
 
     def closedLoopCmd(self):
-        en1_a = int(self.ui.ch1Enable.currentIndex() != 0)
-        en2_a = int(self.ui.ch1Enable2.currentIndex() != 0)
+        en1_a = 1
+        en2_a = 1
         ch_a = self.ui.ch1.value()
-        dir1_a = int(self.ui.ch1Enable.currentIndex() == 1)
+        dir1_a = self.ui.ch1Enable.currentIndex()
         thresh1_a = self.ui.threshold1.value()
+        if thresh1_a < 0:
+            sign = 1
+            thresh1_a = abs(thresh1_a)
+        else:
+            sign = 0
         freq1_min = int((self.ui.freq1.value()/1000)*(2**(self.ui.nfft.currentIndex() + 4)))
         freq1_max = int((self.ui.freq2.value()/1000)*(2**(self.ui.nfft.currentIndex() + 4)))
 
-        dir2_a = int(self.ui.ch1Enable2.currentIndex() == 1)
+        dir2_a = self.ui.ch1Enable2.currentIndex()
         thresh2_a = self.ui.threshold2.value()
+        if thresh2_a < 0:
+            sign2 = 1
+            thresh2_a = abs(thresh2_a)
+        else:
+            sign2 = 0
         freq2_min = int((self.ui.freq3.value()/1000)*(2**(self.ui.nfft.currentIndex() + 4)))
         freq2_max = int((self.ui.freq4.value()/1000)*(2**(self.ui.nfft.currentIndex() + 4)))
 
@@ -156,6 +166,7 @@ class ClosedLoop(QDockWidget):
         ch_order = int(ch_a < chStim)
 
         fakeStim = int(self.ui.fakeStim.isChecked())
+        derivative = int(self.ui.derivative.isChecked())
 
         self.writeCLCh.emit(ch_a, chStim)
         time.sleep(0.4)
@@ -164,7 +175,7 @@ class ClosedLoop(QDockWidget):
 
         self.writeCL.emit(Reg.cl2, self.makeBit(en1_a,31,1,1) | self.makeBit(ch_a,24,7,1) | 
             self.makeBit(dir1_a,23,1,1) | self.makeBit(thresh1_a,8,15,1) | self.makeBit(chStim,0,7,1) | 
-            self.makeBit(ch_order,7,1,1))
+            self.makeBit(ch_order,7,1,1) | self.makeBit(sign,24,1,1))
 
         time.sleep(0.02)
 
@@ -178,7 +189,7 @@ class ClosedLoop(QDockWidget):
 
         self.writeCL.emit(Reg.cl6, self.makeBit(en2_a,31,1,1) | 
             self.makeBit(dir2_a,23,1,1) | self.makeBit(thresh2_a,8,15,1) |
-            self.makeBit(andor,7,1,1))
+            self.makeBit(andor,7,1,1) | self.makeBit(sign2,24,1,1))
 
         time.sleep(0.02)
 
@@ -196,7 +207,7 @@ class ClosedLoop(QDockWidget):
         self.writeCL.emit(Reg.cl1, self.makeBit(dead_len,16,16,1) | self.makeBit(rand_mode,4,1,1) |
             self.makeBit(CL1_off,3,1,1) | self.makeBit(CL1_on,2,1,1) | 
             self.makeBit(CL0_off,1,1,1) | self.makeBit(CL0_on,0,1,1) | self.makeBit(fftSize,5,3,1) |
-            self.makeBit(fakeStim,8,1,1))
+            self.makeBit(fakeStim,8,1,1) | self.makeBit(derivative,9,1,1))
 
         time.sleep(0.02)
 
@@ -212,11 +223,12 @@ class ClosedLoop(QDockWidget):
         fftSize = self.ui.nfft.currentIndex()
         ch_a = self.ui.ch1.value()
         ch_order = int(ch_a < chStim)
-        fakeStim = int(self.ui.fakeStim.isChecked())     
+        fakeStim = int(self.ui.fakeStim.isChecked())  
+        derivative = int(self.ui.derivative.isChecked())   
 
         self.writeCL.emit(Reg.cl1, self.makeBit(dead_len,16,16,1) | self.makeBit(rand_mode,4,1,1) |
             self.makeBit(CL1_off,3,1,1) | self.makeBit(CL1_on,2,1,1) | 
             self.makeBit(CL0_off,1,1,1) | self.makeBit(CL0_on,0,1,1) | self.makeBit(fftSize,5,3,1) |
-            self.makeBit(fakeStim,8,1,1))
+            self.makeBit(fakeStim,8,1,1) | self.makeBit(derivative,9,1,1))
 
         time.sleep(0.02)

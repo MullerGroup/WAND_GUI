@@ -75,6 +75,9 @@ class DataVisualizer(QDockWidget):
     andor = (0 >> 7) & 0x01
     mag_dataA = 0
     mag_dataB = 0
+    derivative = 0
+    signA = 0
+    signB = 0
 
     def __init__(self, parent=None):
         def populate(listbox, start, stop, step):
@@ -206,6 +209,7 @@ class DataVisualizer(QDockWidget):
         if addr == Reg.cl1:
             self.deadlen = (value >> 16) & 0xFFFF
             self.fakestim = (value >> 8) & 0x01
+            self.derivative = (value >> 9) & 0x01
             self.fftsize = (value >> 5) & 0x07
             self.randmode = (value >> 4) & 0x01
             self.en1 = (value >> 2) & 0x01
@@ -214,13 +218,14 @@ class DataVisualizer(QDockWidget):
                 self.streamAdcThread.writeCLInfo(self.deadlen, self.fakestim, self.fftsize, self.randmode, self.en1, self.en0,
                     self.enA, self.chctrl, self.dirA, self.threshA, self.chorder, self.chstim,
                     self.freqmaxA, self.freqminA, self.randMax, self.randMin, self.freqmaxB, self.freqminB,
-                    self.enB, self.dirB, self.threshB, self.andor)
+                    self.enB, self.dirB, self.threshB, self.andor, self.derivative, self.signA, self.signB)
 
         elif addr == Reg.cl2:
             self.enA = (value >> 31) & 0x01
             self.chctrl = (value >> 24) & 0x7F
             self.dirA = (value>>23) & 0x01
             self.threshA = (value >> 8) & 0x7FFF
+            self.signA = (value >> 24) & 0x01
             self.chorder = (value >> 7) & 0x01
             self.chstim = value & 0x7F
         elif addr == Reg.cl3:
@@ -236,6 +241,7 @@ class DataVisualizer(QDockWidget):
             self.enB = (value >> 31) & 0x01
             self.dirB = (value >> 23) & 0x01
             self.threshB = (value >> 8) & 0x7FFF
+            self.signB = (value >> 24) & 0x01
             self.andor = (value >> 7) & 0x01
 
 
@@ -404,11 +410,11 @@ class DataVisualizer(QDockWidget):
                 
                 # print("{}".format(self.mag_dataA))
                 if self.plotPointer > 2**(self.fftsize + 3):
-                    self.dataPlot[2][self.plotPointer - 2**(self.fftsize + 3)] = self.mag_dataA
-                    self.dataPlot[3][self.plotPointer - 2**(self.fftsize + 3)] = self.mag_dataB
+                    self.dataPlot[2][self.plotPointer - 2**(self.fftsize + 3) - 1] = self.mag_dataA
+                    self.dataPlot[3][self.plotPointer - 2**(self.fftsize + 3) - 1] = self.mag_dataB
                 else:
-                    self.dataPlot[2][self.plotPointer + self.xRange - 2**(self.fftsize + 3)] = self.mag_dataA
-                    self.dataPlot[3][self.plotPointer + self.xRange - 2**(self.fftsize + 3)] = self.mag_dataB
+                    self.dataPlot[2][self.plotPointer + self.xRange - 2**(self.fftsize + 3)-1] = self.mag_dataA
+                    self.dataPlot[3][self.plotPointer + self.xRange - 2**(self.fftsize + 3)-1] = self.mag_dataB
                 # self.dataPlot[2][self.plotPointer] = temp[2]
                 # self.dataPlot[3][self.plotPointer] = temp[2]
                 # self.dataPlot[4][self.plotPointer] = temp[4]
@@ -503,21 +509,22 @@ class DataVisualizer(QDockWidget):
                     A = list(range(0,len(dp)))
                     B = list(range(0,len(dp)))
                     for i in range(0,len(dp)):
-                        A[i] = self.threshA
-                        B[i] = self.threshB
+                        A[i] = self.threshA * (-1*self.signA)
+                        B[i] = self.threshB * (-1*self.signB)
                     if ch == 2 or ch == 3:
                         self.plots[self.topPlot+ch].plot(y=dp, pen=self.plotColors[self.topPlot+ch])
                         # self.plots[self.topPlot+ch].plot(y=dp, pen=self.plotColors[self.topPlot+ch])
                         self.plots[self.topPlot+ch].getViewBox().setMouseEnabled(x=True, y=True)
                         self.plots[self.topPlot+ch].getViewBox().setMouseMode(self.plots[self.topPlot+ch].getViewBox().RectMode)
-                        if ch == 2:
-                            self.plots[self.topPlot+ch].plot(y=A)
-                            self.plots[self.topPlot+ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=0, yMax=2*self.threshA)
-                            self.plots[self.topPlot+ch].getViewBox().setRange(yRange=(0,2*self.threshA),update=True)
-                        if ch == 3:
-                            self.plots[self.topPlot+ch].plot(y=B)
-                            self.plots[self.topPlot+ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=0, yMax=2*self.threshB)
-                            self.plots[self.topPlot+ch].getViewBox().setRange(yRange=(0,2*self.threshB),update=True)
+                        if self.derivative == 0:
+                            if ch == 2:
+                                self.plots[self.topPlot+ch].plot(y=A)
+                                self.plots[self.topPlot+ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=0, yMax=2*self.threshA)
+                                self.plots[self.topPlot+ch].getViewBox().setRange(yRange=(0,2*self.threshA),update=True)
+                            if ch == 3:
+                                self.plots[self.topPlot+ch].plot(y=B)
+                                self.plots[self.topPlot+ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=0, yMax=2*self.threshB)
+                                self.plots[self.topPlot+ch].getViewBox().setRange(yRange=(0,2*self.threshB),update=True)
                     else:
                         self.plots[self.topPlot+ch].plot(y=dp, pen=self.plotColors[self.topPlot+ch])
                         # add back in to test new autorange
