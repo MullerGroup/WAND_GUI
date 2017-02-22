@@ -223,11 +223,11 @@ class DataVisualizer(QDockWidget):
                     self.enB, self.dirB, self.threshB, self.andor, self.derivative, self.signA, self.signB, self.derivativeB)
 
         elif addr == Reg.cl2:
-            self.enA = (value >> 31) & 0x01
+            self.enA = 1
             self.chctrl = (value >> 24) & 0x7F
             self.dirA = (value>>23) & 0x01
             self.threshA = (value >> 8) & 0x7FFF
-            self.signA = (value >> 24) & 0x01
+            self.signA = (value >> 31) & 0x01
             self.chorder = (value >> 7) & 0x01
             self.chstim = value & 0x7F
         elif addr == Reg.cl3:

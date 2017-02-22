@@ -174,9 +174,9 @@ class ClosedLoop(QDockWidget):
         # self.writeCLCh.emit(ch_a, chStim)
 
 
-        self.writeCL.emit(Reg.cl2, self.makeBit(en1_a,31,1,1) | self.makeBit(ch_a,24,7,1) | 
+        self.writeCL.emit(Reg.cl2, self.makeBit(ch_a,24,7,1) | 
             self.makeBit(dir1_a,23,1,1) | self.makeBit(thresh1_a,8,15,1) | self.makeBit(chStim,0,7,1) | 
-            self.makeBit(ch_order,7,1,1) | self.makeBit(sign,24,1,1))
+            self.makeBit(ch_order,7,1,1) | self.makeBit(sign,31,1,1))
 
         time.sleep(0.02)
 
