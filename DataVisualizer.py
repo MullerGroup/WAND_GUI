@@ -36,6 +36,7 @@ class DataVisualizer(QDockWidget):
     disableArtifact = pyqtSignal()
     enableInterpolate = pyqtSignal()
     disableInterpolate = pyqtSignal()
+    regFile = pyqtSignal(str)
 
     def __init__(self, parent=None):
         def populate(listbox, start, stop, step):
@@ -108,6 +109,7 @@ class DataVisualizer(QDockWidget):
         # self.enableInterpolate.connect(w.enableInterpolate)
         # self.disableInterpolate.connect(w.disableInterpolate)
         self.readAdc.connect(w.readAdc)
+        self.regFile.connect(w.regFile)
         w.adcData.connect(self.adcData)
         w.updateChannels.connect(self.updateChannels)
 
@@ -216,7 +218,8 @@ class DataVisualizer(QDockWidget):
             self.ui.artifactBtn.setDisabled(True)
             self.ui.interpolateBtn.setDisabled(True)
         else:
-            self.streamAdcThread.stop()
+            filename = self.streamAdcThread.stop()
+            self.regFile.emit(filename)
 
     @pyqtSlot()
     def on_testBtn_clicked(self):
