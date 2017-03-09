@@ -50,6 +50,7 @@ class DataVisualizer(QDockWidget):
     disableArtifact = pyqtSignal()
     enableInterpolate = pyqtSignal()
     disableInterpolate = pyqtSignal()
+    regFile = pyqtSignal(str)
 
     deadlen = (0 >> 16) & 0xFFFF
     fakestim = (0 >> 8) & 0x01
@@ -146,6 +147,7 @@ class DataVisualizer(QDockWidget):
         # self.disableInterpolate.connect(w.disableInterpolate)
         w.updateChannels.connect(self.updateChannels)
         w.writeCLInfo.connect(self.writeCLInfo)
+        self.regFile.connect(w.regFile)
 
     def wheelEvent(self, QWheelEvent):
         # scrolling through plots
@@ -334,7 +336,8 @@ class DataVisualizer(QDockWidget):
             self.ui.interpolateBtn.setDisabled(True)
             self.updatePlotDisplay()
         else:
-            self.streamAdcThread.stop()
+            filename = self.streamAdcThread.stop()
+            self.regFile.emit(filename)
 
     @pyqtSlot()
     def on_testBtn_clicked(self):

@@ -120,6 +120,7 @@ class RegisterEditor_v2(QDockWidget):
         self.readReg.connect(w.readReg)
         self.writeReg.connect(w.writeReg)
         w.regReadData.connect(self.regReadData)
+        w.saveRegs.connect(self.saveRegs)
 
     def saveSettings(self):
         s = QSettings()
@@ -149,6 +150,27 @@ class RegisterEditor_v2(QDockWidget):
         if not self.nm==nm:
             return
         self.regs[addr].setValue(data)
+
+    @pyqtSlot(str,int)
+    def saveRegs(self, fn, nm_num):
+        if self.nm != nm_num:
+            return
+        if not fn:
+            return
+        fh = open(fn, "a")
+        fh.write('NM{} Registers:\n\n'.format(self.nm))
+        for index in range(len(self.regs)):
+            fh.write("%s=%04X\n" % (self.regs[index].name, self.regs[index].value()))
+
+        fh.write('\n\n')
+
+        if self.nm == 1:
+            fh.write('Notes: \n\n')
+            notes, ok = QInputDialog.getText(self, 'Notes', 'Enter notes for stream: ')
+            if ok:
+                fh.write(str(notes))
+
+        fh.close()
 
     @pyqtSlot()
     def on_readButton_clicked(self):

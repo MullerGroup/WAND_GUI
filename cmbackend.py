@@ -338,6 +338,8 @@ class streamAdcThread(QThread):
     signA = 0;
     signB = 0;
 
+    filename = ''
+
     def __init__(self):
         QThread.__init__(self)
         self._running = True
@@ -348,6 +350,7 @@ class streamAdcThread(QThread):
 
     def stop(self):
         self._running = False
+        return self.filename + '.txt'
 
     def setup(self, disp, stim, ch0, ch1, ch2, ch3, rep, delay, art, interp, artdelay, stimOnNM, imp, impdelay):
         self.ch0 = ch0
@@ -416,7 +419,8 @@ class streamAdcThread(QThread):
             self._running = True
 
         os.makedirs('streams', exist_ok=True)
-        self.saveFile = tables.open_file('streams/' + datetime.datetime.now().strftime("%Y%m%d-%H%M%S") + '.hdf', mode="w", title="Stream")
+        self.filename = 'streams/' + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+        self.saveFile = tables.open_file(self.filename + '.hdf', mode="w", title="Stream")
         self.dataGroup = self.saveFile.create_group("/", name='dataGroup', title='Recorded Data Group')
         self.dataTable = self.saveFile.create_table(self.dataGroup, name='dataTable', title='Recorded Data Table', description=stream_data, expectedrows=60000*5*1)
         self.infoGroup = self.saveFile.create_group("/", name='infoGroup', title='Recording Information Group')
@@ -593,6 +597,7 @@ class CMWorker(QThread):
     regReadData = pyqtSignal(int, int, int)
     updateChannels = pyqtSignal(list)
     writeCLInfo = pyqtSignal(int, int)
+    saveRegs = pyqtSignal(str, int)
 
     enabledChannels = [65535,65535,65535,65535,65535,65535,0,0]
 
@@ -809,6 +814,11 @@ class CMWorker(QThread):
         else:
             print("Failed to read register{:04x}".format(addr))
         return ret
+
+    @pyqtSlot(str)
+    def regFile(self, fn):
+        self.saveRegs.emit(fn, 0)
+        self.saveRegs.emit(fn, 1)
 
     @pyqtSlot()
     def testCommOn(self):
