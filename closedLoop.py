@@ -169,8 +169,8 @@ class ClosedLoop(QDockWidget):
         derivative = int(self.ui.derivative.isChecked())
         derivativeB = int(self.ui.derivativeB.isChecked())
 
-        self.writeCLCh.emit(ch_a, chStim)
-        time.sleep(0.4)
+        # self.writeCLCh.emit(ch_a, chStim)
+        # time.sleep(0.4)
         # self.writeCLCh.emit(ch_a, chStim)
 
 
