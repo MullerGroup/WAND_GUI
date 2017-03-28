@@ -261,7 +261,7 @@ class readFTDIFifoThread(QThread):
             data = cp2130_libusb_read(CMWorker.cp2130Handle)
             if data == False:
                 pass
-            elif data[1] == datalen - 2:
+            elif (data[1] == datalen - 2) or (data[1] == 198):
                 dataQueue.put(data)
                 timeQueue.put(time.time() - t_0)
                 if self.count > 0 and self.stim:
