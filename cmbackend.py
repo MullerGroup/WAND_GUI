@@ -271,10 +271,10 @@ class readFTDIFifoThread(QThread):
                         # CMWorker().nmicCommand(0, 0x09)
                         if self.stimOnNM == 0:
                             # print("stim on 0")
-                            CMWorker()._regWr(Reg.req, (self.rep << 16) | (1 << 13) | (1 << 11))
+                            CMWorker()._regWr(Reg.req, (self.rep << 16) | (1 << 13) | (1 << 11) | 1)
                         if self.stimOnNM == 1:
                             # print("stim on 1")
-                            CMWorker()._regWr(Reg.req, (self.rep << 16) | (1 << 13) | (1 << 12))
+                            CMWorker()._regWr(Reg.req, (self.rep << 16) | (1 << 13) | (1 << 12) | 1)
                 if self.artcount > 0:
                     self.artcount = self.artcount - 1
                     if self.artcount == 0:
@@ -656,7 +656,7 @@ class CMWorker(QThread):
             time.sleep(0.005)
             if not write:
                 self._flushRadio()
-                self._regWr(Reg.req, 0x0100)
+                self._regWr(Reg.req, 0x0101)
                 time.sleep(0.05)
                 while d[1] != 4 and count < 20:
                     d = cp2130_libusb_read(CMWorker.cp2130Handle)
@@ -676,7 +676,7 @@ class CMWorker(QThread):
             time.sleep(0.001)
             if not write:
                 self._flushRadio()
-                self._regWr(Reg.req, 0x0200)
+                self._regWr(Reg.req, 0x0201)
                 time.sleep(0.05)
                 while d[1] != 4 and count < 150:
                     d = cp2130_libusb_read(CMWorker.cp2130Handle)
@@ -1034,37 +1034,37 @@ class CMWorker(QThread):
     def enableArtifact(self):
         if not self.cp2130Handle:
             return
-        self._regWr(Reg.req, 0x0080)
+        self._regWr(Reg.req, 0x0081)
         print("Enabled Artifact Removal")
 
     # @pyqtSlot()
     def disableArtifact(self):
         if not self.cp2130Handle:
             return
-        self._regWr(Reg.req, 0x0040)
+        self._regWr(Reg.req, 0x0041)
         print("Disabled Artifact Removal")
 
     # @pyqtSlot()
     def enableInterpolate(self):
         if not self.cp2130Handle:
             return
-        self._regWr(Reg.req, 0x8000)
+        self._regWr(Reg.req, 0x8001)
         print("Enabled Artifact Interpolation")
 
     # @pyqtSlot()
     def disableInterpolate(self):
         if not self.cp2130Handle:
             return
-        self._regWr(Reg.req, 0x4000)
+        self._regWr(Reg.req, 0x4001)
         print("Disabled Artifact Interpolation")
 
     def startStream(self):
         if not self.cp2130Handle:
             return
-        self._regWr(Reg.req, 0x0020)
+        self._regWr(Reg.req, 0x0021)
 
     def stopStream(self):
         if not self.cp2130Handle:
             return
-        self._regWr(Reg.req, 0x0010)
+        self._regWr(Reg.req, 0x0011)
         # self._regWr(Reg.req, 0x0000)
