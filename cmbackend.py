@@ -402,6 +402,8 @@ class streamAdcThread(QThread):
         print("Stream ended at: {}".format(datetime.datetime.now()))
         print("CRCs: {}".format(crcs))
         print("Received Samples: {}".format(samples))
+        print("Success: {}".format((samples - crcs)/samples))
+        print("Error: {}".format(crcs/samples))
         time.sleep(0.5)
 
         CMWorker().stopStream() # turn off streaming mode
