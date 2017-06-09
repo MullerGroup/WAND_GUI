@@ -209,6 +209,18 @@ class Ui_closedLoop(object):
         self.threshold2.setObjectName(_fromUtf8("threshold2"))
         self.gridLayout.addWidget(self.threshold2, 5, 6, 1, 1)
 
+        self.stimeDelayLabel = QtGui.QLabel(self.dockWidgetContents)
+        self.stimeDelayLabel.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
+        self.stimeDelayLabel.setObjectName(_fromUtf8("stimeDelayLabel"))
+        self.gridLayout.addWidget(self.stimeDelayLabel, 5, 7, 1, 1)
+        self.stimDelay = QtGui.QSpinBox(self.dockWidgetContents)
+        self.stimDelay.setMinimum(0)
+        self.stimDelay.setMaximum(3)
+        self.stimDelay.setSingleStep(1)
+        self.stimDelay.setProperty("value", 0)
+        self.stimDelay.setObjectName(_fromUtf8("stimDelay"))
+        self.gridLayout.addWidget(self.stimDelay, 5, 8, 1, 1)
+
         self.freq3Label = QtGui.QLabel(self.dockWidgetContents)
         self.freq3Label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
         self.freq3Label.setObjectName(_fromUtf8("freq3Label"))
@@ -408,6 +420,7 @@ class Ui_closedLoop(object):
 
         self.threshold1Label.setText(_translate("closedLoop", "Threshold:", None))
         self.threshold2Label.setText(_translate("closedLoop", "Threshold:", None))
+        self.stimeDelayLabel.setText(_translate("closedLoop", "Stim Delay:", None))
         # self.threshold2Label.setText(_translate("closedLoop", "Threshold:", None))
         # self.threshold3Label.setText(_translate("closedLoop", "Threshold:", None))
         # self.threshold4Label.setText(_translate("closedLoop", "Threshold:", None))

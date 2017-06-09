@@ -169,6 +169,8 @@ class ClosedLoop(QDockWidget):
         derivative = int(self.ui.derivative.isChecked())
         derivativeB = int(self.ui.derivativeB.isChecked())
 
+        stim_delay = self.ui.stimDelay.value()
+
         # self.writeCLCh.emit(ch_a, chStim)
         # time.sleep(0.4)
         # self.writeCLCh.emit(ch_a, chStim)
@@ -208,7 +210,8 @@ class ClosedLoop(QDockWidget):
         self.writeCL.emit(Reg.cl1, self.makeBit(dead_len,16,16,1) | self.makeBit(rand_mode,4,1,1) |
             self.makeBit(CL1_off,3,1,1) | self.makeBit(CL1_on,2,1,1) | 
             self.makeBit(CL0_off,1,1,1) | self.makeBit(CL0_on,0,1,1) | self.makeBit(fftSize,5,3,1) |
-            self.makeBit(fakeStim,8,1,1) | self.makeBit(derivative,9,1,1) | self.makeBit(derivativeB,10,1,1))
+            self.makeBit(fakeStim,8,1,1) | self.makeBit(derivative,9,1,1) | self.makeBit(derivativeB,10,1,1) | 
+            self.makeBit(stim_delay,11,2,1))
 
         time.sleep(0.02)
 
@@ -231,6 +234,7 @@ class ClosedLoop(QDockWidget):
         self.writeCL.emit(Reg.cl1, self.makeBit(dead_len,16,16,1) | self.makeBit(rand_mode,4,1,1) |
             self.makeBit(CL1_off,3,1,1) | self.makeBit(CL1_on,2,1,1) | 
             self.makeBit(CL0_off,1,1,1) | self.makeBit(CL0_on,0,1,1) | self.makeBit(fftSize,5,3,1) |
-            self.makeBit(fakeStim,8,1,1) | self.makeBit(derivative,9,1,1) | self.makeBit(derivativeB,10,1,1))
+            self.makeBit(fakeStim,8,1,1) | self.makeBit(derivative,9,1,1) | self.makeBit(derivativeB,10,1,1) | 
+            self.makeBit(stim_delay,11,2,1))
 
         time.sleep(0.02)
