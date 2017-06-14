@@ -230,6 +230,7 @@ class ClosedLoop(QDockWidget):
         fakeStim = int(self.ui.fakeStim.isChecked())  
         derivative = int(self.ui.derivative.isChecked())
         derivativeB = int(self.ui.derivativeB.isChecked())   
+        stim_delay = self.ui.stimDelay.value()
 
         self.writeCL.emit(Reg.cl1, self.makeBit(dead_len,16,16,1) | self.makeBit(rand_mode,4,1,1) |
             self.makeBit(CL1_off,3,1,1) | self.makeBit(CL1_on,2,1,1) | 
