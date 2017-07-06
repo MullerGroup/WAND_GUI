@@ -4,6 +4,7 @@ from ui.ui_closedLoop import Ui_closedLoop
 import datetime
 from enum import Enum
 import time
+import math
 
 
 # CM register addresses
@@ -122,6 +123,7 @@ class ClosedLoop(QDockWidget):
             thresh1_a = abs(thresh1_a)
         else:
             sign = 0
+        thresh1_a = math.floor(thresh1_a/64)
         freq1_min = int((self.ui.freq1.value()/1000)*(2**(self.ui.nfft.currentIndex() + 4)))
         freq1_max = int((self.ui.freq2.value()/1000)*(2**(self.ui.nfft.currentIndex() + 4)))
 
@@ -132,6 +134,7 @@ class ClosedLoop(QDockWidget):
             thresh2_a = abs(thresh2_a)
         else:
             sign2 = 0
+        thresh2_a = math.floor(thresh2_a/64)
         freq2_min = int((self.ui.freq3.value()/1000)*(2**(self.ui.nfft.currentIndex() + 4)))
         freq2_max = int((self.ui.freq4.value()/1000)*(2**(self.ui.nfft.currentIndex() + 4)))
 

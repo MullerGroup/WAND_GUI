@@ -515,13 +515,13 @@ class DataVisualizer(QDockWidget):
                     B = list(range(0,len(dp)))
                     for i in range(0,len(dp)):
                         if self.signA == 0:
-                            A[i] = self.threshA
+                            A[i] = self.threshA*64
                         else:
-                            A[i] = -self.threshA
+                            A[i] = -self.threshA*64
                         if self.signB == 0:
-                            B[i] = self.threshB
+                            B[i] = self.threshB*64
                         else:
-                            B[i] = -self.threshB
+                            B[i] = -self.threshB*64
                     if ch == 2 or ch == 3:
                         self.plots[self.topPlot+ch].plot(y=dp, pen=self.plotColors[self.topPlot+ch])
                         # self.plots[self.topPlot+ch].plot(y=dp, pen=self.plotColors[self.topPlot+ch])
@@ -530,13 +530,13 @@ class DataVisualizer(QDockWidget):
                         if self.derivative == 0:
                             if ch == 2:
                                 self.plots[self.topPlot+ch].plot(y=A)
-                                self.plots[self.topPlot+ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=0, yMax=2*self.threshA)
-                                self.plots[self.topPlot+ch].getViewBox().setRange(yRange=(0,2*self.threshA),update=True)
+                                self.plots[self.topPlot+ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=0, yMax=2*self.threshA*64)
+                                self.plots[self.topPlot+ch].getViewBox().setRange(yRange=(0,2*self.threshA*64),update=True)
                         if self.derivativeB == 0:
                             if ch == 3:
                                 self.plots[self.topPlot+ch].plot(y=B)
-                                self.plots[self.topPlot+ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=0, yMax=2*self.threshB)
-                                self.plots[self.topPlot+ch].getViewBox().setRange(yRange=(0,2*self.threshB),update=True)
+                                self.plots[self.topPlot+ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=0, yMax=2*self.threshB*64)
+                                self.plots[self.topPlot+ch].getViewBox().setRange(yRange=(0,2*self.threshB*64),update=True)
                     else:
                         self.plots[self.topPlot+ch].plot(y=dp, pen=self.plotColors[self.topPlot+ch])
                         # add back in to test new autorange
