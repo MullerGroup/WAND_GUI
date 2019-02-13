@@ -11,7 +11,6 @@ from cmdline import CommandLineWidget
 #from backend import *
 from nmicCommand import NmicCommand
 from DataVisualizer import DataVisualizer
-from closedLoop import ClosedLoop
 
 class MainWindow(QMainWindow):   
     def __init__(self, parent=None):
@@ -22,30 +21,34 @@ class MainWindow(QMainWindow):
         self.worker = None
 
         self.DataVisualizer = DataVisualizer(self)
+        self.DataVisualizer.setFeatures(QDockWidget.NoDockWidgetFeatures)
         self.addDockWidget(Qt.LeftDockWidgetArea, self.DataVisualizer)
         
         # self.regEdit0 = RegisterEditor(self, 0)
         self.regEdit0 = RegisterEditor_v2(self, 0)
+        self.regEdit0.setFeatures(QDockWidget.NoDockWidgetFeatures)
         self.addDockWidget(Qt.RightDockWidgetArea, self.regEdit0)
 
         # self.regEdit1 = RegisterEditor(self, 1)
         self.regEdit1 = RegisterEditor_v2(self, 1)
+        self.regEdit1.setFeatures(QDockWidget.NoDockWidgetFeatures)
         self.addDockWidget(Qt.RightDockWidgetArea, self.regEdit1)
 
         self.sConfig0 = StimConfig(self, 0)
+        self.sConfig0.setFeatures(QDockWidget.NoDockWidgetFeatures)
         self.addDockWidget(Qt.RightDockWidgetArea, self.sConfig0)
 
         self.sConfig1 = StimConfig(self, 1)
+        self.sConfig1.setFeatures(QDockWidget.NoDockWidgetFeatures)
         self.addDockWidget(Qt.RightDockWidgetArea, self.sConfig1)
 
         self.nmicCommand0 = NmicCommand(self, 0)
+        self.nmicCommand0.setFeatures(QDockWidget.NoDockWidgetFeatures)
         self.addDockWidget(Qt.RightDockWidgetArea, self.nmicCommand0)
 
         self.nmicCommand1 = NmicCommand(self, 1)
+        self.nmicCommand1.setFeatures(QDockWidget.NoDockWidgetFeatures)
         self.addDockWidget(Qt.RightDockWidgetArea, self.nmicCommand1)
-
-        self.closedLoop = ClosedLoop(self)
-        self.addDockWidget(Qt.RightDockWidgetArea, self.closedLoop)
 
 
         # NM0 widgets grouping
@@ -54,25 +57,27 @@ class MainWindow(QMainWindow):
         self.tabifyDockWidget(self.sConfig0, self.sConfig1)
         self.tabifyDockWidget(self.sConfig1, self.nmicCommand0)
         self.tabifyDockWidget(self.nmicCommand0, self.nmicCommand1)
-        self.tabifyDockWidget(self.nmicCommand1, self.closedLoop)
 
-        # self.sConfig0.loadState()
-        # self.sConfig1.loadState()
+        self.sConfig0.loadState()
+        self.sConfig1.loadState()
 
         self.boardControl = BoardControl(self)
+        self.boardControl.setFeatures(QDockWidget.NoDockWidgetFeatures)
         self.addDockWidget(Qt.RightDockWidgetArea, self.boardControl)
 
         self.cmdline = CommandLineWidget(self)
+        self.cmdline.setFeatures(QDockWidget.NoDockWidgetFeatures)
         self.addDockWidget(Qt.RightDockWidgetArea, self.cmdline)
 
         self.tabifyDockWidget(self.boardControl, self.cmdline)
 
-        # s = QSettings()
-        # if s.value("mainwindow/geometry") is not None:
-        #     self.restoreGeometry(s.value("mainwindow/geometry"))
-        #     self.restoreState(s.value("mainwindow/state"))
-        # # run loadState when the event loop starts
-        # QTimer.singleShot(0, self.loadState)
+        s = QSettings()
+        if s.value("mainwindow/geometry") is not None:
+            print(s.value("mainwindow/geometry"))
+            self.restoreGeometry(s.value("mainwindow/geometry"))
+            self.restoreState(s.value("mainwindow/state"))
+        # run loadState when the event loop starts
+        QTimer.singleShot(0, self.loadState)
 
     def setWorker(self, worker):
         self.worker = worker
@@ -84,7 +89,6 @@ class MainWindow(QMainWindow):
         self.sConfig0.setWorker(worker)
         self.sConfig1.setWorker(worker)
         self.DataVisualizer.setWorker(worker)
-        self.closedLoop.setWorker(worker)
 
 
     @pyqtSlot()
