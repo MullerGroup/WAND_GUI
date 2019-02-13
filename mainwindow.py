@@ -6,7 +6,6 @@ from RegisterEditor_v2 import *
 from PowerControl import *
 from StimConfig import *
 from BoardControl import BoardControl
-from adccontrol import AdcControl
 from cmdline import CommandLineWidget
 #from nmic_registry import *
 #from backend import *
