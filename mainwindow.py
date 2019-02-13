@@ -57,8 +57,8 @@ class MainWindow(QMainWindow):
         self.tabifyDockWidget(self.nmicCommand0, self.nmicCommand1)
         self.tabifyDockWidget(self.nmicCommand1, self.closedLoop)
 
-        self.sConfig0.loadState()
-        self.sConfig1.loadState()
+        # self.sConfig0.loadState()
+        # self.sConfig1.loadState()
 
         self.boardControl = BoardControl(self)
         self.addDockWidget(Qt.RightDockWidgetArea, self.boardControl)
@@ -68,12 +68,12 @@ class MainWindow(QMainWindow):
 
         self.tabifyDockWidget(self.boardControl, self.cmdline)
 
-        s = QSettings()
-        if s.value("mainwindow/geometry") is not None:
-            self.restoreGeometry(s.value("mainwindow/geometry"))
-            self.restoreState(s.value("mainwindow/state"))
-        # run loadState when the event loop starts
-        QTimer.singleShot(0, self.loadState)
+        # s = QSettings()
+        # if s.value("mainwindow/geometry") is not None:
+        #     self.restoreGeometry(s.value("mainwindow/geometry"))
+        #     self.restoreState(s.value("mainwindow/state"))
+        # # run loadState when the event loop starts
+        # QTimer.singleShot(0, self.loadState)
 
     def setWorker(self, worker):
         self.worker = worker

@@ -1,12 +1,7 @@
 from PyQt4.QtCore import *
 from PyQt4 import QtGui
-import serial
-import serial.tools.list_ports # _osx ?
-from bitarray import *
 import struct
 import time
-# from binascii import hexlify
-from pylibftdi import Driver, Device
 import ui.ui_DataVisualizer as ui_DataVisualizer
 import DataVisualizer
 import datetime
