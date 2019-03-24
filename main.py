@@ -6,7 +6,7 @@ from cmdline import StdoutHandler, CmdInterp
 if __name__ == '__main__':
     import sys
     app = QApplication(sys.argv)
-    app.setApplicationName('WAND Control')
+    app.setApplicationName('WAND_Control')
     app.setOrganizationName('BWRC')
 
     stdout = StdoutHandler()
