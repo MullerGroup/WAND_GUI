@@ -2,7 +2,6 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from ui.ui_mainwindow import Ui_MainWindow
 from RegisterEditor_v2 import *
-from PowerControl import *
 from StimConfig import *
 from BoardControl import BoardControl
 from cmdline import CommandLineWidget
