@@ -71,10 +71,10 @@ class MainWindow(QMainWindow):
 
         self.tabifyDockWidget(self.boardControl, self.cmdline)
 
-        s = QSettings()
+        s = QSettings("settings.plist", QSettings.NativeFormat)
         if s.value("mainwindow/geometry") is not None:
-            print(s.value("mainwindow/geometry"))
             self.restoreGeometry(s.value("mainwindow/geometry"))
+        if s.value("mainwindow/state") is not None:
             self.restoreState(s.value("mainwindow/state"))
         # run loadState when the event loop starts
         QTimer.singleShot(0, self.loadState)
@@ -93,7 +93,7 @@ class MainWindow(QMainWindow):
 
     @pyqtSlot()
     def loadState(self):
-        s = QSettings()
+        s = QSettings("settings.plist", QSettings.NativeFormat)
         if s.value("mainwindow/state") is not None:
             self.restoreState(s.value("mainwindow/state"))
 
@@ -102,7 +102,7 @@ class MainWindow(QMainWindow):
         self.sConfig1.saveState()
         self.regEdit0.saveSettings()
         self.regEdit1.saveSettings()
-        s = QSettings()
+        s = QSettings("settings.plist", QSettings.NativeFormat)
         s.setValue("mainwindow/geometry", self.saveGeometry())
         s.setValue("mainwindow/state", self.saveState())
         super().closeEvent(event)

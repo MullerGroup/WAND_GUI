@@ -68,8 +68,8 @@ class DataVisualizer(QDockWidget):
         self.streamAdcThread.streamAdcData.connect(self.streamAdcData)
         # self.connect(self.streamAdcThread, SIGNAL('streamDataOut(PyQt_PyObject)'), self.streamAdcData)
 
-        self.file = open('gui_data.csv','w')
-        self.csvfile = csv.writer(self.file)
+        self.file = []
+        self.csvfile = []
 
         self.setWindowTitle("Data Visualizer")
 

@@ -1,0 +1,55 @@
+name: wand
+channels:
+  - defaults
+dependencies:
+  - blas=1.0=mkl
+  - ca-certificates=2018.03.07=0
+  - certifi=2018.8.13=py35_0
+  - cycler=0.10.0=py35hb89929e_0
+  - freetype=2.9.1=hb4e5f40_0
+  - intel-openmp=2018.0.3=0
+  - kiwisolver=1.0.1=py35h219a9d8_0
+  - libcxx=4.0.1=h579ed51_0
+  - libcxxabi=4.0.1=hebd6815_0
+  - libedit=3.1.20170329=hb402a30_2
+  - libffi=3.2.1=h475c297_4
+  - libgfortran=3.0.1=h93005f0_2
+  - libpng=1.6.34=he12f830_0
+  - matplotlib=2.2.3=py35h54f8f79_0
+  - mkl=2018.0.3=1
+  - mkl_fft=1.0.4=py35h5d10147_1
+  - mkl_random=1.0.1=py35h78cc56f_0
+  - ncurses=6.1=h0a44026_0
+  - numpy=1.15.0=py35h648b28d_0
+  - numpy-base=1.15.0=py35h8a80b8c_0
+  - openssl=1.0.2p=h1de35cc_0
+  - pip=10.0.1=py35_0
+  - pyparsing=2.2.0=py35h31fab04_0
+  - pyqt=4.11.4=py35_4
+  - pyqtgraph=0.10.0=py35_0
+  - python=3.5.5=h0a44026_3
+  - python-dateutil=2.7.3=py35_0
+  - pytz=2018.5=py35_0
+  - qt=4.8.7=4
+  - readline=7.0=hc1231fa_4
+  - scipy=1.1.0=py35hcaad992_0
+  - setuptools=40.0.0=py35_0
+  - sip=4.18=py35_0
+  - six=1.11.0=py35h39a4c60_1
+  - sqlite=3.24.0=ha441bb4_0
+  - tk=8.6.7=h35a86e2_3
+  - tornado=5.1=py35h1de35cc_0
+  - wheel=0.31.1=py35_0
+  - xz=5.2.4=h1de35cc_4
+  - zlib=1.2.11=hf3cbc9b_2
+  - pip:
+    - altgraph==0.16.1
+    - future==0.16.0
+    - libusb1==1.6.6
+    - macholib==1.11
+    - numexpr==2.6.8
+    - pefile==2018.8.8
+    - pyinstaller==3.4
+    - tables==3.4.4
+prefix: /anaconda3/envs/wand
+

@@ -122,8 +122,8 @@ class RegisterEditor(QDockWidget):
         w.regReadData.connect(self.regReadData)
 
     def saveSettings(self):
-        s = QSettings()
-        s.beginWriteArray("regEdit/values")
+        s = QSettings("settings.plist", QSettings.NativeFormat)
+        s.beginWriteArray("regEdit/values{}".format(self.nm))
         i = 0
         for r in self.regs:
             s.setArrayIndex(i)
@@ -133,8 +133,8 @@ class RegisterEditor(QDockWidget):
         s.endArray()
 
     def restoreSettings(self):
-        s = QSettings()
-        sz = s.beginReadArray("regEdit/values")
+        s = QSettings("settings.plist", QSettings.NativeFormat)
+        sz = s.beginReadArray("regEdit/values{}".format(self.nm))
         for i in range(0, sz):
             s.setArrayIndex(i)
             a = s.value("addr")

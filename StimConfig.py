@@ -203,7 +203,7 @@ class StimConfig(QDockWidget):
         self.setWindowTitle("NM{} Stim Config".format(self.nm))
 
     def saveState(self):
-        s = QSettings()
+        s = QSettings("settings.plist", QSettings.NativeFormat)
         cbs = [self.ui.blkAllCheck,
                self.ui.cgndCheck,
                self.ui.doffCheck,
@@ -225,18 +225,19 @@ class StimConfig(QDockWidget):
         spins = [self.ui.nccpBox,
                  self.ui.stimBiasBox,
                  self.ui.stimFrequencyBox]
-        s.beginWriteArray("stimSetup/units")
+        s.beginWriteArray("stimSetup/units{}".format(self.nm))
         for i in range(0,4):
             s.setArrayIndex(i)
+            # print(self.unit[i].getState())
             s.setValue("state", self.unit[i].getState())
         s.endArray()
-        s.setValue("stimSetup/cbState", pickle.dumps([cb.isChecked() for cb in cbs]))
-        s.setValue("stimSetup/cmbState", pickle.dumps([b.currentIndex() for b in cmbs]))
-        s.setValue("stimSetup/spinState", pickle.dumps([s.value() for s in spins]))
+        s.setValue("stimSetup/cbState{}".format(self.nm), pickle.dumps([cb.isChecked() for cb in cbs]))
+        s.setValue("stimSetup/cmbState{}".format(self.nm), pickle.dumps([b.currentIndex() for b in cmbs]))
+        s.setValue("stimSetup/spinState{}".format(self.nm), pickle.dumps([s.value() for s in spins]))
         self.saveWfms()
 
     def loadState(self):
-        s = QSettings()
+        s = QSettings("settings.plist", QSettings.NativeFormat)
         self.loadWfms()
         cbs = [self.ui.blkAllCheck,
                self.ui.cgndCheck,
@@ -259,16 +260,17 @@ class StimConfig(QDockWidget):
         spins = [self.ui.nccpBox,
                  self.ui.stimBiasBox,
                  self.ui.stimFrequencyBox]
-        sz = s.beginReadArray("stimSetup/units")
+        sz = s.beginReadArray("stimSetup/units{}".format(self.nm))
         for i in range(0, sz):
             s.setArrayIndex(i)
+            # print(s.value("state"))
             self.unit[i].loadState(s.value("state"))
         s.endArray()
 
         try:
-            cbState = pickle.loads(s.value("stimSetup/cbState"))
-            cmbState = pickle.loads(s.value("stimSetup/cmbState"))
-            spinState = pickle.loads(s.value("stimSetup/spinState"))
+            cbState = pickle.loads(s.value("stimSetup/cbState{}".format(self.nm)))
+            cmbState = pickle.loads(s.value("stimSetup/cmbState{}".format(self.nm)))
+            spinState = pickle.loads(s.value("stimSetup/spinState{}".format(self.nm)))
         except Exception as e:
             print("failed to load stim state")
             return
@@ -284,8 +286,8 @@ class StimConfig(QDockWidget):
         self.writeReg.connect(w.writeReg)
 
     def saveWfms(self):
-        s = QSettings()
-        s.beginWriteArray("stimWaveforms")
+        s = QSettings("settings.plist", QSettings.NativeFormat)
+        s.beginWriteArray("stimWaveforms{}".format(self.nm))
         i = 0
         for wfm in self.wfmlist.list:
             s.setArrayIndex(i)
@@ -294,8 +296,8 @@ class StimConfig(QDockWidget):
         s.endArray()
 
     def loadWfms(self):
-        s = QSettings()
-        sz = s.beginReadArray("stimWaveforms")
+        s = QSettings("settings.plist", QSettings.NativeFormat)
+        sz = s.beginReadArray("stimWaveforms{}".format(self.nm))
         for i in range(0, sz):
             s.setArrayIndex(i)
             wfmState = pickle.loads(s.value("wfm"))

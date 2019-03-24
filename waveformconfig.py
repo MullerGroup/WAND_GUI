@@ -23,9 +23,10 @@ class WaveformEditor(QDialog):
         self.ui.waveformList.setCurrentIndex(self.model.index(0))
         self.blockEditing = False
         
-        s = QSettings()
+        s = QSettings("settings.plist", QSettings.NativeFormat)
         if s.value("waveformeditor/geometry") is not None:
             self.setGeometry(s.value("waveformeditor/geometry", type=QRect))
+        if s.value("waveformeditor/splitterstate") is not None:
             self.ui.splitter.restoreState(s.value("waveformeditor/splitterstate"))
 
     @pyqtSlot()
@@ -71,7 +72,7 @@ class WaveformEditor(QDialog):
 
     # Load/Save dialog geometry/state
     def done(self, result):
-        s = QSettings()
+        s = QSettings("settings.plist", QSettings.NativeFormat)
         s.setValue("waveformeditor/splitterstate", self.ui.splitter.saveState())
         s.setValue("waveformeditor/geometry", self.geometry())
         super().done(result)

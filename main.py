@@ -7,6 +7,7 @@ if __name__ == '__main__':
     import sys
     app = QApplication(sys.argv)
     app.setApplicationName('WAND Control')
+    app.setOrganizationName('BWRC')
 
     stdout = StdoutHandler()
     worker = CMWorker()
