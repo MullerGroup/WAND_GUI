@@ -85,42 +85,50 @@ class Ui_DataVisualizer(object):
 
         self.ch0 = QtGui.QSpinBox(self.dockWidgetContents)
         self.ch0.setMinimum(0)
-        self.ch0.setMaximum(98)
+        self.ch0.setMaximum(63)
         self.ch0.setSingleStep(1)
-        self.ch0.setProperty("value", 28)
+        self.ch0.setProperty("value", 0)
         self.ch0.setObjectName(_fromUtf8("ch0"))
         self.gridLayout.addWidget(self.ch0, 2, 1, 1, 1)
 
         self.ch1 = QtGui.QSpinBox(self.dockWidgetContents)
         self.ch1.setMinimum(0)
-        self.ch1.setMaximum(98)
+        self.ch1.setMaximum(63)
         self.ch1.setSingleStep(1)
-        self.ch1.setProperty("value", 29)
+        self.ch1.setProperty("value", 1)
         self.ch1.setObjectName(_fromUtf8("ch1"))
         self.gridLayout.addWidget(self.ch1, 2, 2, 1, 1)
 
         self.ch2 = QtGui.QSpinBox(self.dockWidgetContents)
         self.ch2.setMinimum(0)
-        self.ch2.setMaximum(98)
+        self.ch2.setMaximum(63)
         self.ch2.setSingleStep(1)
-        self.ch2.setProperty("value", 92)
+        self.ch2.setProperty("value", 2)
         self.ch2.setObjectName(_fromUtf8("ch2"))
         self.gridLayout.addWidget(self.ch2, 2, 3, 1, 1)
 
         self.ch3 = QtGui.QSpinBox(self.dockWidgetContents)
         self.ch3.setMinimum(0)
-        self.ch3.setMaximum(98)
+        self.ch3.setMaximum(63)
         self.ch3.setSingleStep(1)
-        self.ch3.setProperty("value", 93)
+        self.ch3.setProperty("value", 3)
         self.ch3.setObjectName(_fromUtf8("ch3"))
         self.gridLayout.addWidget(self.ch3, 2, 4, 1, 1)
 
         # Row 3
 
+        self.line = QtGui.QFrame(self.dockWidgetContents);
+        self.line.setObjectName(_fromUtf8("line"))
+        self.line.setFrameShape(QtGui.QFrame.HLine)
+        self.line.setFrameShadow(QtGui.QFrame.Sunken)
+        self.gridLayout.addWidget(self.line,3, 0, 1, 5)
+
+        # Row 4
+
         self.stim = QtGui.QCheckBox(self.dockWidgetContents)
         self.stim.setCheckable(True)
         self.stim.setObjectName(_fromUtf8("stim"))
-        self.gridLayout.addWidget(self.stim, 3, 0, 1, 1)
+        self.gridLayout.addWidget(self.stim, 4, 0, 1, 1)
 
         self.stimRep = QtGui.QSpinBox(self.dockWidgetContents)
         self.stimRep.setMinimum(1)
@@ -128,30 +136,12 @@ class Ui_DataVisualizer(object):
         self.stimRep.setSingleStep(1)
         self.stimRep.setProperty("value", 1)
         self.stimRep.setObjectName(_fromUtf8("stimRep"))
-        self.gridLayout.addWidget(self.stimRep, 3, 1, 1, 1)
-
-        self.stimOnNMLabel = QtGui.QLabel(self.dockWidgetContents)
-        self.stimOnNMLabel.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
-        self.stimOnNMLabel.setObjectName(_fromUtf8("stimOnNMLabel"))
-        self.gridLayout.addWidget(self.stimOnNMLabel, 3, 2, 1, 1)
-
-        self.stimOnNM = QtGui.QComboBox(self.dockWidgetContents)
-        self.stimOnNM.setEditable(False)
-        self.stimOnNM.setMaxVisibleItems(2)
-        self.stimOnNM.setObjectName(_fromUtf8("stimOnNM"))
-        self.stimOnNM.addItem(_fromUtf8(""))
-        self.stimOnNM.addItem(_fromUtf8(""))
-        self.stimOnNM.setCurrentIndex(0)
-        self.gridLayout.addWidget(self.stimOnNM, 3, 3, 1, 1)
-        self.stimOnNM.setItemText(0, _translate("DataVisualizer", "0", None))
-        self.stimOnNM.setItemText(1, _translate("DataVisualizer", "1", None))
-
-        # Row 4
+        self.gridLayout.addWidget(self.stimRep, 4, 1, 1, 1)
 
         self.delayLabel = QtGui.QLabel(self.dockWidgetContents)
         self.delayLabel.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
         self.delayLabel.setObjectName(_fromUtf8("delayLabel"))
-        self.gridLayout.addWidget(self.delayLabel, 4, 0, 1, 1)
+        self.gridLayout.addWidget(self.delayLabel, 4, 2, 1, 1)
 
         self.stimDelay = QtGui.QSpinBox(self.dockWidgetContents)
         self.stimDelay.setMinimum(10)
@@ -159,17 +149,19 @@ class Ui_DataVisualizer(object):
         self.stimDelay.setSingleStep(1)
         self.stimDelay.setProperty("value", 1000)
         self.stimDelay.setObjectName(_fromUtf8("stimDelay"))
-        self.gridLayout.addWidget(self.stimDelay, 4, 1, 1, 1)
+        self.gridLayout.addWidget(self.stimDelay, 4, 3, 1, 1)
 
-        self.interpolateBtn = QtGui.QPushButton(self.dockWidgetContents)
+        # Row 5
+        
+        self.interpolateBtn = QtGui.QCheckBox(self.dockWidgetContents)
         self.interpolateBtn.setCheckable(True)
         self.interpolateBtn.setObjectName(_fromUtf8("interpolateBtn"))
-        self.gridLayout.addWidget(self.interpolateBtn, 4, 2, 1, 1)
+        self.gridLayout.addWidget(self.interpolateBtn, 5, 0, 1, 1)
 
         self.artDelayLabel = QtGui.QLabel(self.dockWidgetContents)
         self.artDelayLabel.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
         self.artDelayLabel.setObjectName(_fromUtf8("artDelayLabel"))
-        self.gridLayout.addWidget(self.artDelayLabel, 4, 3, 1, 1)
+        self.gridLayout.addWidget(self.artDelayLabel, 5, 2, 1, 1)
 
         self.artDelay = QtGui.QSpinBox(self.dockWidgetContents)
         self.artDelay.setMinimum(10)
@@ -177,13 +169,18 @@ class Ui_DataVisualizer(object):
         self.artDelay.setSingleStep(1)
         self.artDelay.setProperty("value", 1000)
         self.artDelay.setObjectName(_fromUtf8("artDelay"))
-        self.gridLayout.addWidget(self.artDelay, 4, 4, 1, 1)
+        self.gridLayout.addWidget(self.artDelay, 5, 3, 1, 1)
 
-        # Row 5
+        # Row 6
 
         self.impStart = QtGui.QCheckBox(self.dockWidgetContents)
         self.impStart.setObjectName(_fromUtf8("impStart"))
-        self.gridLayout.addWidget(self.impStart, 5, 0, 1, 1)
+        self.gridLayout.addWidget(self.impStart, 6, 0, 1, 1)
+
+        self.impDelayLabel = QtGui.QLabel(self.dockWidgetContents)
+        self.impDelayLabel.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
+        self.impDelayLabel.setObjectName(_fromUtf8("impDelayLabel"))
+        self.gridLayout.addWidget(self.impDelayLabel, 6, 2, 1, 1)
 
         self.impDelay = QtGui.QSpinBox(self.dockWidgetContents)
         self.impDelay.setMinimum(10)
@@ -191,7 +188,7 @@ class Ui_DataVisualizer(object):
         self.impDelay.setSingleStep(1)
         self.impDelay.setProperty("value", 1000)
         self.impDelay.setObjectName(_fromUtf8("impDelay"))
-        self.gridLayout.addWidget(self.impDelay, 5, 1, 1, 1)
+        self.gridLayout.addWidget(self.impDelay, 6, 3, 1, 1)
 
         DataVisualizer.setWidget(self.dockWidgetContents)
 
@@ -209,11 +206,11 @@ class Ui_DataVisualizer(object):
         self.dispStream.setText(_translate("DataVisualizer", "Display stream data from Ch:", None))
 
         self.stim.setText(_translate("DataVisualizer", "Stimulate in Stream, Repeat:", None))
-        self.stimOnNMLabel.setText(_translate("DataVisualizer", "Stim on NM #:", None))
 
         self.delayLabel.setText(_translate("DataVisualizer", "Stim Delay:", None))
         self.interpolateBtn.setText(_translate("DataVisualizer", "Interpolate Artifacts", None))
         self.artDelayLabel.setText(_translate("DataVisualizer", "Artifact Delay:", None))
+        self.impDelayLabel.setText(_translate("DataVisualizer", "Impedance Delay:", None))
 
         self.impStart.setText(_translate("DataVisualizer", "Measure Impedance w/ Delay:", None))
 

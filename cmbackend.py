@@ -175,14 +175,6 @@ def cp2130_libusb_get_rtr_state(handle):
 
 
 class readFTDIFifoThread(QThread):
-
-    stim = False
-    count = 1000
-    rep = 1
-    art = False
-    interp = False
-    artcount = 1000
-
     def __init__(self):
         QThread.__init__(self)
         self._running = True
@@ -193,14 +185,12 @@ class readFTDIFifoThread(QThread):
     def stop(self):
         self._running = False
 
-    def setup(self, stim, rep, delay, art, interp, artdelay, stimOnNM, imp, impdelay):
-        self.rep = rep
+    def setup(self, stim, rep, delay, interp, artdelay, imp, impdelay):
         self.stim = stim
+        self.rep = rep
         self.count = delay
-        self.art = art
         self.interp = interp
         self.artcount = artdelay + self.count
-        self.stimOnNM = stimOnNM
         self.imp = imp
         self.impcount = impdelay
 
@@ -226,26 +216,18 @@ class readFTDIFifoThread(QThread):
                 if self.count > 0 and self.stim:
                     self.count = self.count - 1
                     if self.count == 0:
-                        print("stimming")
-                        # CMWorker().nmicCommand(0, 0x09)
-                        if self.stimOnNM == 0:
-                            # print("stim on 0")
-                            CMWorker()._regWr(Reg.req, (self.rep << 16) | (1 << 13) | (1 << 11))
-                        if self.stimOnNM == 1:
-                            # print("stim on 1")
-                            CMWorker()._regWr(Reg.req, (self.rep << 16) | (1 << 13) | (1 << 12))
+                        print("Stimulation started at: {}".format(datetime.datetime.now()))
+                        CMWorker()._regWr(Reg.req, (self.rep << 16) | (1 << 13) | (1 << 11))
                 if self.artcount > 0 and self.stim:
                     self.artcount = self.artcount - 1
                     if self.artcount == 0:
-                        print("artifact enable")
-                        if self.art:
-                            CMWorker().enableArtifact()
-                        elif self.interp:
+                        if self.interp:
                             CMWorker().enableInterpolate()
+                            print("Artiact interpolation enabled at {}".format(datetime.datetime.now()))
                 if self.impcount > 0 and self.imp and not self.stim:
                     self.impcount = self.impcount - 1
                     if self.impcount == 0:
-                            print("impedance measure")
+                            print("Impedance measurement started at {}".format(datetime.datetime.now()))
                             CMWorker().nmicCommand(0, 0x04)
                             CMWorker().nmicCommand(1, 0x04)
 
@@ -257,18 +239,6 @@ class readFTDIFifoThread(QThread):
 class streamAdcThread(QThread):
 
     streamAdcData = pyqtSignal(list)
-    display = True
-    ch0 = 0
-    ch1 = 0
-    ch2 = 0
-    ch3 = 0
-    stim = True
-    rep = 1
-    delay = 1000
-    art = False
-    interp = False
-    artdelay = 1000
-    filename = ''
 
     def __init__(self):
         QThread.__init__(self)
@@ -282,29 +252,18 @@ class streamAdcThread(QThread):
         self._running = False
         return self.filename + '.txt'
 
-    def setup(self, disp, stim, ch0, ch1, ch2, ch3, rep, delay, art, interp, artdelay, stimOnNM, imp, impdelay):
-        self.ch0 = ch0
-        self.ch1 = ch1
-        self.ch2 = ch2
-        self.ch3 = ch3
-        self.display = disp
+    def setup(self, stim, rep, delay, interp, artdelay, imp, impdelay):
         self.stim = stim
         self.rep = rep
         self.delay = delay
-        self.art = art
         self.interp = interp
         self.artdelay = artdelay
-        self.stimOnNM = stimOnNM
         self.imp = imp
         self.impdelay = impdelay
         if stim:
-            print("Streaming with stim")
+            print("Streaming with stimulation enabled")
         elif imp:
             print("Streaming with impedance measurement")
-        # print(art)
-        # print(interp)
-        # print(artdelay)
-
 
     def run(self):
         # make sure serial device is open
@@ -320,15 +279,9 @@ class streamAdcThread(QThread):
         self.saveFile = tables.open_file(self.filename + '.hdf', mode="w", title="Stream")
         self.dataGroup = self.saveFile.create_group("/", name='dataGroup', title='Recorded Data Group')
         self.dataTable = self.saveFile.create_table(self.dataGroup, name='dataTable', title='Recorded Data Table', description=stream_data, expectedrows=60000*5*1)
-        self.infoGroup = self.saveFile.create_group("/", name='infoGroup', title='Recording Information Group')
-        self.infoTable = self.saveFile.create_table(self.infoGroup, name='infoTable', title='Recording Information Table', description=stream_info)
 
         start = datetime.datetime.now()
         print("Stream started at: {}".format(start))
-        data_point = self.infoTable.row
-        data_point['channels'] = CMWorker.enabledChannels
-        data_point.append()
-        self.infoTable.flush()
 
         CMWorker().startStream() # put CM into streaming mode for both NMs
         time.sleep(0.07)
@@ -341,8 +294,9 @@ class streamAdcThread(QThread):
         t_0 = time.time()
 
         # initialize ftdiFIFO thread and start it
-        self.ftdiFIFO.setup(self.stim, self.rep, self.delay, self.art, self.interp, self.artdelay, self.stimOnNM, self.imp, self.impdelay)
+        self.ftdiFIFO.setup(self.stim, self.rep, self.delay, self.interp, self.artdelay, self.imp, self.impdelay)
         self.ftdiFIFO.start()
+
         timeout = False
         while self._running:
             try:
@@ -364,9 +318,7 @@ class streamAdcThread(QThread):
                     success += 1
                     data_point = self.dataTable.row
                     data_point['out'] = [data[0] if i == 0 else ((data[i + 1] << 8 | data[i]) & 0xFFFF if i < datalen - 7 else (data[i + 1] << 8 | data[i])) for i in list(range(0, datalen - 3, 2))]
-                    if self.display:
-                        # out.append([(data[i + 1] << 8 | data[i]) & 0x7FFF for i in list(range(2*(self.chStart + 1), 2*(self.chStart + 5), 2))])
-                        out.append([(data[i + 1] << 8 | data[i]) & 0x7FFF for i in [2*(self.ch0 + 1), 2*(self.ch1 + 1), 2*(self.ch2 + 1), 2*(self.ch3 + 1)]])
+                    out.append([(data[2*(i+1) + 1] << 8 | data[2*(i+1)]) & 0x7FFF for i in range(0,64)])
                     data_point['time'] = data_time
                     data_point.append()
 
@@ -375,35 +327,30 @@ class streamAdcThread(QThread):
                     success += 1
                     data_point = self.dataTable.row
                     data_point['out'] = [data[0] if i == 0 else ((data[i + 1] << 8 | data[i]) & 0xFFFF if i < datalen - 7 else (data[i + 1] << 8 | data[i])) for i in list(range(0, datalen - 3, 2))]
-                    # if self.display:
-                    #     # out.append([(data[i + 1] << 8 | data[i]) & 0x7FFF for i in list(range(2*(self.chStart + 1), 2*(self.chStart + 5), 2))])
-                    #     out.append([(data[i + 1] << 8 | data[i]) & 0x7FFF for i in [2*(self.ch0 + 1), 2*(self.ch1 + 1), 2*(self.ch2 + 1), 2*(self.ch3 + 1)]])
                     data_point['time'] = data_time
                     data_point.append()
 
-                else: # should never get here?
+                else:
                     fail += 1
 
-                # flush the tables every 1000 samples (any speed up?)
                 if samples%1000 == 0:
                     self.dataTable.flush()
-                if samples%50 == 0 and self.display:
+                if samples%50 == 0:
                     self.streamAdcData.emit(out)
                     out = []
             timeout = False
-            #TODO: add plotting during streaming (activated via checkbox) only on displayed channels
 
         self.ftdiFIFO.stop() # turn off FTDI fifo reading thread
         print("Stream ended at: {}".format(datetime.datetime.now()))
-        print("CRCs: {}".format(crcs))
         print("Received Samples: {}".format(samples))
-        print("Success: {}".format((samples - crcs)/samples))
-        print("Error: {}".format(crcs/samples))
+        print("CRCs: {}".format(crcs))
+        if samples != 0:
+            print("Success: {}".format((samples - crcs)/samples))
+            print("Error: {}".format(crcs/samples))
         time.sleep(0.5)
 
         CMWorker().stopStream() # turn off streaming mode
         print("End of Stream")
-        print("Fifos Flushed")
 
         self.saveFile.close()
 
