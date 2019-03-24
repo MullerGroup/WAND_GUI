@@ -45,5 +45,5 @@ class Ui_MainWindow(object):
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
-        MainWindow.setWindowTitle(_translate("MainWindow", "NMIC Control", None))
+        MainWindow.setWindowTitle(_translate("MainWindow", "WAND Control", None))
 

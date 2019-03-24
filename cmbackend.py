@@ -481,7 +481,6 @@ class CMWorker(QThread):
     def regFile(self, fn):
         print('CMworker call')
         self.saveRegs.emit(fn, 0)
-        self.saveRegs.emit(fn, 1)
 
     @pyqtSlot(int)
     def readAdc(self, ns):
