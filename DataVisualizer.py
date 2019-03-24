@@ -141,6 +141,5 @@ class DataVisualizer(QDockWidget):
             self.plots[ch].getViewBox().setMouseEnabled(x=True, y=True)
             self.plots[ch].getViewBox().setMouseMode(self.plots[ch].getViewBox().RectMode)
             self.plots[ch].getViewBox().setLimits(xMin=0, xMax=self.xRange, yMin=-32768, yMax=32768)
-            self.plots[ch].getViewBox().setRange(yRange=(avg-(sd*2),avg+(sd*2)),update=True)
             if self.ui.autorange.isChecked():
                 self.plots[ch].getViewBox().autoRange()

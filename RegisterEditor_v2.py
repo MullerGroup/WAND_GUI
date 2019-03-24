@@ -167,7 +167,7 @@ class RegisterEditor_v2(QDockWidget):
 
         fh.write('\n\n')
 
-        if self.nm == 1:
+        if self.nm == 0:
             fh.write('Notes:\n\n')
             notes, ok = QInputDialog.getText(self, 'Notes', 'Enter notes for stream: ')
             if ok:
