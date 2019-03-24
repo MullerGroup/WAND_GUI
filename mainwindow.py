@@ -1,7 +1,6 @@
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from ui.ui_mainwindow import Ui_MainWindow
-from RegisterEditor import *
 from RegisterEditor_v2 import *
 from PowerControl import *
 from StimConfig import *
