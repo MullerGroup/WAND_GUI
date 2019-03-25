@@ -30,15 +30,8 @@ class Reg(Enum):
     req = 0xff
 
 class stream_data(IsDescription):
-    # crc = UInt8Col()
-    # data = UInt16Col(shape=(96))
-    # ramp = UInt16Col()
-    # time = FloatCol()
     out = UInt16Col(int(datalen/2 - 1))
     time = FloatCol()
-
-class stream_info(IsDescription):
-    channels = UInt16Col(shape=(8))
 
 dataQueue = Queue()
 timeQueue = Queue()
@@ -55,9 +48,6 @@ def cp2130_libusb_set_usb_config(handle):
 	if error_code != sizeof(control_buf_out):
 		print('Error in bulk transfer')
 		return False
-	# print('Successfully set value of spi_word on chip:')
-	# for i in control_buf_out:
-	# 	print(i)
 	return True
 
 # this function always writes 5 bytes. if you want to write more than that, have to parametrize it
@@ -100,15 +90,12 @@ def cp2130_libusb_readRTR(handle):
         print('Error in bulk transfer write size')
         print(bytesWritten.value)
         return False
-    # time.sleep(0.05)
-    # while(1):
-    #     pass
+
     error_code = libusb1.libusb_bulk_transfer(handle, 0x81, read_input_buf, sizeof(read_input_buf), byref(bytesRead), usbTimeout)
     if error_code:
         print('Error in bulk transfer (read buffer). Error # {}'.format(error_code))
         return False
-    # for i in read_input_buf:
-    #     print('{} '.format(i), end="")
+
     return read_input_buf
 
 def cp2130_libusb_read(handle):
@@ -132,9 +119,7 @@ def cp2130_libusb_read(handle):
         print('Error in bulk transfer write size')
         print(bytesWritten.value)
         return False
-    # time.sleep(0.05)
-    # while(1):
-    #     pass
+
     error_code = libusb1.libusb_bulk_transfer(handle, 0x81, read_input_buf, sizeof(read_input_buf), byref(bytesRead), usbTimeout)
     if error_code:
         print('Error in bulk transfer (read buffer). Error # {}'.format(error_code))
@@ -142,8 +127,7 @@ def cp2130_libusb_read(handle):
     if bytesRead.value != sizeof(read_input_buf):
         print('Error in bulk transfer - returned {} out of {} bytes'.format(bytesRead.value, sizeof(read_input_buf)))
         return False
-    # for i in read_input_buf:
-    #     print('{} '.format(i), end="")
+
     return read_input_buf
 
 def cp2130_libusb_set_spi_word(handle):
@@ -155,8 +139,7 @@ def cp2130_libusb_set_spi_word(handle):
     if error_code != sizeof(control_buf_out):
         print('Error in bulk transfer')
         return False
-    # for i in control_buf_out:
-    # 	print(i)
+
     return True
 
 def cp2130_libusb_get_rtr_state(handle):
@@ -168,9 +151,7 @@ def cp2130_libusb_get_rtr_state(handle):
     if error_code != sizeof(control_buf_in):
         print('Error in bulk transfer')
         return False
-    # print('RTR_state: ')
-    # for i in control_buf_in:
-    # 	print(i)
+
     return True
 
 
@@ -231,7 +212,6 @@ class readFTDIFifoThread(QThread):
                             CMWorker().nmicCommand(0, 0x04)
                             CMWorker().nmicCommand(1, 0x04)
 
-        CMWorker().disableArtifact()
         CMWorker().disableInterpolate()
         dataQueue.queue.clear()
         timeQueue.queue.clear()
@@ -374,11 +354,15 @@ class CMWorker(QThread):
     device = libusb1.libusb_device_p()
     cp2130Handle = libusb1.libusb_device_handle_p()
     kernelAttached = 0
+
+    regReadFailed = False
+
     if libusb1.libusb_init(byref(context)) != 0:
         print('Could not initialize libusb!')
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.regReadFailed = False
 
     def __del__(self):
         # wait for the thread to finish before destroying object
@@ -444,49 +428,9 @@ class CMWorker(QThread):
                 val = d[4] + 256 * d[5]
                 return [success, add, val]
 
-    def _getAdc(self, N):
-        print('Requesting data...')
-        out = []
-        self._flushRadio()
-        self.startStream() # put CM into streaming mode
-        crcs = 0
-        samples = 0
-        running = True
-        timeout = 0
-        while samples < N and running:
-            data = cp2130_libusb_read(CMWorker.cp2130Handle)
-
-            if data:
-                if data[1] == 198:
-                    timeout = 0
-                    out.append([data[i+1] << 8 | data[i] if i > datalen - 8 else (data[i+1] << 8 | data[i]) & 0x7FFF for i in list(range(2, datalen-1, 2))])
-                    samples = samples + 1
-                    if data[0] == 0xFF:
-                        crcs = crcs + 1
-                else:
-                    # TODO: decrease timeout
-                    timeout = timeout + 1
-                    if timeout > 1000:
-                        running = False
-                        print('Request failed')
-
-        print("Samples: {}".format(samples))
-        print("CRCs: {}".format(crcs))
-        self.stopStream() # stop streamining
-        self._flushRadio()
-        return out
-
-
     @pyqtSlot(str)
     def regFile(self, fn):
-        print('CMworker call')
         self.saveRegs.emit(fn, 0)
-
-    @pyqtSlot(int)
-    def readAdc(self, ns):
-        if not self.cp2130Handle:
-            return
-        self.adcData.emit(self._getAdc(ns))
 
     def exit_cp2130(self):
         if self.cp2130Handle:
@@ -548,8 +492,6 @@ class CMWorker(QThread):
         if not self.cp2130Handle:
             return
         self._sendCmd(nm, cmd)
-        # if (cmd == 0x04 or cmd == 0x09):
-        #     self.adcData.emit(self._getAdc(1000))
 
     @pyqtSlot(int, int, int)
     def writeReg(self, nm, addr, value):
@@ -584,12 +526,15 @@ class CMWorker(QThread):
     def readReg(self, nm, addr):
         if not self.cp2130Handle:
             return
+        if (addr != 0) and self.regReadFailed:
+            return
         ret = [False, 0, 0]
         tries = 0
         while (tries < 10) and not(ret[0] and addr == ret[1]):
             ret = self._regOp(nm, addr, 0, False)
             tries = tries + 1
         if tries < 10:
+            self.regReadFailed = False
             print("Read register from NM {}: {:04x} {:04x}".format(nm, addr, ret[2]))
             if addr == 0x04:
                 if nm == 0:
@@ -615,176 +560,20 @@ class CMWorker(QThread):
             self.regReadData.emit(nm, addr, ret[2])
         else:
             print("Failed to read register{:04x}".format(addr))
+            self.regReadFailed = True
         return ret
-
-    @pyqtSlot()
-    def testCommOn(self):
-        if not self.cp2130Handle:
-            return
-        print("Test Comm On")
-        self._regWr(Reg.req, 0x00000080) # enable test
-
-    @pyqtSlot()
-    def testCommOff(self):
-        if not self.cp2130Handle:
-            return
-        print("Test Comm Off")
-        self._regWr(Reg.req, 0x00000040)  # disable test
-
-    @pyqtSlot()
-    def setupRecording(self):
-        if not self.cp2130Handle:
-            return
-        self.writeReg(0, 0x11, 0x4000)
-        time.sleep(0.01)
-        self._sendCmd(0, 0x0a)
-        self.writeReg(1, 0x11, 0x4000)
-        time.sleep(0.01)
-        self._sendCmd(1, 0x0a)
-
-        time.sleep(0.05)
-        ret0 = self.readReg(0, 0x11)
-        if not ret0[0]:
-            print("Register readback failed for NM0 - try again")
-            return
-        if ret0[2] != 0x4000:
-            print("Register write failed for NM0 - try again")
-            return
-        ret1 = self.readReg(1, 0x11)
-        if not ret1[0]:
-            print("Register write failed for NM1 - try again")
-            return
-        if ret1[2] != 0x4000:
-            print("Register write failed for NM1 - try again")
-            return
-        print("Recording setup successfully. You may begin stream.")
-
-    @pyqtSlot()
-    def setupStim(self):
-        if not self.cp2130Handle:
-            return
-        # write stim registers for NM0
-        self.writeReg(0, 16, 0x82)
-        time.sleep(0.01)
-        self.writeReg(0, 17, 0x1082)
-        time.sleep(0.01)
-        self.writeReg(0, 18, 0x7)
-        time.sleep(0.01)
-        self.writeReg(0, 19, 0x7)
-        time.sleep(0.01)
-        self.writeReg(0, 20, 0x7)
-        time.sleep(0.01)
-        self.writeReg(0, 21, 0x7)
-        time.sleep(0.01)
-        self.writeReg(0, 22, 0x0)
-        time.sleep(0.01)
-        self.writeReg(0, 23, 0x260)
-        time.sleep(0.01)
-        self.writeReg(0, 24, 0x64)
-        time.sleep(0.01)
-        self.writeReg(0, 25, 0x0)
-        time.sleep(0.01)
-        self.writeReg(0, 26, 0x275C)
-        time.sleep(0.01)
-        self.writeReg(0, 27, 0x0)
-        time.sleep(0.01)
-        self.writeReg(0, 28, 0x0)
-        time.sleep(0.01)
-        self.writeReg(0, 29, 0x0)
-        time.sleep(0.01)
-        self.writeReg(0, 30, 0x62)
-        time.sleep(0.01)
-
-        self.writeReg(1, 16, 0x82)
-        time.sleep(0.01)
-        self.writeReg(1, 17, 0x1082)
-        time.sleep(0.01)
-        self.writeReg(1, 18, 0x7)
-        time.sleep(0.01)
-        self.writeReg(1, 19, 0x7)
-        time.sleep(0.01)
-        self.writeReg(1, 20, 0x7)
-        time.sleep(0.01)
-        self.writeReg(1, 21, 0x7)
-        time.sleep(0.01)
-        self.writeReg(1, 22, 0x0)
-        time.sleep(0.01)
-        self.writeReg(1, 23, 0x260)
-        time.sleep(0.01)
-        self.writeReg(1, 24, 0x64)
-        time.sleep(0.01)
-        self.writeReg(1, 25, 0x0)
-        time.sleep(0.01)
-        self.writeReg(1, 26, 0x275C)
-        time.sleep(0.01)
-        self.writeReg(1, 27, 0x0)
-        time.sleep(0.01)
-        self.writeReg(1, 28, 0x0)
-        time.sleep(0.01)
-        self.writeReg(1, 29, 0x0)
-        time.sleep(0.01)
-        self.writeReg(1, 30, 0x102)
-        time.sleep(0.01)
-
-        # clear error
-        self.nmicCommand(0, 0x02)
-        time.sleep(0.01)
-        self.nmicCommand(1, 0x02)
-        time.sleep(0.01)
-
-        # HV load
-        self.nmicCommand(0, 0x03)
-        time.sleep(0.01)
-        self.nmicCommand(1, 0x03)
-        time.sleep(0.01)
-
-        # stim transfer
-        self.nmicCommand(0, 0x0a)
-        time.sleep(0.01)
-        self.nmicCommand(1, 0x0a)
-        time.sleep(0.01)
-
-        # clear error again
-        self.nmicCommand(0, 0x02)
-        time.sleep(0.01)
-        self.nmicCommand(1, 0x02)
-        time.sleep(0.01)
-
-    @pyqtSlot(int, int)
-    def writeCL(self, addr, value):
-        if not self.cp2130Handle:
-            print(hex(addr))
-            print(bin(value))
-            return
-        self._regWr(addr, value)
-
-    # @pyqtSlot()
-    def enableArtifact(self):
-        if not self.cp2130Handle:
-            return
-        self._regWr(Reg.req, 0x0080)
-        print("Enabled Artifact Removal")
-
-    # @pyqtSlot()
-    def disableArtifact(self):
-        if not self.cp2130Handle:
-            return
-        self._regWr(Reg.req, 0x0040)
-        print("Disabled Artifact Removal")
 
     # @pyqtSlot()
     def enableInterpolate(self):
         if not self.cp2130Handle:
             return
         self._regWr(Reg.req, 0x8000)
-        print("Enabled Artifact Interpolation")
 
     # @pyqtSlot()
     def disableInterpolate(self):
         if not self.cp2130Handle:
             return
         self._regWr(Reg.req, 0x4000)
-        print("Disabled Artifact Interpolation")
 
     def startStream(self):
         if not self.cp2130Handle:

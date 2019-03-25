@@ -43,8 +43,6 @@ class SysCtrl(QObject):
     def setWorker(self, w):
         self._writeReg.connect(w.writeReg)
         self._cmd.connect(w.nmicCommand)
-        self._adcReq.connect(w.readAdc, QtCore.Qt.BlockingQueuedConnection)
-        w.adcData.connect(self._adcData, QtCore.Qt.DirectConnection)
 
     def clear(self):
         self._clearLog.emit()

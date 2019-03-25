@@ -155,7 +155,6 @@ class RegisterEditor_v2(QDockWidget):
     def saveRegs(self, fn, nm_num):
         if self.nm != nm_num:
             return
-        print('reg edit call {}'.format(self.nm))
         if not fn:
             return
         fh = open(fn,"a")
