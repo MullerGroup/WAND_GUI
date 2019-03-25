@@ -1,0 +1,31 @@
+from PyQt4.QtCore import *
+from PyQt4.QtGui import *
+from ui.ui_nmicConfig import Ui_nmicConfig
+from enum import Enum
+
+class Cmd(Enum):
+    Reset = 0x01
+    ClearErr = 0x02
+    HvLoad = 0x03
+    ImpStart = 0x04
+    StimReset = 0x08
+    StimStart = 0x09
+    StimXfer = 0x0a
+
+class nmicConfig(QDockWidget):
+    setWideIn = pyqtSignal(int, bool)
+
+    def __init__(self, parent=None, nm=0):
+        super().__init__(parent)
+        self.nm = nm
+        self.ui = Ui_nmicConfig()
+        self.ui.setupUi(self)
+        
+        self.setWindowTitle("NM{} Configuration".format(self.nm))
+
+    def setWorker(self, w):
+        self.setWideIn.connect(w.setWideIn)
+
+    @pyqtSlot()
+    def on_wideIn_clicked(self):
+        self.setWideIn.emit(self.nm, self.ui.wideIn.isChecked())

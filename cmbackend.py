@@ -497,30 +497,41 @@ class CMWorker(QThread):
     def writeReg(self, nm, addr, value):
         if not self.cp2130Handle:
             return
-        self._regOp(nm, addr, value, True)
-        #print("Write register: {:04x} {:04x}".format(addr, value))
-        self.regReadData.emit(nm, addr, value)
-        if addr == 0x04:
-            if nm == 0:
-                self.enabledChannels[0] = value
-            else:
-                self.enabledChannels[4] = value
-        elif addr == 0x05:
-            if nm == 0:
-                self.enabledChannels[1] = value
-            else:
-                self.enabledChannels[5] = value
-        elif addr == 0x06:
-            if nm == 0:
-                self.enabledChannels[2] = value
-            else:
-                self.enabledChannels[6] = value
-        elif addr == 0x07:
-            if nm == 0:
-                self.enabledChannels[3] = value
-            else:
-                self.enabledChannels[7] = value
-        self.updateChannels.emit(self.enabledChannels)
+        tries = 0
+        while tries < 5:
+            self._regOp(nm, addr, value, True)
+            ret = self.readReg(nm, addr)
+            if ret[0] and (ret[2] == value):
+                break
+            tries = tries + 1
+        if tries == 5:
+            success = False
+        else:
+            success = True 
+            #print("Write register: {:04x} {:04x}".format(addr, value))
+            self.regReadData.emit(nm, addr, value)
+            if addr == 0x04:
+                if nm == 0:
+                    self.enabledChannels[0] = value
+                else:
+                    self.enabledChannels[4] = value
+            elif addr == 0x05:
+                if nm == 0:
+                    self.enabledChannels[1] = value
+                else:
+                    self.enabledChannels[5] = value
+            elif addr == 0x06:
+                if nm == 0:
+                    self.enabledChannels[2] = value
+                else:
+                    self.enabledChannels[6] = value
+            elif addr == 0x07:
+                if nm == 0:
+                    self.enabledChannels[3] = value
+                else:
+                    self.enabledChannels[7] = value
+            self.updateChannels.emit(self.enabledChannels)
+        return success
 
     @pyqtSlot(int, int)
     def readReg(self, nm, addr):
@@ -584,3 +595,36 @@ class CMWorker(QThread):
         if not self.cp2130Handle:
             return
         self._regWr(Reg.req, 0x0010)
+
+
+    @pyqtSlot(int, bool)
+    def setWideIn(self, nm, enable):
+        if not self.cp2130Handle:
+            return
+        self.regReadFailed = False
+        r = self.readReg(nm, 0x0C)
+        if not r:
+            print('Failed to read wide input register')
+            return False 
+        if not r[0]:
+            print('Failed to read wide input register')
+            return False
+        else:
+            value = r[2]
+            print("Register Value: {:04x}".format(value))
+            value = value & 0xFFFE
+            if enable:
+                value = value + 1;
+
+            print('Writing wide input mode')
+            tries = 0
+            success = self.writeReg(nm, 0x0C, value)
+            if success:
+                if enable:
+                    print('Wide input enabled!')
+                else:
+                    print('Wide input disabled!')
+                return True
+            else:
+                print('Unable to configure wide input mode.')
+                return False

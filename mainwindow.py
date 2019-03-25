@@ -9,6 +9,7 @@ from cmdline import CommandLineWidget
 #from backend import *
 from nmicCommand import NmicCommand
 from DataVisualizer import DataVisualizer
+from nmicConfig import *
 
 class MainWindow(QMainWindow):   
     def __init__(self, parent=None):
@@ -21,6 +22,10 @@ class MainWindow(QMainWindow):
         self.DataVisualizer = DataVisualizer(self)
         self.DataVisualizer.setFeatures(QDockWidget.NoDockWidgetFeatures)
         self.addDockWidget(Qt.LeftDockWidgetArea, self.DataVisualizer)
+
+        self.nmicConfig0 = nmicConfig(self,0)
+        self.nmicConfig0.setFeatures(QDockWidget.NoDockWidgetFeatures)
+        self.addDockWidget(Qt.RightDockWidgetArea, self.nmicConfig0)
 
         self.sConfig0 = StimConfig(self, 0)
         self.sConfig0.setFeatures(QDockWidget.NoDockWidgetFeatures)
@@ -36,6 +41,7 @@ class MainWindow(QMainWindow):
 
 
         # NM0 widgets grouping
+        self.tabifyDockWidget(self.nmicConfig0, self.sConfig0)
         self.tabifyDockWidget(self.sConfig0, self.nmicCommand0)
         self.tabifyDockWidget(self.nmicCommand0, self.regEdit0)
 
@@ -66,6 +72,7 @@ class MainWindow(QMainWindow):
         self.regEdit0.setWorker(worker)
         self.sConfig0.setWorker(worker)
         self.DataVisualizer.setWorker(worker)
+        self.nmicConfig0.setWorker(worker)
 
 
     @pyqtSlot()
