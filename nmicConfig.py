@@ -14,6 +14,8 @@ class Cmd(Enum):
 
 class nmicConfig(QDockWidget):
     setWideIn = pyqtSignal(int, bool)
+    enableHV = pyqtSignal(int)
+    setZmeasure = pyqtSignal(int, int, int)
 
     def __init__(self, parent=None, nm=0):
         super().__init__(parent)
@@ -25,7 +27,17 @@ class nmicConfig(QDockWidget):
 
     def setWorker(self, w):
         self.setWideIn.connect(w.setWideIn)
+        self.enableHV.connect(w.enableHV)
+        self.setZmeasure.connect(w.setZmeasure)
 
     @pyqtSlot()
     def on_wideIn_clicked(self):
         self.setWideIn.emit(self.nm, self.ui.wideIn.isChecked())
+
+    @pyqtSlot()
+    def on_hvEn_clicked(self):
+        self.enableHV.emit(self.nm)
+
+    @pyqtSlot()
+    def on_zSet_clicked(self):
+        self.setZmeasure.emit(self.nm, self.ui.zMag.currentIndex(), self.ui.zCycle.value())

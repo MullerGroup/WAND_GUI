@@ -69,5 +69,5 @@ class Ui_CommandLine(object):
         self.runButton.setText(_translate("CommandLine", "Run", None))
         self.execButton.setText(_translate("CommandLine", "Exec script", None))
         self.saveButton.setText(_translate("CommandLine", "Save Log", None))
-        self.clearButton.setText(_translate("CommandLine", "Clear", None))
+        self.clearButton.setText(_translate("CommandLine", "Clear Log", None))
 

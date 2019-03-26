@@ -61,5 +61,5 @@ class Ui_BoardControl(object):
         self.disconnBtn.setText(_translate("BoardControl", "Disconnect", None))
         self.refreshBtn.setText(_translate("BoardControl", "Refresh", None))
         self.connectBtn.setText(_translate("BoardControl", "Connect", None))
-        self.label.setText(_translate("BoardControl", "Connected control modules:", None))
+        self.label.setText(_translate("BoardControl", "Connected receivers:", None))
 

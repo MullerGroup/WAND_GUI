@@ -198,20 +198,20 @@ class Ui_DataVisualizer(object):
     def retranslateUi(self, DataVisualizer):
         DataVisualizer.setWindowTitle(_translate("DataVisualizer", "WAND_Control", None))
 
-        self.streamBtn.setText(_translate("DataVisualizer", "Stream Data", None))
+        self.streamBtn.setText(_translate("DataVisualizer", "Stream data", None))
         self.clearBtn.setText(_translate("DataVisualizer", "Clear plots", None))
         self.autorange.setText(_translate("DataVisualizer", "Autorange Y", None))
         self.xRangeLabel.setText(_translate("DataVisualizer", "X-axis range (ms):", None))
 
-        self.dispStream.setText(_translate("DataVisualizer", "Display stream data from Ch:", None))
+        self.dispStream.setText(_translate("DataVisualizer", "Display stream data from ch:", None))
 
-        self.stim.setText(_translate("DataVisualizer", "Stimulate in Stream, Repeat:", None))
+        self.stim.setText(_translate("DataVisualizer", "Stimulate in stream, repeat:", None))
 
-        self.delayLabel.setText(_translate("DataVisualizer", "Stim Delay:", None))
-        self.interpolateBtn.setText(_translate("DataVisualizer", "Interpolate Artifacts", None))
-        self.artDelayLabel.setText(_translate("DataVisualizer", "Artifact Delay:", None))
-        self.impDelayLabel.setText(_translate("DataVisualizer", "Impedance Delay:", None))
+        self.delayLabel.setText(_translate("DataVisualizer", "Stim delay:", None))
+        self.interpolateBtn.setText(_translate("DataVisualizer", "Interpolate artifacts", None))
+        self.artDelayLabel.setText(_translate("DataVisualizer", "Artifact delay:", None))
+        self.impDelayLabel.setText(_translate("DataVisualizer", "Impedance delay:", None))
 
-        self.impStart.setText(_translate("DataVisualizer", "Measure Impedance w/ Delay:", None))
+        self.impStart.setText(_translate("DataVisualizer", "Measure impedance w/ delay:", None))
 
 from pyqtgraph import GraphicsLayoutWidget

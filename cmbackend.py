@@ -338,11 +338,7 @@ class CMWorker(QThread):
     connStateChanged = pyqtSignal(bool)
     boardsChanged = pyqtSignal(list)
     regReadData = pyqtSignal(int, int, int)
-    adcData = pyqtSignal(list)
-    updateChannels = pyqtSignal(list)
     saveRegs = pyqtSignal(str, int)
-
-    enabledChannels = [65535,65535,65535,65535,65535,65535,0,0]
 
     # ser = Device(lazy_open=True)
 
@@ -373,13 +369,6 @@ class CMWorker(QThread):
 
     def _regWr(self, reg, value):
         cp2130_libusb_write(CMWorker.cp2130Handle, [reg.value, *struct.pack('>I', value)])
-
-    def _resetIF(self):
-        # reset AM
-        self._regWr(Reg.ctrl, 0x103)
-        # reset all NMs
-        self._regWr(Reg.rst, 0xFFFF)
-        self._regWr(Reg.ctrl, 0x102)
 
     def _sendCmd(self, nm, cmd):
         print('Send Command')
@@ -498,6 +487,9 @@ class CMWorker(QThread):
         if not self.cp2130Handle:
             return
         tries = 0
+        if addr > 0x0F:
+            self._regOp(nm, addr, value, True)
+            return True
         while tries < 5:
             self._regOp(nm, addr, value, True)
             ret = self.readReg(nm, addr)
@@ -508,29 +500,7 @@ class CMWorker(QThread):
             success = False
         else:
             success = True 
-            #print("Write register: {:04x} {:04x}".format(addr, value))
             self.regReadData.emit(nm, addr, value)
-            if addr == 0x04:
-                if nm == 0:
-                    self.enabledChannels[0] = value
-                else:
-                    self.enabledChannels[4] = value
-            elif addr == 0x05:
-                if nm == 0:
-                    self.enabledChannels[1] = value
-                else:
-                    self.enabledChannels[5] = value
-            elif addr == 0x06:
-                if nm == 0:
-                    self.enabledChannels[2] = value
-                else:
-                    self.enabledChannels[6] = value
-            elif addr == 0x07:
-                if nm == 0:
-                    self.enabledChannels[3] = value
-                else:
-                    self.enabledChannels[7] = value
-            self.updateChannels.emit(self.enabledChannels)
         return success
 
     @pyqtSlot(int, int)
@@ -547,27 +517,6 @@ class CMWorker(QThread):
         if tries < 10:
             self.regReadFailed = False
             print("Read register from NM {}: {:04x} {:04x}".format(nm, addr, ret[2]))
-            if addr == 0x04:
-                if nm == 0:
-                    self.enabledChannels[0] = ret[2]
-                else:
-                    self.enabledChannels[4] = ret[2]
-            elif addr == 0x05:
-                if nm == 0:
-                    self.enabledChannels[1] = ret[2]
-                else:
-                    self.enabledChannels[5] = ret[2]
-            elif addr == 0x06:
-                if nm == 0:
-                    self.enabledChannels[2] = ret[2]
-                else:
-                    self.enabledChannels[6] = ret[2]
-            elif addr == 0x07:
-                if nm == 0:
-                    self.enabledChannels[3] = ret[2]
-                else:
-                    self.enabledChannels[7] = ret[2]
-            self.updateChannels.emit(self.enabledChannels)
             self.regReadData.emit(nm, addr, ret[2])
         else:
             print("Failed to read register{:04x}".format(addr))
@@ -628,3 +577,83 @@ class CMWorker(QThread):
             else:
                 print('Unable to configure wide input mode.')
                 return False
+
+    @pyqtSlot(int)
+    def enableHV(self, nm):
+        if not self.cp2130Handle:
+            return
+        regval = self.readReg(nm, 0x02)
+        if not regval[0]:
+            print('Failed to read power config register!')
+            return False
+        else:
+            newval = (regval[2] & 0xFFFE) # clear lv_ratio
+            newval = (newval | 0x0E20) # set hvclock and first step of charge pump
+            if self.writeReg(nm, 0x02, newval):
+                print('Successfully set LV_RATIO and HV Clk')
+                print('Successfully set to 6V')
+            else:
+                print('Failed to set LV_RATIO and HV Clk')
+                return False
+
+        print('Stepping to 6V...')
+        self._sendCmd(nm, 0x03)
+        self._sendCmd(nm, 0x03)
+        time.sleep(1)
+
+        newval = (newval & 0xFF9F)
+        newval = (newval | 0x0040)
+        if self.writeReg(nm, 0x02, newval):
+            print('Successfully set to 9V')
+        else:
+            print('Failed to set to 9V')
+            return False
+
+        print('Stepping to 9V...')
+        self._sendCmd(nm, 0x03)
+        self._sendCmd(nm, 0x03)
+        time.sleep(1)
+
+        newval = (newval | 0x0060)
+        if self.writeReg(nm, 0x02, newval):
+            print('Successfully set to 12V')
+        else:
+            print('Failed to set to 12V')
+            return False
+
+        print('Stepping to 12V...')
+        self._sendCmd(nm, 0x03)
+        self._sendCmd(nm, 0x03)
+        time.sleep(1)
+
+
+    @pyqtSlot(int, int, int)
+    def setZmeasure(self, nm, mag, cycles):
+        print("Set z-measure {} mag, {} cycles".format(mag, cycles))
+        if not self.cp2130Handle:
+            return
+        magbits = ((2**mag) - 1) << 4
+        regval = self.readReg(nm, 0x0C)
+        if not regval[0]:
+            print('Failed to read z-measure magnitude register!')
+            return False
+        else:
+            newval = (regval[2] & 0xFF8F) + magbits
+            if self.writeReg(nm, 0x0C, newval):
+                print('Successfully set impedance measurement magnitude')
+            else:
+                print('Failed to set impedance measurement magnitude')
+                return False
+
+        cycles = (cycles - 1) << 4
+        regval = self.readReg(nm, 0x0D)
+        if not regval[0]:
+            print('Failed to read register!')
+            return False
+        else:
+            newval = (regval[2] & 0xFF0F) + cycles
+            if self.writeReg(nm, 0x0D, newval):
+                print('Successfully set impedance measurement cycles')
+                return True
+            print('Failed to set impedance measurement cycles')
+            return False

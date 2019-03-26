@@ -59,11 +59,11 @@ class Ui_nmicCommand(object):
 
     def retranslateUi(self, nmicCommand):
         nmicCommand.setWindowTitle(_translate("nmicCommand", "Commands", None))
-        self.stim_transfer.setText(_translate("nmicCommand", "STIM_TRANSFER", None))
-        self.stim_start.setText(_translate("nmicCommand", "STIM_START", None))
-        self.reset.setText(_translate("nmicCommand", "RESET", None))
-        self.hv_load.setText(_translate("nmicCommand", "HV_LOAD", None))
-        self.imp_start.setText(_translate("nmicCommand", "IMP_START", None))
-        self.clear_err.setText(_translate("nmicCommand", "CLEAR_ERR", None))
-        self.stim_reset.setText(_translate("nmicCommand", "STIM_RESET", None))
+        self.stim_transfer.setText(_translate("nmicCommand", "Transfer stimulation settings", None))
+        self.stim_start.setText(_translate("nmicCommand", "Trigger stimulation", None))
+        self.reset.setText(_translate("nmicCommand", "Reset NMIC", None))
+        self.hv_load.setText(_translate("nmicCommand", "Load high voltage charge pump", None))
+        self.imp_start.setText(_translate("nmicCommand", "Trigger impedance measurement", None))
+        self.clear_err.setText(_translate("nmicCommand", "Clear errors", None))
+        self.stim_reset.setText(_translate("nmicCommand", "Reset stimulation", None))
 
